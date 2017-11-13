@@ -43,4 +43,6 @@ Acknowledgements
 ----------------
 
 This package has been developed thanks to the incredible work made by
-previous scientist and developers. 
+previous scientist and developers. Most of the work of those who make
+this package possible has been cited in our papers.  Others are
+mentioned in the software itself.

@@ -136,8 +136,31 @@ Components
 - **wanderer**: This program integrate the orbit of a moving object
   inside the Solar System.
   
-  * Usage: make wanderer.exe
+  * Usage: 
+
+    ``
+    make wanderer.exe
+    ``
+
   * Input information: wanderer.conf
+
+    ``
+    ////////////////////////////////////////////////////////////////////////
+    //WANDERER CONFIRATION FILE
+    ////////////////////////////////////////////////////////////////////////
+    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    //INPUT
+    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    int Npart=1;
+    int qdiagonal=1;
+
+    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    //UNITS
+    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    UL=AU;
+    UM=MSUN;
+    GGLOBAL=1.0;
+    ``
 
 For the developer
 -----------------

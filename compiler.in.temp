@@ -1,6 +1,13 @@
-UTIL=util
+###################################################
+#CHOOSE YOUR ARCHITECTURE
+###################################################
 #ARCH=32
 ARCH=64
+
+###################################################
+#DO NOT MODIFY FROM HERE
+###################################################
+UTIL=util
 CPP=g++
 CFLAGS=-I. -w -I$(UTIL)/include -I$(UTIL)/include/gsl
 LFLAGS=-lm $(UTIL)/lib/$(ARCH)/cspice.a $(UTIL)/lib/$(ARCH)/csupport.a $(UTIL)/lib/$(ARCH)/libgsl.a $(UTIL)/lib/$(ARCH)/libgslcblas.a

@@ -1,4 +1,5 @@
 #!/bin/bash
+basedir=$(pwd)
 pack=$1
 if [ "x$pack" == "x" ];then pack="pack";fi
 
@@ -7,17 +8,19 @@ confile="pack.conf"
 
 if [ $pack = "pack" ];then
     echo "Packing..."
-    rm -r $storedir/*--*
+    rm -r $storedir/*--* &> /dev/null
     for file in $(cat $storedir/$confile)
     do
 	echo -e "\tfile $file..."
 	fname=$(basename $file)
 	dname=$(dirname $file)
-	sdir="$storedir/$dname--$fname"
+	uname=$(echo $dname |sed -e s/\\//_/)
+	sdir="$storedir/$uname--$fname"
 	mkdir -p "$sdir"
 	cd $sdir
-	split -b 20000KB ../../$file $fname-
+	split -b 20000KB $basedir/$file $fname-
 	cd - &> /dev/null
+	git add "$storedir/$uname--$fname/*"
     done
     git add $storedir/*--*
 else
@@ -27,7 +30,8 @@ else
 	echo -e "\tUnpacking $file..."
 	fname=$(basename $file)
 	dname=$(dirname $file)
-	sdir="$storedir/$dname--$fname"
+	uname=$(echo $dname |sed -e s/\\//_/)
+	sdir="$storedir/$uname--$fname"
 	cat "$sdir"/$fname-* > $dname/$fname
     done
 fi

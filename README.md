@@ -81,6 +81,13 @@ large files:
 make unpack
 ```  
 
+For the developer
+-----------------
+
+iWander uses GSL and Spice as backbone utility libraries.  The latest
+precompiled version of both libraries, along witth the header files
+are provided with the package in the `util` directory.
+
 Acknowledgements
 ----------------
 

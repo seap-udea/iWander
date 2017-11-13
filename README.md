@@ -150,6 +150,7 @@ Components
     + Columns:
 
      ```markdown
+
           0:i
 	  1-6:Initial elements, q,e,i,W,w,Mo,to,mu
 	  7:tdb (terminal)

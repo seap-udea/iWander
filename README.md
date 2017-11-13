@@ -29,3 +29,13 @@ You may obtain the package in different ways:
 git clone http://github.com/seap-udea/iWander.git
 ```  
 
+- Download the tarball:
+```  
+wget http://github.com/seap-udea/iWander/archive/master.zip
+```  
+
+- Cloning as developer:
+```  
+git clone git@github.com:seap-udea/iWander.git
+```  
+

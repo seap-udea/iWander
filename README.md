@@ -19,3 +19,9 @@ refer to:
       assesing the procedence of an interstellar small body: the case
       of 1I/´Oumuamuaa (1I/2017 U1).
 
+---
+title: "Sample Document"
+output: html_document
+bibliography: bibliography.bib
+csl: biomed-central.csl
+---

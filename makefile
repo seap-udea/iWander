@@ -1,5 +1,8 @@
 include compiler.in
 
+test:
+	@echo "It works!"
+
 cleancrap:
 	@echo "Cleaning crap..."
 	@find . -name "*~" -exec rm -rf {} \;

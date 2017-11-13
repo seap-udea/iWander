@@ -43,6 +43,33 @@ The size of the package is large (several hundreds of MBs).  This is
 mainly due to the data required to run some of the modules (GAIA and
 Radial velocities databases, SPICE Kernels, etc.).  
 
+Before you start
+----------------
+
+Before you start using the package set up the `makefile`.  Create a
+local copy of `compiler.in.temp`:
+
+```  
+cp compiler.in.temp compiler.in
+```  
+
+Edit the file to properly choose your system architecture.  You just
+need to comment/uncomment the proper line in the file:
+
+```  
+###################################################
+#CHOOSE YOUR ARCHITECTURE
+###################################################
+#ARCH=32
+ARCH=64
+```  
+
+Test it:
+
+```  
+make
+```  
+
 Unpacking large files
 ---------------------
 

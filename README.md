@@ -25,6 +25,7 @@ Getting the package
 You may obtain the package in different ways:
 
 - Cloning anonymously the github repository:
-  
-	git clone http://github.com/seap-udea/iWander.git
+```  
+git clone http://github.com/seap-udea/iWander.git
+```  
 

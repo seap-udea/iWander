@@ -133,7 +133,7 @@ functionalities of the package.
 Programs
 --------
 
-- *wanderer*: This program integrate the orbit of a moving object
+- **wanderer**: This program integrate the orbit of a moving object
   inside the Solar System.
 
 For the developer

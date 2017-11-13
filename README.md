@@ -39,3 +39,8 @@ wget http://github.com/seap-udea/iWander/archive/master.zip
 git clone git@github.com:seap-udea/iWander.git
 ```  
 
+Acknowledgements
+----------------
+
+This package has been developed thanks to the incredible work made by
+previous scientist and developers. 

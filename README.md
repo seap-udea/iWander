@@ -144,7 +144,7 @@ Components
 
   * Input information: wanderer.conf
 
-    ``
+``
     ////////////////////////////////////////////////////////////////////////
     //WANDERER CONFIRATION FILE
     ////////////////////////////////////////////////////////////////////////
@@ -160,7 +160,7 @@ Components
     UL=AU;
     UM=MSUN;
     GGLOBAL=1.0;
-    ``
+``
 
 For the developer
 -----------------

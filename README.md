@@ -39,6 +39,22 @@ wget http://github.com/seap-udea/iWander/archive/master.zip
 git clone git@github.com:seap-udea/iWander.git
 ```  
 
+Please take into account that the size of the package is large due to
+the data required to run some of the modules (GAIA and Radial
+velocities data bases, SPICE Kernels, etc.).  If you want to clone the
+repository without those large files you may run the command:
+
+Unpacking large files
+---------------------
+
+Large files are splitted in 20MB chunks of data inside the `.store`
+directory.  Before you use some critical modules you must unpack those
+large files:
+
+```  
+make unpack
+```  
+
 Acknowledgements
 ----------------
 

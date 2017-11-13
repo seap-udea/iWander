@@ -1,9 +1,5 @@
 include compiler.in
 
-PROGRAMS=whattimeisit.exe whereami.exe whereisit.exe whereisthisasteroid.exe whereisinsky.exe wherewillitbe.exe scenarioof.exe throwrays.exe whereonearth.exe whereisapex.exe
-
-all:$(PROGRAMS)
-
 cleancrap:
 	@echo "Cleaning crap..."
 	@find . -name "*~" -exec rm -rf {} \;
@@ -38,14 +34,10 @@ pull:
 	@-git reset --hard HEAD
 	@-git pull
 
-edit:
-	emacs -nw *.cpp tests/*.sh tests/*.py makefile *.py README.md
+pack:
+	@echo "Packing data..."
+	@bash .store/pack.sh pack
 
 unpack:
-	@echo "Unpacking large kernels..."
-	@cat util/kernels/de430bsp/* > util/kernels/de430.bsp
-	@echo "Done."
-
-#Programs that depend on objects.hpp
-launchmany.exe scenarioof.exe wherewillitbe.exe:objects.hpp
-
+	@echo "Unpacking data..."
+	@bash .store/pack.sh unpack

@@ -110,8 +110,8 @@ orbital elements compatible to those of your body.
 Once the integration is fully completed the results are stored in the
 file `wanderer.csv`.
 
-For a fully explanation about the input options and output options see
-below.
+For a fully explanation about the input options and output information see
+components section.
 
 Structure of the package
 ------------------------
@@ -130,11 +130,14 @@ Ipython scripts.
 Databases contain the information required to run some of the
 functionalities of the package.
 
-Programs
---------
+Components
+----------
 
 - **wanderer**: This program integrate the orbit of a moving object
   inside the Solar System.
+  
+  * Usage: make wanderer.exe
+  * Input information: wanderer.conf
 
 For the developer
 -----------------

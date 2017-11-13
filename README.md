@@ -134,7 +134,7 @@ Programs
 --------
 
 wanderer
-........
+~~~~~~~~
 
 This program integrate the orbit of a moving object inside the Solar
 System.

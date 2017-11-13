@@ -17,11 +17,5 @@ refer to:
 
       Zuluaga,Sánchez-Hernández & Sucerquia, A general method for
       assesing the procedence of an interstellar small body: the case
-      of 1I/´Oumuamuaa (1I/2017 U1).
+      of 1I/´Oumuamuaa (1I/2017 U1) [arXiv](http://arxiv.org).
 
----
-title: "Sample Document"
-output: html_document
-bibliography: bibliography.bib
-csl: biomed-central.csl
----

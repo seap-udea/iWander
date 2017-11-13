@@ -151,27 +151,16 @@ Components
 
     ``
           0:i
-
 	  1-6:Initial elements, q,e,i,W,w,Mo,to,mu
-
 	  7:tdb (terminal)
-
 	  8-13:Position Ecliptic J2000
-
 	  14-19:Position J2000
-
 	  20-25:Position Galactic J2000
-
 	  26:RA(h) (terminal)
-
 	  27:DEC(deg)
-
 	  28:l(deg)
-
 	  29:b(deg)
-
 	  30:d(AU)
-
 	  31-36:Asymptotic elements, q,e,i,W,w,Mo,to,mu
     ``
 

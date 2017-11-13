@@ -9,7 +9,7 @@ confile="pack.conf"
 if [ $pack = "pack" ];then
     echo "Packing..."
     rm -r $storedir/*--* &> /dev/null
-    for file in $(cat $storedir/$confile)
+    for file in $(cat $storedir/$confile |grep -v "#")
     do
 	echo -e "\tfile $file..."
 	fname=$(basename $file)

@@ -113,6 +113,18 @@ file `wanderer.csv`.
 For a fully explanation about the input options and output information see
 components section.
 
+Once you have propagated your wanderer out of the Solar System is time
+to check if it found or will find any star in their path.  This
+achieved by running the program:
+
+```  
+make encounters.exe
+```  
+
+This will create a list of stars in the huge database included with
+the package, to which the wanderer will flyby to a maximum distance
+defined by the user in a desired time window.
+
 Structure of the package
 ------------------------
 
@@ -146,8 +158,9 @@ Components
 
   * Output: 
 
-    + File: wanderer.csv.
-    + Columns:
+    + File: wanderer.csv.  Contains the solution of the
+      backward/forward integration of the wanderer and/or the test
+      particles created from their errors.
 
      ```
 	  0:i

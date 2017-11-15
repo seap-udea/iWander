@@ -185,6 +185,14 @@ int main(int argc,char* argv[])
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     //INTEGRATION
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+    FILE* ftraj;
+    if(j==0){
+      npoints=100;
+      ftraj=fopen("nominal-trajectory.dat","w");
+    }else{
+      npoints=2;
+    }
+
     h_used=h;
     for(i=0;i<npoints;i++) {
       deltat=(t-tini/UT)*UT/YEAR;
@@ -209,6 +217,17 @@ int main(int argc,char* argv[])
 				    TOLERANCE,EXTMET,params);
 	copyVec(X0,X,6);
 	t=t_stop;
+      }
+      if(j==0){
+	//CONVERT POSITION TO J2000 AND SAVE POSITION
+	vscl_c(UL/1E3,X0,Xu);vscl_c(UV/1E3,X0+3,Xu+3);
+	mxv_c(M_Eclip_J2000,Xu,posJ2000);
+	mxv_c(M_Eclip_J2000,Xu+3,posJ2000+3);
+	recrad_c(posJ2000,&d,&RA,&DEC);
+	mxv_c(M_Eclip_Galactic,Xu,posGalactic);
+	mxv_c(M_Eclip_Galactic,Xu+3,posGalactic+3);
+	recrad_c(posGalactic,&d,&l,&b);
+	fprintf(ftraj,"%e %e %e\n",d*1e3/AU,l,b);
       }
       t_start = t;
       if(direction*(t_start-tend)>0) break;

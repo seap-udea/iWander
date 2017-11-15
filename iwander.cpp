@@ -277,10 +277,6 @@ int initWander(void)
   gsl_rng_set(RAND,time(NULL));
   gsl_rng_set(RAND,3);
 
-  //DERIVED UNITS
-  UT=sqrt(UL*UL*UL/(GCONST*UM));
-  UV=UL/UT;
-
   return 0;
 }
 

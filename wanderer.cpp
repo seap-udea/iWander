@@ -11,6 +11,10 @@ int main(int argc,char* argv[])
       10: Number of particles
       1: Use diagonal covariance
 
+    Function: This program compute the position of the interstellar
+    objects and their surrogates at the time when the object entered
+    the Solar System.
+
     Input: None
 
     Output: 
@@ -101,10 +105,14 @@ int main(int argc,char* argv[])
   gsl_matrix_set(D,3,3,ini_dW*ini_dW);
   gsl_matrix_set(D,4,4,ini_dw*ini_dw);
   gsl_matrix_set(D,5,5,ini_di*ini_di);
-
+  double ts[2],**Xout=matrixAllocate(2,6);
+  
   ////////////////////////////////////////////////////
   //LOOP OVER PARTICLES
   ////////////////////////////////////////////////////
+  pxform_c("ECLIPJ2000","GALACTIC",t,M_Eclip_Galactic);
+  pxform_c("ECLIPJ2000","J2000",0,M_Eclip_J2000);
+
   FILE* fc=fopen("wanderer.csv","w");
   int Nfreq=ceil(Npart/10);
   Nfreq=Nfreq==0?1:Nfreq;
@@ -185,66 +193,23 @@ int main(int argc,char* argv[])
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     //INTEGRATION
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-    FILE* ftraj;
-    if(j==0){
-      npoints=100;
-      ftraj=fopen("nominal-trajectory.dat","w");
-    }else{
-      npoints=2;
-    }
-
-    h_used=h;
-    for(i=0;i<npoints;i++) {
-      deltat=(t-tini/UT)*UT/YEAR;
-      if(direction*((t_start+t_step)-tend)>0) t_step=(tend-t_start);
-      t_stop = t_start + t_step;
-      h_used = h;
-      do {
-	while(1){
-	  status=Gragg_Bulirsch_Stoer(EoM,X0,X,t,h_used,&h_next,1.0,
-				      TOLERANCE,EXTMET,params);
-	  if(status) h_used/=4.0;
-	  else break;
-	}
-	t+=h_used;
-	copyVec(X0,X,6);
-	if(direction*(t+h_next-t_stop)>0) h_used=t_stop-t;
-	else h_used=h_next;
-      }while(direction*(t-(t_stop-direction*1.e-10))<0);
-      if(direction*(t-t_stop)>0){
-	h_adjust=(t_stop-t);
-	status=Gragg_Bulirsch_Stoer(EoM,X0,X,t,h_adjust,&h_next,1.0,
-				    TOLERANCE,EXTMET,params);
-	copyVec(X0,X,6);
-	t=t_stop;
-      }
-      if(j==0){
-	//CONVERT POSITION TO J2000 AND SAVE POSITION
-	vscl_c(UL/1E3,X0,Xu);vscl_c(UV/1E3,X0+3,Xu+3);
-	mxv_c(M_Eclip_J2000,Xu,posJ2000);
-	mxv_c(M_Eclip_J2000,Xu+3,posJ2000+3);
-	recrad_c(posJ2000,&d,&RA,&DEC);
-	mxv_c(M_Eclip_Galactic,Xu,posGalactic);
-	mxv_c(M_Eclip_Galactic,Xu+3,posGalactic+3);
-	recrad_c(posGalactic,&d,&l,&b);
-	fprintf(ftraj,"%e %e %e\n",d*1e3/AU,l,b);
-      }
-      t_start = t;
-      if(direction*(t_start-tend)>0) break;
-    }
+    h=tdyn/1000.0;
+    integrateEoM(tini/UT,X0,h,npoints,duration,6,EoM,params,ts,Xout);
 
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     //FINAL POSITION
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-    vscl_c(UL/1E3,X0,Xu);vscl_c(UV/1E3,X0+3,Xu+3);
+    //vscl_c(UL/1E3,X0,Xu);vscl_c(UV/1E3,X0+3,Xu+3);
+    vscl_c(UL/1E3,Xout[1],Xu);vscl_c(UV/1E3,Xout[1]+3,Xu+3);
     if(VERBOSE) fprintf(stdout,"\tFinal position : %s\n",
 	    vec2strn(Xu,3,"%.17e "));
+    double d=vnorm_c(Xu)*1e3/AU;
+    //fprintf(stdout,"\tDistance : %e\n",d);
 
     //ASYMPTOTIC ELEMENTS
     oscelt_c(Xu,t,MUTOT,elts);
     
     //J2000
-    pxform_c("ECLIPJ2000","J2000",t,M_Eclip_J2000);
     mxv_c(M_Eclip_J2000,Xu,posJ2000);
     mxv_c(M_Eclip_J2000,Xu+3,posJ2000+3);
     recrad_c(posJ2000,&d,&RA,&DEC);
@@ -252,7 +217,6 @@ int main(int argc,char* argv[])
 	    dec2sex(RA*RAD/15.0),dec2sex(DEC*RAD),d*1e3/AU);
 
     //GALACTIC
-    pxform_c("ECLIPJ2000","GALACTIC",t,M_Eclip_Galactic);
     mxv_c(M_Eclip_Galactic,Xu,posGalactic);
     mxv_c(M_Eclip_Galactic,Xu+3,posGalactic+3);
     recrad_c(posGalactic,&d,&l,&b);
@@ -265,7 +229,7 @@ int main(int argc,char* argv[])
     //ELEMENTOS
     fprintf(fc,"%d,%s",j,vec2strn(elements,8,"%.17e,"));
     //PARTICLE TEND
-    fprintf(fc,"%.17e,",tend*UT);
+    fprintf(fc,"%.17e,",(tend*UT-tini));
     //POSITION ECLIPJ2000
     fprintf(fc,"%s",vec2strn(Xu,6,"%.17e,"));
     //POSITION J2000

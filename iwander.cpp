@@ -1291,6 +1291,7 @@ int LSR2GC(double LSR[6],double GC[6])
   double MGC[][3]={{cos(theta),0,sin(theta)},
 		   {0,1.0,0},
 		   {-sin(theta),0,cos(theta)}};
+
   VPRINT(stdout,"theta = %.3lf degrees\n",theta*RAD);
   VPRINT(stdout,"UVW (SUN) = %s\n",vec2str(UVW_Sun,"%.5e "));
 

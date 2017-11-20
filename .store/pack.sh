@@ -25,7 +25,7 @@ if [ $pack = "pack" ];then
     git add $storedir/*--*
 else
     echo "Unpacking..."
-    for file in $(cat $storedir/$confile)
+    for file in $(cat $storedir/$confile |grep -v "#")
     do
 	echo -e "\tUnpacking $file..."
 	fname=$(basename $file)

@@ -32,6 +32,6 @@ else
 	dname=$(dirname $file)
 	uname=$(echo $dname |sed -e s/\\//_/)
 	sdir="$storedir/$uname--$fname"
-	cat "$sdir"/$fname-* > $dname/$fname
+	echo "cat \"$sdir\"/$fname-* > $dname/$fname"
     done
 fi

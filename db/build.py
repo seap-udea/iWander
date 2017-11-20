@@ -293,10 +293,12 @@ def buildCat(gaia,hipparcos,tycho,simbad):
     print("\tSimbad size:", len(simbad), ". Final size of database:", n4, ". Contribution:", n4-n3)
 
     sources=database[['source_x','source_y']].fillna('')
-    #sources.columns=['s1','s2','s3','s4']
-    #database["source"]=sources["s1"].astype(str)+":"+sources["s2"]+":"+sources["s3"]+":"+sources["s4"]
-    sources.columns=['s1','s2']
-    database["source"]=sources["s1"].astype(str)+":"+sources["s2"]
+    print("\tSources:",sources.columns)
+
+    sources.columns=['s1','s2','s3','s4']
+    database["source"]=sources["s1"].astype(str)+":"+sources["s2"]+":"+sources["s3"]+":"+sources["s4"]
+    #sources.columns=['s1','s2']
+    #database["source"]=sources["s1"].astype(str)+":"+sources["s2"]
     del(database["source_x"])
     del(database["source_y"])
 

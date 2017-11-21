@@ -1032,14 +1032,9 @@ char *str_replace(char *orig, char *rep, char *with)
 #define MAXLINE 100000
 int parseLine(char line[],char** cols,int *ncols)
 {
-  char *pt;
-  pt=strtok(line,",");
   int i=0;
-  while(pt!= NULL) {
-    strcpy(cols[i],pt);
-    pt=strtok (NULL, ",");
-    i+=1;
-  }
+  char *found;
+  while((found=strsep(&line,","))!=NULL) strcpy(cols[i++],found);
   *ncols=i;
   return 0;
 }
@@ -1666,6 +1661,16 @@ double **matrixAllocate(int n,int m)
   
   M=(double**)malloc(n*sizeof(double*));
   for(int i=0;i<n;i++) M[i]=(double*)malloc(m*sizeof(double));
+  
+  return M;
+}
+
+char **charMatrixAllocate(int n,int m)
+{
+  char **M;
+  
+  M=(char**)malloc(n*sizeof(char*));
+  for(int i=0;i<n;i++) M[i]=(char*)malloc(m*sizeof(char));
   
   return M;
 }

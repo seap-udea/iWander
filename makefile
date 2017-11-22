@@ -6,7 +6,7 @@ test:
 cleancrap:
 	@echo "Cleaning crap..."
 	@find . -name "*~" -exec rm -rf {} \;
-	@find . -name "#" -exec rm -rf {} \;
+	@find . -name "#*#" -exec rm -rf {} \;
 
 cleanexe:
 	@echo "Cleaning executable..."

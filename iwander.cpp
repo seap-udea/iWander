@@ -311,7 +311,7 @@ char* vec2str(double vec[],char frm[]="%.8e ")
 {
   char format[100];
   char *str=(char*)calloc(sizeof(char),100); 
-  sprintf(format,"%s %s %s",frm,frm,frm);
+  sprintf(format,"%s%s%s",frm,frm,frm);
   sprintf(str,format,vec[0],vec[1],vec[2]);
   return str;
 }
@@ -1198,18 +1198,27 @@ int calcUVW(double ra,double dec,
 	    double UVW[3],double dUVW[3])
 {
   //CORRECTION BY DECLINATION
-  mura=mura*cos(dec*DEG);
+  //MURA SHOULD BE ALREADY CORRECTED BY DECLINATION
 
   //COMPUTE VSKY
+  double kc2=KC2;
   double vsky[]={
     vr,/*RADIAL, km/s*/
-    KC2*mura/par,/*RA, km/s*/
-    KC2*mudec/par/*DEC, km/s*/
+    kc2*mura/par,/*RA, km/s*/
+    kc2*mudec/par/*DEC, km/s*/
   };
-
+  
   //TRANSFORM TO LSR
   double TM[3][3];
   pxform_c("J2000","GALACTIC",0,TM);
+
+  //ORIGINAL
+  /*
+  double TM[][3]={{-0.06699,-0.87276,-0.48354},
+		  {0.49273,-0.45035,+0.74458},
+		  {-0.86760,-0.18837,+0.46020}};
+  */
+	  
   double AM[][3]={{+cos(ra*DEG)*cos(dec*DEG),-sin(ra*DEG),-cos(ra*DEG)*sin(dec*DEG)},
 		  {+sin(ra*DEG)*cos(dec*DEG),+cos(ra*DEG),-sin(ra*DEG)*sin(dec*DEG)},
 		  {+sin(dec*DEG),0,+cos(dec*DEG)}}; 

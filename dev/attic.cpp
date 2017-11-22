@@ -112,3 +112,46 @@
       qlma=1;
       break;
     }
+
+    /*
+    //EPOCH
+    tstar=atof(fields[REF_EPOCH]);
+    VPRINT(stdout,"\tEpoch (year): = %lf\n",tstar);
+    sprintf(ctmp,"01/01/%d 00:00:00.000",(int)tstar);
+    str2et_c(ctmp,&tstar);
+    deltet_c(tstar,"et",&dt);
+    tstar-=dt;
+    VPRINT(stdout,"\tEpoch: tdb = %lf\n",tstar);
+    */
+
+
+    /*
+    //HD39587,HIP27913
+    mura=-184.0;dmura=1.4;
+    mudec=-87.0;dmura=1.1;
+    vr=-13.3;dvr=0.3;
+    par=104.1;dpar=5.8;
+    /*
+    //HR 4867, HIP62512
+    mura=+107.0;dmura=3.5;
+    mudec=-5.0;dmudec=2.5;
+    vr=-12.0;dvr=3.6;
+    par=41.4;dpar=12.1;
+    //*/
+    /*
+    //HD115043, HIP64532
+    mura=+110.0;dmura=3.8;
+    mudec=-35.0;dmudec=3.3;
+    vr=-8.8;dvr=2.0;
+    par=49.5;dpar=15.7;
+    //*/
+    /*
+    ra=(1+49./60+23.35579/3600)*15;
+    dec=-(10+42./60+12.8593/3600.);
+    mura=-144;dmura=3.4;
+    mudec=-88;dmudec=3.2;
+    par=46.4;dpar=6.7;
+    vr=-1.5;dvr=1.6;
+    //*/
+    calcUVW(ra,dec,par,dpar,mura,dmura,mudec,dmudec,vr,dvr,UVW,dUVW);
+

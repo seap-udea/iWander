@@ -35,17 +35,16 @@ int main(int argc,char* argv[])
 
       Cols:
           0:i
-	  1-6:Initial elements, q,e,i,W,w,Mo,to,mu
-	  7:tdb (terminal)
-	  8-13:Position Ecliptic J2000
-	  14-19:Position J2000
-	  20-25:Position Galactic J2000
-	  26:RA(h) (terminal)
-	  27:DEC(deg)
-	  28:l(deg)
-	  29:b(deg)
-	  30:d(AU)
-	  31-36:Asymptotic elements, q,e,i,W,w,Mo,to,mu
+	  1-8:Initial elements, q,e,i,W,w,Mo,to,mu
+	  9-15:Asymptotic elements, q,e,i,W,w,Mo,to,mu
+	  16:ting (time of ingress, seconds)
+	  17-22:Position Ecliptic J2000
+	  23-28:Position J2000
+	  29-34:Position Galactic J2000
+	  35:RA(h) (ingress)
+	  36:DEC(deg)
+	  37:l(deg)
+	  38:b(deg)
   */
 
   ////////////////////////////////////////////////////
@@ -386,6 +385,7 @@ int main(int argc,char* argv[])
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     //ELEMENTOS
     fprintf(fc,"%d,",j);
+    //INITIAL ELEMENTS
     fprintf(fc,"%s",vec2strn(elements,8,"%.17e,"));
     //ASYMPTOTIC ELEMENTS
     fprintf(fc,"%s",vec2strn(elements,8,"%.17e,"));

@@ -24,14 +24,10 @@ double cart2sph(double x,double y,double z,double *lat,double *lon)
   return 0;
 }
 
-/*
-int velocityDistribution(double Ms=1.0,double ap=1.0,
-			 double Mp=1e-3,double Rk=7e7,
-			 double *vmean,double *vstd)
-*/
 int velocityDistribution(double Ms,double ap,
 			 double Mp,double Rk,
-			 double *vm,double *vs)
+			 double *vm,double *vs,
+			 int qout=0)
 {
   //////////////////////////////////////////////////////////////
   //UNITS AND CONSTANTS
@@ -73,8 +69,13 @@ int velocityDistribution(double Ms,double ap,
   double vmean_old=0;
   double vstd_old=0;
   double ratio_old=0;
+  char fname[100];
+  FILE *fv;
 
-  FILE *fv=fopen("vinfs.data","w");
+  if(qout){
+    sprintf(fname,"data/vinfs--Mp_%.1e--ap_%.1e--.data",Mp,ap);
+    fv=fopen(fname,"w");
+  }
   while(n<Npart){
     //#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //#GENERATE RANDOM ASTROCENTRIC VELOCITIES FOR TEST PARTICLES
@@ -190,8 +191,9 @@ int velocityDistribution(double Ms,double ap,
        fabs(vstd-vstd_old)/vstd<TOLSTD && 
        fabs(ratio-ratio_old)/ratio<TOLRATIO)
       break;
-
-    fprintf(fv,"%e\n",vinf);//*UV/1e3);
+    
+    if(qout)
+      fprintf(fv,"%e\n",vinf);//*UV/1e3);
 
     vmean_old=vmean;
     vstd_old=vstd;
@@ -199,7 +201,7 @@ int velocityDistribution(double Ms,double ap,
   }
   *vm=vmean_old;
   *vs=vstd_old;
-  fclose(fv);
+  if(qout) fclose(fv);
   return n;
 }
 
@@ -225,7 +227,34 @@ int main(int argc,char* argv[])
   double Rp=7e5;//km
 
   /*
+  //SINGLE EXPERIMENT
   navg=velocityDistribution(Ms,ap,Mp,Rp,&vmean,&vstd);
+  fprintf(stdout,"Converge after %d bodies\n",navg);
+  fprintf(stdout,"vmean = %e, vstd = %e, ratio = %e\n",vmean,vstd,vstd/vmean);
+  exit(0);
+  //*/
+
+  UL=1*AU;
+  UM=1*MSUN;
+  UT=sqrt(UL*UL*UL/(GCONST*UM));
+  fprintf(stdout,"UL = %e\nUM = %e\nUT = %e\nUV = UL/UT = %e m/s\n",
+	  UL,UM,UT,UL/UT);
+
+  //*
+  //MULTIPLE EXPERIMENT
+  ap=5.0;
+  Mp=1e-3;
+  navg=velocityDistribution(Ms,ap,Mp,Rp,&vmean,&vstd,1);
+  fprintf(stdout,"Converge after %d bodies\n",navg);
+  fprintf(stdout,"vmean = %e, vstd = %e, ratio = %e\n",vmean,vstd,vstd/vmean);
+
+  Mp=5e-3;
+  navg=velocityDistribution(Ms,ap,Mp,Rp,&vmean,&vstd,1);
+  fprintf(stdout,"Converge after %d bodies\n",navg);
+  fprintf(stdout,"vmean = %e, vstd = %e, ratio = %e\n",vmean,vstd,vstd/vmean);
+
+  Mp=1e-2;
+  navg=velocityDistribution(Ms,ap,Mp,Rp,&vmean,&vstd,1);
   fprintf(stdout,"Converge after %d bodies\n",navg);
   fprintf(stdout,"vmean = %e, vstd = %e, ratio = %e\n",vmean,vstd,vstd/vmean);
   exit(0);

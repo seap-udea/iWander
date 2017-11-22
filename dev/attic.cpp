@@ -1,3 +1,41 @@
+    /*
+    ra=(1+49./60+23.35579/3600)*15;
+    dec=-(10+42./60+12.8593/3600.);
+    mura=-144;dmura=3.4;
+    mudec=-88;dmudec=3.2;
+    par=46.4;dpar=6.7;
+    vr=-1.5;dvr=1.6;
+    //*/
+    /*
+    //HD39587,HIP27913
+    ra=(05+51.0/60+25.15/3600)*15;
+    dec=+20+16.0/60+08.2/3600;
+    mura=-184.0;dmura=1.4;
+    mudec=-87.0;dmura=1.1;
+    vr=-13.3;dvr=0.3;
+    par=104.1;dpar=5.8;
+    //*/
+    /*
+    //HD115043, HIP64532
+    ra=(13+11.0/60+34.42/3600)*15;
+    dec=56+58.0/60+22.8/3600;
+    mura=+110.0;dmura=3.8;
+    mudec=-35.0;dmudec=3.3;
+    vr=-8.8;dvr=2.0;
+    par=49.5;dpar=15.7;
+    fprintf(stdout,"ra=%e,dec=%e,par=%e,mura=%e,mudec=%e,vr=%e\n",
+	    ra,dec,par,mura,mudec,vr);
+    //*/
+    /*
+    //EXAMPLE WITH GALPY: http://docs.astropy.org/en/stable/api/astropy.coordinates.Galactocentric.html
+    ra=45.1128;
+    dec=0.380844;
+    mura=-1.5728952522432993;dmura=0.0;
+    mudec=-11.6616;dmudec=0.0;
+    vr=2.061;dvr=0.0;
+    par=2.09081;dpar=0.0;
+    //*/
+
       if(j==0){
 	//CONVERT POSITION TO J2000 AND SAVE POSITION
 	vscl_c(UL/1E3,X,Xu);vscl_c(UV/1E3,X+3,Xu+3);
@@ -204,7 +242,108 @@
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
-//PROGENITORS
+//PROGENITOR
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+
+    //LMA ENCOUNTER TIME
+    duration=atof(fields[TMIN])*YEAR/UT;
+    fprintf(stdout,"\tLMA time:%e (compared to %e)\n",duration,tsp[Ntimesp-1]);
+    dmin=atof(fields[DMIN]);
+    fprintf(stdout,"\tLMA distance:%e\n",dmin);
+    hstep=fabs(duration)/(10*Ntimes);
+    if(1.1*duration<tsp[Ntimesp-1]){
+      fprintf(stdout,"\t\tEncounters happens out of the integration range (%e)...\n",tsp[Ntimesp-1]);
+      continue;
+    }
+
+    //SPATIAL COORDINATES AND LSR VELOCITY
+    for(int k=0;k<6;k++) x[k]=atof(fields[POSTARX+k]);
+    vscl_c(PARSEC/1e3,x,x);
+
+    //CONVERT TO GC
+    LSR2GC(x,xg);
+    vscl_c(1e3/UL,xg,xg);//SET UNITS
+    vscl_c(1e3/UV,xg+3,xg+3);
+    cart2polar(xg,xInt0,1.0);//CONVERSION TO CYLINDRICAL
+    fprintf(stdout,"\tInitial position: %s\n",vec2strn(xInt0,6,"%.5e "));
+    //exit(0);
+
+    //INTEGRATE 
+    duration+=duration/10;
+    fprintf(stdout,"\tIntegrating until t = %e, time step = %e\n",duration,hstep);
+
+    integrateEoM(0,xInt0,hstep,Ntimes,duration,
+		 nsys,EoMGalactic,params,
+		 ts,xInt);
+
+    //FIND TIME OF MINIMUM DISTANCE
+    dyn_dmin=1.0e+100;
+    for(int i=1;i<Ntimes;i++){
+      //STAR POSITION 
+      polar2cart(xInt[i],x,1.0);
+      VPRINT(stdout,"\tPosition %d @ t=%e:%s\n",i,ts[i],vec2strn(x,6,"%.5e,"));
+
+      //FIND TIME IN PARTICLE INTEGRATION
+      t=ts[i];
+      it=findTime(t,tsp,Ntimesp);
+      VPRINT(stdout,"\t\tCorrespond to interval %d: [%e,%e]\n",it,tsp[it],tsp[it+1]);
+
+      //FIND POSITION OF NOMINAL PARTICLE AT INITIAL POINT OF INTERVAL
+      xp1=xIntc[it];
+      xp2=xIntc[it+1];
+      VPRINT(stdout,"\t\tNominal particle position 1:%s\n",vec2strn(xp1,6,"%.5e "));
+      VPRINT(stdout,"\t\tNominal particle position 2:%s\n",vec2strn(xp2,6,"%.5e "));
+
+      //DIFFERENCE
+      vsubg_c(x,xp1,6,dx);
+      VPRINT(stdout,"\t\tDifference 1: [%s] (pos:%.5e,vel:%.5e]\n",
+	      vec2strn(dx,6,"%.5e,"),vnorm_c(dx),vnorm_c(dx+3)*UV);
+      vsubg_c(x,xp2,6,dx);
+      VPRINT(stdout,"\t\tDifference 2: [%s] (pos:%.5e,vel:%.5e]\n",
+	      vec2strn(dx,6,"%.5e,"),vnorm_c(dx),vnorm_c(dx+3)*UV);
+
+      //CALCULATE DISTANCE FROM PARTICLE TO INTERVAL
+      dmin=distancePointLine(x,xp1,xp2,&ftmin);
+      VPRINT(stdout,"\t\tDistance: %.5e\n",dmin);
+      
+      //CORRECTED TIME
+      tmin=tsp[it]+ftmin*(tsp[it+1]-tsp[it]);
+      VPRINT(stdout,"\t\tCorrected time:%e\n",tmin);
+
+      //INTERPOLATED POSITION OF NOMINAL PARTICLE
+      vsubg_c(xp2,xp1,6,dx);
+      vscl_c((tmin-tsp[it])/(tsp[it+1]-tsp[it]),dx,dx);
+      vscl_c((tmin-tsp[it])/(tsp[it+1]-tsp[it]),dx+3,dx+3);
+      vaddg_c(xp1,dx,6,xpmin);
+
+      //DISTANCE TO STAR
+      vsubg_c(xpmin,x,6,dx);
+      VPRINT(stdout,"\t\tDifference at minimum: [%s] (pos:%.5e,vel:%.5e]\n",
+	      vec2strn(dx,6,"%.5e,"),vnorm_c(dx),vnorm_c(dx+3)*UV/1e3);
+
+      //COMPUTE MINIMUM DISTANCE
+      if(dmin<=dyn_dmin){
+	dyn_dmin=dmin;
+	dyn_tmin=tmin;
+	dyn_vrel=vnorm_c(dx+3)*UV/1e3;
+      }
+    }
+
+    fprintf(stdout,"\tDynamical minimum distance: %e\n",dyn_dmin);
+    fprintf(stdout,"\tDynamical minimum time: %e\n",dyn_tmin);
+    
+    //STORE THE BEST CANDIDATES
+    if(dyn_dmin<2.0){
+      fprintf(fp,"%.5lf,%.5lf,%.5lf,%s",dyn_tmin,dyn_dmin,dyn_vrel,values);
+    }
+    
+
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//PROBABILITY
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
@@ -513,3 +652,10 @@
   fclose(fc);
 
 
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//OLD METHOD TO GET MINIMUM DISTANCES FROM INTEGRATIONS
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////

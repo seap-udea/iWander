@@ -83,14 +83,14 @@ int main(int argc,char* argv[])
   double TM[3][3],BM[3][3];
   double vsky[3],dvsky[3],UVW[3],dUVW[3];
 
-  double *p2,*d2,p1mp2[3],r1mr2[3],d1md2[3],nv[3],nv1[3],nv2[3];
+  double p2[3],*d2,p1mp2[3],r1mr2[3],d1md2[3],nv[3],nv1[3],nv2[3];
   double dc1[3],dc2[3],c1[3],c2[3],drp[3];
   double dvnorm;
   double d1n2,d2n1;
   double dmin,tmin,tmin1,tmin2;
   double vrel[3],vrelmag;
-
   double dthres;
+  double ting;
 
   ////////////////////////////////////////////////////
   //GLOBAL DEFINITIONS
@@ -136,7 +136,7 @@ int main(int argc,char* argv[])
   //READING HEADER
   fscanf(fc,"%s",head);
 
-  fprintf(fe,"n,postarx,postary,postarz,velstarx,velstary,velstarz,posbodyperix,posbodyperiy,posbodyperiz,postarperix,postarperiy,postarperiz,d,dmin,tmin,vrelx,vrely,vrelz,vrel\n");
+  fprintf(fe,"n,postarx,postary,postarz,velstarx,velstary,velstarz,posbodyperix,posbodyperiy,posbodyperiz,postarperix,postarperiy,postarperiz,d,dmin,tmin,vrelx,vrely,vrelz,vrel,%s\n",head);
   fprintf(fg,"n,postarx,postary,postarz,velstarx,velstary,velstarz,posbodyperix,posbodyperiy,posbodyperiz,postarperix,postarperiy,postarperiz,d,dmin,tmin,vrelx,vrely,vrelz,vrel,%s\n",head);
 
   //COMPUTING LMA MINIMUM DISTANCE TO STARS
@@ -154,10 +154,15 @@ int main(int argc,char* argv[])
 
     //PARSE FIELDS
     parseLine(line,fields,&nfields);
+
+    //DEBUGGING
+    //if(!(strcmp(fields[Stars::TYCHO2_ID],"6995-570-1")==0)) continue;
+    //if(!(strcmp(fields[Stars::HIP],"27913")==0) and VERBOSE) continue;
     //if(!(strcmp(fields[Stars::HIP],"62512")==0)) continue;
     //if(!(strcmp(fields[Stars::HIP],"64532")==0)) continue;
     //if(n<243520) continue;
-    if(n<14053 && VERBOSE) continue;
+    //if(n<14053 && VERBOSE) continue;
+    //if(!(strcmp(fields[Stars::HIP],"43667")==0)) continue;
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //ID
@@ -279,24 +284,34 @@ int main(int argc,char* argv[])
 	   vec2str(UVW,"%.5f,"),
 	   vec2str(dUVW,"%.5f "));
 
+    double vsun[]={USUN,VSUN+VCIRC,WSUN};
+    vadd_c(UVW,vsun,vsun);
+    VPRINT(stdout,"\tGalactocentric velocity: %s\n",vec2str(vsun,"%.17f,"));
+
     double vmag=vnorm_c(UVW);
     
     if(vmag>=vgc_max){
-      fprintf(stderr,"\tThe star %d %s %s is going too fast. Skipping\n",
-	      n,fields[Stars::HIP],fields[Stars::TYCHO2_ID]);
+      VPRINT(stderr,"\tThe star %d %s %s is going too fast. Skipping\n",
+	     n,fields[Stars::HIP],fields[Stars::TYCHO2_ID]);
       continue;
     }
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //CALCULATE MINIMUM DISTANCE
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    //MINIMUM DISTANCE
-    p2=postar;
+    //BACKWARD STAR UNTIL TING
+    vscl_c(tbody,UVW,p2);
+    VPRINT(stdout,"\tDisplacement (km): %s\n",vec2str(p2,"%.17e,"));
+    vscl_c(1e3/PARSEC,p2,p2);
+    VPRINT(stdout,"\tDisplacement (pc): %s\n",vec2str(p2,"%.17e,"));
+    vadd_c(postar,p2,p2);
     d2=UVW;
-
+    
     VPRINT(stdout,"\tPosition particle: %s\n",vec2str(p1,"%.5lf,"));
     VPRINT(stdout,"\tVelocity particle: %s\n",vec2str(d1,"%.5lf,"));
-    VPRINT(stdout,"\tPosition star: %s\n",vec2str(p2,"%.5lf,"));
+
+    VPRINT(stdout,"\tPosition star today: %s\n",vec2str(postar,"%.17lf,"));
+    VPRINT(stdout,"\tPosition star: %s\n",vec2str(p2,"%.17lf,"));
     VPRINT(stdout,"\tVelocity star: %s\n",vec2str(d2,"%.5lf,"));
 
     vsub_c(p1,p2,p1mp2);
@@ -347,7 +362,8 @@ int main(int argc,char* argv[])
     fprintf(fe,"%s%s",vec2str(p2,"%.5e,"),vec2str(UVW,"%.5e,"));
     fprintf(fe,"%s%s",vec2str(c1,"%.5e,"),vec2str(c2,"%.5e,"));
     fprintf(fe,"%.5e,%.5e,%.5e,",d,dmin,tmin);
-    fprintf(fe,"%s%.5e",vec2str(vrel,"%.5e,"),vrelmag);
+    fprintf(fe,"%s%.5e,",vec2str(vrel,"%.5e,"),vrelmag);
+    fprintf(fe,"%s",aline);
     fprintf(fe,"\n");
 
     //CONDITION FOR CANDIDATES

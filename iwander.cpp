@@ -1055,8 +1055,10 @@ int parseLine(char line[],char** cols,int *ncols)
  */
 //GIVEN BY https://ui.adsabs.harvard.edu/#abs/2009ApJ…692.1075G/abstract
 #define ROSUN 8.3E3 //PC
+//#define ROSUN 8.0E3 //PC
 //GIVEN BY https://ui.adsabs.harvard.edu/#abs/2001ApJ…553..184C/abstract
 #define ZSUN 27.0 //PC, 
+//#define ZSUN 10.0 //PC, 
 #define PHISUN 0.0 //DEG
 //GIVEN BY: https://ui.adsabs.harvard.edu/#abs/2010MNRAS.403.1829S/abstract
 #define USUN 11.1 //km/s, U IN DIRECTION OF -r 
@@ -1199,9 +1201,12 @@ int calcUVW(double ra,double dec,
 {
   //CORRECTION BY DECLINATION
   //MURA SHOULD BE ALREADY CORRECTED BY DECLINATION
+  //mura=mura*cos(dec*DEG);
 
   //COMPUTE VSKY
   double kc2=KC2;
+  //kc2=4.74057;
+
   double vsky[]={
     vr,/*RADIAL, km/s*/
     kc2*mura/par,/*RA, km/s*/
@@ -1209,15 +1214,17 @@ int calcUVW(double ra,double dec,
   };
   
   //TRANSFORM TO LSR
-  double TM[3][3];
-  pxform_c("J2000","GALACTIC",0,TM);
 
   //ORIGINAL
   /*
   double TM[][3]={{-0.06699,-0.87276,-0.48354},
-		  {0.49273,-0.45035,+0.74458},
+		  {+0.49273,-0.45035,+0.74458},
 		  {-0.86760,-0.18837,+0.46020}};
-  */
+  //*/
+  //*
+  double TM[3][3];
+  pxform_c("J2000","GALACTIC",0,TM);
+  //*/
 	  
   double AM[][3]={{+cos(ra*DEG)*cos(dec*DEG),-sin(ra*DEG),-cos(ra*DEG)*sin(dec*DEG)},
 		  {+sin(ra*DEG)*cos(dec*DEG),+cos(ra*DEG),-sin(ra*DEG)*sin(dec*DEG)},

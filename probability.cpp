@@ -38,7 +38,7 @@ int main(int argc,char* argv[])
   double params[10],mparams[23];
   double hstep,duration;
   //MATRICES WITH INTEGRATIONS
-  double *xnom0,*xnoms0,*xIntp0,*xIntc0,**xIntp,**xIntc;
+  double *xnom0,*xnoms0,*xIntp0,*xIntc0,**xIntp,**xFullp,**xFullc,**xIntc;
   double *xInt0,**xInt;
   double *tsp,*ts;
   //INITIAL CONDITIONS
@@ -94,6 +94,12 @@ int main(int argc,char* argv[])
   xIntp=(double**)malloc(Ntimesp*sizeof(double*));
   for(int j=0;j<Ntimesp;j++) xIntp[j]=(double*)malloc(nsysp*sizeof(double));
 
+  xFullp=(double**)malloc(Ntimesp*sizeof(double*));
+  for(int j=0;j<Ntimesp;j++) xFullp[j]=(double*)malloc(nsysp*sizeof(double));
+
+  xFullc=(double**)malloc(Ntimesp*sizeof(double*));
+  for(int j=0;j<Ntimesp;j++) xFullc[j]=(double*)malloc(nsysp*sizeof(double));
+
   xIntc=(double**)malloc(Ntimesp*sizeof(double*));
   for(int j=0;j<Ntimesp;j++) xIntc[j]=(double*)malloc(nsysp*sizeof(double));
   
@@ -117,13 +123,13 @@ int main(int argc,char* argv[])
   //GLOBAL PROPERTIES FOR INTEGRATION
   ////////////////////////////////////////////////////
   ip=1;
-  params[ip++]=G*MDISK*MSUN/UM;
+  params[ip++]=GGLOBAL*MDISK*MSUN/UM;
   params[ip++]=ADISK*PARSEC/UL;
   params[ip++]=BDISK*PARSEC/UL;
-  params[ip++]=G*MBULGE*MSUN/UM;
+  params[ip++]=GGLOBAL*MBULGE*MSUN/UM;
   params[ip++]=0.0;
   params[ip++]=BBULGE*PARSEC/UL;
-  params[ip++]=G*MHALO*MSUN/UM;
+  params[ip++]=GGLOBAL*MHALO*MSUN/UM;
   params[ip++]=0.0;
   params[ip++]=BHALO*PARSEC/UL;
 
@@ -158,12 +164,34 @@ int main(int argc,char* argv[])
   fclose(fc);
   copyVec(xnoms0,xIntp0,6);
   fprintf(stdout,"Initial condition nominal test particle: %s\n",vec2strn(xIntp0,6,"%e "));
-
+  
+  ////////////////////////////////////////////////////
+  //READ PREINTEGRATED TEST PARTICLES
+  ////////////////////////////////////////////////////
+  fprintf(stdout,"Reading preintegrated %d test particles:\n",Npart);
+  fc=fopen("cloud.csv","r");
+  fgets(line,MAXLINE,fc);//HEADER
+  i=0;
+  while(fgets(line,MAXLINE,fc)!=NULL){
+    parseLine(line,fields,&nfields);
+    tsp[i]=atof(fields[0]);
+    n=1;
+    for(int j=0;j<Npart;j++){
+      ip=6*j;
+      x=xFullp[i]+ip;
+      for(int k=0;k<6;k++) x[k]=atof(fields[n++]);
+      x=xFullc[i]+ip;
+      for(int k=0;k<6;k++) x[k]=atof(fields[n++]);
+    }
+    i++;
+  }
+  fclose(fc);
+  fprintf(stdout,"Initial condition nominal test particle (preintegrated): %s\n",vec2strn(xFullp[0],6,"%e "));
+  
   ////////////////////////////////////////////////////
   //READING POTENTIAL OBJECTS
   ////////////////////////////////////////////////////
   params[0]=nsys;
-  int Nsur=10;
 
   //CHOOSE H FOR PROBABILITY CALCULATIONS
   double hprob=1.0*PARSEC/UL;//PC
@@ -175,7 +203,7 @@ int main(int argc,char* argv[])
   fgets(line,MAXLINE,fc);//HEADER
 
   FILE *fp=fopen("progenitors.csv","w");
-  fprintf(fp,"mindmin,maxdmin,velrelmin,velrelmax,%s",line);
+  fprintf(fp,"nomdmin,nomtmin,mindmin,maxdmin,velrelmin,velrelmax,%s",line);
 
   while(fgets(line,MAXLINE,fc)!=NULL){
     
@@ -203,6 +231,7 @@ int main(int argc,char* argv[])
     double tmin0=tmin;
     double tmins=tmin0;
     double dmin0=dmin;
+    double nomtmin,nomdmin;
 
     mint=1.2*tmin;
     maxt=0.8*tmin;
@@ -291,6 +320,42 @@ int main(int argc,char* argv[])
     for(int i=Nobs;i-->0;){
       VPRINT(stdout,"\t\tObservation %d: %s\n",i,vec2strn(obs[i],6,"%.10e "));
     }
+
+    //COMPUTE THE NOMINAL CONDITIONS
+    d=AU/tan(par/(60*60*1000.0)*DEG)/PARSEC;
+    radrec_c(d,ra*DEG,dec*DEG,xg);
+    mxv_c(M_J2000_Galactic,xg,x);
+    recrad_c(x,&tmp,&l,&b);
+    calcUVW(ra,dec,par,dpar,mura,dmura,mudec,dmudec,vr,dvr,x+3,dx+3);
+    vscl_c(PARSEC/1e3,x,x);
+    LSR2GC(x,xg);
+    vscl_c(1e3/UL,xg,xg);//SET UNITS
+    vscl_c(1e3/UV,xg+3,xg+3);
+    cart2polar(xg,xInt0,1.0);
+    params[0]=6;
+    copyVec(xnom0,xnoms0,6);
+
+    //DISCRETE METHOD
+    //minDistanceDiscrete(xInt0,xFullc,tsp,Ntimesp,1.1*tmin0,params,&dmin,&tmin);
+
+    try{
+      minDistance2(xInt0,xnom0,tmin0,&dmin,&tmin,params);
+    }catch(int e){
+      fprintf(stdout,"¡No minimum!\n");
+      //continue;
+    }
+    fprintf(stdout,"\t\tMinimum distance from nominal to nominal (nom. t=%.6e, d=%.6e): t = %.6e, d = %.6e\n",tmin0,dmin0,tmin,dmin);
+    nomdmin=dmin;
+    nomtmin=tmin;
+
+    /*
+    int it=findTime(tmin,tsp,Ntimesp);
+    fprintf(stdout,"\t\tTime %e correspond to interval %d: [%e,%e]\n",tmin,it,tsp[it],tsp[it+1]);
+    double *xp1=xFullc[it];
+    double *xp2=xFullc[it+1];
+    fprintf(stdout,"\t\tNominal particle position 1 (%e):%s\n",tsp[it],vec2strn(xp1,6,"%.5e "));
+    fprintf(stdout,"\t\tNominal particle position 2 (%e):%s\n",tsp[it+1],vec2strn(xp2,6,"%.5e "));
+    */
 
     //CALCULATE PROBABILITIES
     Pprob=0;
@@ -398,13 +463,14 @@ int main(int argc,char* argv[])
       Pprob+=Psur;
       //getchar();
     }
-    fprintf(stdout,"Probability for star: %.6e\n",Pprob);
+    fprintf(stdout,"Probability for star %d: %.6e\n",n,Pprob);
+    fprintf(stdout,"Minimum distance (lma.dmin=%e,nom.dmin=%e): min.dmin = %e, max.dmin = %e\n",dmin0,nomdmin,mindmin,maxdmin);
 
-    fprintf(fp,"%e,%e,%e,%e,",mindmin,maxdmin,velrelmin,velrelmax);
-    fprintf(fp,"%s\n",values);
+    fprintf(fp,"%e,%e,%e,%e,%e,%e,",nomdmin,nomtmin,mindmin,maxdmin,velrelmin*UV/1e3,velrelmax*UV/1e3);
+    fprintf(fp,"%s",values);
     fflush(fp);
 
-    //if(VERBOSE) getchar();
+    if(VERBOSE) getchar();
     //break;
   }
   fclose(fc);

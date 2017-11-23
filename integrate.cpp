@@ -34,7 +34,7 @@ int main(int argc,char* argv[])
   int nfields;
   double params[10];
   //MATRICES WITH INTEGRATIONS
-  double *xIntp0,**xIntp,**xIntc;
+  double *xIntp0,*xIntc0,**xIntp,**xIntc;
   double *xInt0,**xInt;
   double *tsp,*ts;
   //INITIAL CONDITIONS
@@ -58,6 +58,7 @@ int main(int argc,char* argv[])
   xg=(double*)malloc(6*sizeof(double));//GC STATE VECTOR
 
   xIntp0=(double*)malloc(nsysp*sizeof(double));
+  xIntc0=(double*)malloc(nsysp*sizeof(double));
   xInt0=(double*)malloc(nsys*sizeof(double));
 
   xIntp=(double**)malloc(Ntimesp*sizeof(double*));
@@ -105,6 +106,7 @@ int main(int argc,char* argv[])
     vscl_c(1e3/UL,xg,xg);//SET UNITS
     vscl_c(1e3/UV,xg+3,xg+3);
     //CONVERT TO CYLINDRICAL GALACTIC COORDINATES
+    copyVec(xIntc0+ip,xg,6);
     cart2polar(xg,xIntp0+ip,1.0);
     i++;
     if(i==Npart) break;
@@ -117,11 +119,34 @@ int main(int argc,char* argv[])
   //INTEGRATE
   VPRINT(stdout,"Integrating %d test particles (nsys = %d)\n",Npart,nsysp);
   VPRINT(stdout,"\n");
-
+  
+  /*
+  duration=-8.308136e+06;
+  fprintf(stdout,"hstep = %e\n",hstep);
+  */
   params[0]=nsysp;
+
+
+  //LMA APPROXIMATION
+  /*
+  fprintf(stdout,"Initial conditions: %s\n",vec2strn(xIntc0,6,"%e "));
+  double dxlma[3],xlma[3];
+  vscl_c(UV/PARSEC*duration*YEAR,xIntc0+3,dxlma);
+  vadd_c(xIntc0,dxlma,xlma);
+  fprintf(stdout,"Estimated final position: %s\n",vec2strn(xlma,3,"%e "));
+  Ntimesp=2;
+  */
+
   integrateEoM(0,xIntp0,hstep,Ntimesp,duration,
 	       nsysp,EoMGalactic,params,
 	       tsp,xIntp);
+
+  /*
+  fprintf(stdout,"Final conditions (polar): %s\n",vec2strn(xIntp[Ntimesp-1],6,"%e "));
+  polar2cart(xIntp[Ntimesp-1],xIntc[Ntimesp-1],1.0);
+  fprintf(stdout,"Final conditions (cart.): %s\n",vec2strn(xIntc[Ntimesp-1],6,"%e "));
+  exit(0);
+  */
   
   ////////////////////////////////////////////////////
   //SAVING POSITIONS

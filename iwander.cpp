@@ -1101,6 +1101,8 @@ int gradKuzmin(double R,double z,double mu,double a,double b,
   *dphidR=mu*R/D;
   *dphidz=mu*z*v/(u*D);
 
+  VPRINT(stdout,"R=%e, z=%e, mu=%e, a=%e, b=%e, dphidR=%e,dphidz=%e\n",R,z,mu,a,b,*dphidR,*dphidz);
+
   return 0;
 }
 
@@ -1109,7 +1111,7 @@ int gradKuzmin(double R,double z,double mu,double a,double b,
   
   Compute the derivatives of the potential
 */
-int gradGalacticPotential(double R,double z,
+int gradGalacticPotential(double R,double q,double z,
 			  double *dphidR,double *dphidq,double *dphidz,
 			  void *params)
 {
@@ -1405,6 +1407,7 @@ int integrateEoM(double tini,double X0[],double h,int npoints,double duration,
 		 int nsys,int eom(double,double*,double*,void*),void *params,
 		 double *ts,double** X)
 {
+  VPRINT(stdout,"Entre\n");
   //INTEGRATE GC
   double direction=duration/fabs(duration);
   h*=direction;
@@ -1419,6 +1422,7 @@ int integrateEoM(double tini,double X0[],double h,int npoints,double duration,
   double x0[nsys],x[nsys];
 
   VPRINT(stdout,"Integration parameters:\n");
+  VPRINT(stdout,"\tnsys = %d\n",nsys);
   VPRINT(stdout,"\ttini = %.5e UT\n",tini);
   VPRINT(stdout,"\tt_start = %.5e UT\n",t_start);
   VPRINT(stdout,"\tt_stop = %.5e UT\n",t_stop);
@@ -1458,13 +1462,18 @@ int integrateEoM(double tini,double X0[],double h,int npoints,double duration,
 
 	VPRINT(stdout,"\t\tStatus = %d, h_used = %e, h_next = %e, x = %s\n",
 	       status,h_used,h_next,vec2strn(x,nsys/2,"%.17e,"));
-
+	if(VERBOSE) getchar();
+	
 	if(status){
 	  //if(fabs(h_next)>fabs(h_used)) h_used=h_next;
 	  //else 
 	  h_used/=4.0;
 	  VPRINT(stdout,"\t\t\tAdaptando paso h_used = %e, h_next = %e\n",h_used,h_next);
-	  if(h_used>0) exit(0);
+	  if(direction*h_used<0){
+	    fprintf(stdout,"************ERROR*********** TIME STEP HAS THE WRONG SIGN\n");
+	    h_used=h;
+	    //exit(0);
+	  }
 	  if(VERBOSE) getchar();
 	  qpause=1;
 	}
@@ -1532,6 +1541,7 @@ int EoMGalactic(double t,double y[],double dydt[],void *params)
   double* ps=(double*)params;
   int nsys=(int)ps[0];
   int Npart=(int)(nsys/6);
+
   double R,q,z,vR,uq,vz,dphidR,dphidq,dphidz;
   
   //VPRINT(stdout,"Number of particles: %d (sys. %d)\n",Npart,nsys);
@@ -1542,9 +1552,9 @@ int EoMGalactic(double t,double y[],double dydt[],void *params)
   for(int i=Npart;i-->0;){
     int ip=6*i;
     int j=ip;
-    dydt[j]=y[j+3];j++;
-    dydt[j]=y[j+3];j++;
-    dydt[j]=y[j+3];j++;
+    dydt[j]=y[3+j];j++;
+    dydt[j]=y[3+j];j++;
+    dydt[j]=y[3+j];j++;
   }
 
   //dvdt=f(y,vy,t)
@@ -1560,7 +1570,7 @@ int EoMGalactic(double t,double y[],double dydt[],void *params)
     uq=y[j];j++;
     vz=y[j];j++;
 
-    gradGalacticPotential(R,z,&dphidR,&dphidq,&dphidz,ps);
+    gradGalacticPotential(R,q,z,&dphidR,&dphidq,&dphidz,ps);
     /*
     fprintf(stdout,"\ty = %s\n",vec2strn(y+ip,6,"%.17e "));
     fprintf(stdout,"Particle %d:\n\tR = %.17e, z = %.17e, dphidR = %.17e, dphidq = %.17e, dphidz = %.17e\n",
@@ -1582,12 +1592,16 @@ int EoMGalactic(double t,double y[],double dydt[],void *params)
     dydt[k]=-dphidq-2*vR*uq/R;k++;
     dydt[k]=-dphidz;k++;
     //*/
+
+    //*
+    VPRINT(stdout,"\tR = %e, q = %e, z = %e, dphidR = %e, dphidq = %e, dphidz = %e\n",
+	   R,q,z,dphidR,dphidq,dphidz);
+    VPRINT(stdout,"\ty = %s\n\tdydt = %s\n",
+	   vec2strn(y,nsys,"%.17e "),
+	   vec2strn(dydt,nsys,"%.17e "));
+    if(VERBOSE) getchar();
   }
 
-  /*
-  VPRINT(stdout,"\ty = %s\n\tdydt = %s\n",
-	 vec2strn(y,nsys,"%.17e "),
-	 vec2strn(dydt,nsys,"%.17e "));
   //*/
   //exit(0);
   //*/
@@ -1597,7 +1611,9 @@ int EoMGalactic(double t,double y[],double dydt[],void *params)
 int findTime(double t,double tsp[],int Ntimesp)
 {
   double sgn=t/fabs(t);
-  for(int i=Ntimesp;i-->0;) if(sgn*(t-tsp[i])>0) return i;
+  for(int i=Ntimesp-1;i-->0;){
+    if((t-tsp[i])*(t-tsp[i+1])<0) return i;
+  }
   return -1;
 }
 
@@ -1740,6 +1756,86 @@ double terminalDistance(double t,void *params)
   return d;
 }
 
+#define MVERBOSE 0
+int minDistanceDiscrete(double *xs,double **xp,double *tsp,int Ntimes,double duration,double *params,
+			double *dmin,double *tmin)
+{
+  //INTEGRATION PARAMETERS
+  double hstep=fabs(duration)/(10*Ntimes);
+  double *ts=(double*)malloc(Ntimes*sizeof(double));
+  double **xInt=matrixAllocate(Ntimes,6);
+  double x[6],*xp1,*xp2,dx[6],xpmin[6];
+  double t1,t2,ftmin,dyn_vrel;
+  
+  //INTEGRATE STAR
+  if(MVERBOSE) fprintf(stdout,"Integrating star until %e:\n",duration);
+  integrateEoM(0,xs,hstep,Ntimes,duration,
+	       6,EoMGalactic,params,
+	       ts,xInt);
+
+  //FIND TIME OF MINIMUM DISTANCE
+  double dyn_dmin=1.0e+100,dyn_tmin;
+  for(int i=1;i<Ntimes;i++){
+
+    //STAR POSITION 
+    polar2cart(xInt[i],x,1.0);
+    if(MVERBOSE) fprintf(stdout,"\tPosition %d @ t=%e:%s\n",i,ts[i],vec2strn(x,6,"%.5e,"));
+
+    //FIND TIME IN PARTICLE INTEGRATION
+    double t=ts[i];
+    int it=findTime(t,tsp,Ntimes);
+    if(MVERBOSE) fprintf(stdout,"\t\tCorrespond to interval %d: [%e,%e]\n",it,tsp[it],tsp[it+1]);
+
+    //FIND POSITION OF NOMINAL PARTICLE AT INITIAL POINT OF INTERVAL
+    xp1=xp[it];
+    xp2=xp[it+1];
+    if(MVERBOSE) fprintf(stdout,"\t\tNominal particle position 1 (%e):%s\n",tsp[it],vec2strn(xp1,6,"%.5e "));
+    if(MVERBOSE) fprintf(stdout,"\t\tNominal particle position 2 (%e):%s\n",tsp[it+1],vec2strn(xp2,6,"%.5e "));
+
+    //DIFFERENCE
+    vsubg_c(x,xp1,6,dx);
+    if(MVERBOSE) fprintf(stdout,"\t\tDifference 1: [%s] (pos:%.5e,vel:%.5e]\n",
+	   vec2strn(dx,6,"%.5e,"),vnorm_c(dx),vnorm_c(dx+3)*UV);
+    vsubg_c(x,xp2,6,dx);
+    if(MVERBOSE) fprintf(stdout,"\t\tDifference 2: [%s] (pos:%.5e,vel:%.5e]\n",
+	   vec2strn(dx,6,"%.5e,"),vnorm_c(dx),vnorm_c(dx+3)*UV);
+
+    //CALCULATE DISTANCE FROM PARTICLE TO INTERVAL
+    *dmin=distancePointLine(x,xp1,xp2,&ftmin);
+    if(MVERBOSE) fprintf(stdout,"\t\tPosition factor: %.5e\n",ftmin);
+    if(MVERBOSE) fprintf(stdout,"\t\tDistance at minimum: %.5e\n",*dmin);
+      
+    //CORRECTED TIME
+    t1=tsp[it]<tsp[it+1]?tsp[it]:tsp[it+1];
+    t2=tsp[it]>tsp[it+1]?tsp[it]:tsp[it+1];
+    *tmin=t1+ftmin*(t2-t1);
+    if(MVERBOSE) fprintf(stdout,"\t\tCorrected time at minimum:%e\n",*tmin);
+
+    //INTERPOLATED POSITION OF NOMINAL PARTICLE
+    vsubg_c(xp2,xp1,6,dx);
+    vscl_c((*tmin-tsp[it])/(tsp[it+1]-tsp[it]),dx,dx);
+    vscl_c((*tmin-tsp[it])/(tsp[it+1]-tsp[it]),dx+3,dx+3);
+    vaddg_c(xp1,dx,6,xpmin);
+
+    //DISTANCE TO STAR
+    vsubg_c(xpmin,x,6,dx);
+    if(MVERBOSE) fprintf(stdout,"\t\tDifference at minimum: [%s] (pos:%.5e,vel:%.5e]\n",
+	   vec2strn(dx,6,"%.5e,"),vnorm_c(dx),vnorm_c(dx+3)*UV/1e3);
+
+    //COMPUTE MINIMUM DISTANCE
+    if(*dmin<=dyn_dmin){
+      dyn_dmin=*dmin;
+      dyn_tmin=*tmin;
+      dyn_vrel=vnorm_c(dx+3)*UV/1e3;
+    }
+  }
+
+  fprintf(stdout,"\tDynamical minimum distance: %e\n",dyn_dmin);
+  fprintf(stdout,"\tDynamical minimum time: %e\n",dyn_tmin);
+  return 0;
+}
+
+
 int minDistance(double *xs,double *xp,double mint,double maxt,double tmin0,
 		double *dmin,double *tmin,double *params)
 {
@@ -1792,6 +1888,7 @@ double terminalDistance2(const gsl_vector *x,void *params)
   double t;
   double* ps=(double*)params;
   double **x1=matrixAllocate(2,6),**x2=matrixAllocate(2,6);
+  double x1c[6],x2c[6];
   double* ipars;
   double ts[2];
   double h;
@@ -1799,6 +1896,7 @@ double terminalDistance2(const gsl_vector *x,void *params)
   ipars=ps+12;
 
   t=gsl_vector_get(x,0);
+  //fprintf(stdout,"%e\n",t);
   h=fabs(t)/100;
   copyVec(x1[0],ps,6);
   copyVec(x2[0],ps+6,6);
@@ -1809,20 +1907,41 @@ double terminalDistance2(const gsl_vector *x,void *params)
   VPRINT(stdout,"Initial conditions:\n\t%s\n\t%s\n",
 	  vec2strn(x1[0],6,"%.5e "),vec2strn(x2[0],6,"%.5e "));
 
+  /*
+  polar2cart(x2[0],x2c);
+  polar2cart(x1[0],x1c);
+  fprintf(stdout,"Initial conditions:\n\t%s\n\t%s\n",
+	  vec2strn(x1c,6,"%.5e "),vec2strn(x2c,6,"%.5e "));
+  //*/
+
   //Integrate star
   integrateEoM(0,ps,h,2,t,6,EoMGalactic,ipars,ts,x1);
   VPRINT(stdout,"Integration result star: %s\n",vec2strn(x1[1],6,"%.5e "));
-  
+
+  //Convert to cartesian
+  polar2cart(x1[1],x1c);
+
   //Integrate particle
+  h=1e4;
   integrateEoM(0,ps+6,h,2,t,6,EoMGalactic,ipars,ts,x2);
   VPRINT(stdout,"Integration result particle: %s\n",vec2strn(x2[1],6,"%.5e "));
 
+  //Convert to cartesian
+  polar2cart(x2[1],x2c);
+
   //Distance
-  vsubg_c(x1[1],x2[1],6,dx);
+  vsubg_c(x1c,x2c,6,dx);
   d=vnorm_c(dx);
   dv=vnorm_c(dx+3);
   VPRINT(stdout,"Distance = %e, Velocity difference = %e\n",d,dv);
-  
+
+  /*
+  fprintf(stdout,"Integration result star: %s\n",vec2strn(x1c,6,"%.5e "));
+  fprintf(stdout,"Integration result particle: %s\n",vec2strn(x2c,6,"%.5e "));
+  fprintf(stdout,"Integration result particle (polar): %s\n",vec2strn(x2[1],6,"%.5e "));
+  fprintf(stdout,"Distance = %e, Velocity difference = %e\n",d,dv);
+  //*/
+
   if(VERBOSE) getchar();
   
   if((int)ps[22]==1){

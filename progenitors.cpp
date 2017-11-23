@@ -1,7 +1,7 @@
 #include <iwander.cpp>
 using namespace std;
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 int main(int argc,char* argv[])
 {
@@ -99,8 +99,8 @@ int main(int argc,char* argv[])
   xIntp0=(double*)malloc(nsysp*sizeof(double));
   xInt0=(double*)malloc(nsys*sizeof(double));
 
-  xInt=(double**)malloc(Ntimes*sizeof(double*));
-  for(int j=0;j<Ntimes;j++) xInt[j]=(double*)malloc(nsys*sizeof(double));
+  xInt=(double**)malloc(Ntimesp*sizeof(double*));
+  for(int j=0;j<Ntimesp;j++) xInt[j]=(double*)malloc(nsys*sizeof(double));
 
   xIntp=(double**)malloc(Ntimesp*sizeof(double*));
   for(int j=0;j<Ntimesp;j++) xIntp[j]=(double*)malloc(nsysp*sizeof(double));
@@ -131,8 +131,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   //READ PARTICLES POSITION
   ////////////////////////////////////////////////////
-  VPRINT(stdout,"Reading %d test particles\n",Npart);
-  
+  VPRINT(stdout,"Reading %d initial test particles\n",Npart);
   FILE *fc;
   fc=fopen("cloud.csv","r");
   fgets(line,MAXLINE,fc);//HEADER
@@ -157,6 +156,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   params[0]=nsys;
 
+  VPRINT(stdout,"Reading %d pre integrated test particles\n",Npart);
   fc=fopen("candidates.csv","r");
   fgets(line,MAXLINE,fc);//HEADER
 
@@ -269,7 +269,7 @@ int main(int argc,char* argv[])
 
     fprintf(stdout,"\tDynamical minimum distance: %e\n",dyn_dmin);
     fprintf(stdout,"\tDynamical minimum time: %e\n",dyn_tmin);
-    
+    exit(0);
     //STORE THE BEST CANDIDATES
     if(dyn_dmin<dmax2){
       np++;

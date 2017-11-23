@@ -521,6 +521,12 @@ int copyVec(double tgt[],double src[],int n)
   return 0;
 }
 
+int copyVecInt(int tgt[],int src[],int n)
+{
+  memcpy(tgt,src,n*sizeof(int));
+  return 0;
+}
+
 int sumVec(double c[],double ca,double a[],double cb,double b[],int n)
 {
   int i;

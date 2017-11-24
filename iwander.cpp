@@ -23,6 +23,8 @@
 #include <gsl/gsl_cdf.h>
 #include <gsl/gsl_const_mksa.h>
 #include <gsl/gsl_statistics.h>
+#include <gsl/gsl_interp.h>
+#include <gsl/gsl_spline.h>
 
 //////////////////////////////////////////
 //MACROS
@@ -1036,11 +1038,11 @@ char *str_replace(char *orig, char *rep, char *with)
 #define MAXCOLS 10000
 #define MAXTEXT 200
 #define MAXLINE 100000
-int parseLine(char line[],char** cols,int *ncols)
+int parseLine(char line[],char** cols,int *ncols,char sep[]=",")
 {
   int i=0;
   char *found;
-  while((found=strsep(&line,","))!=NULL) strcpy(cols[i++],found);
+  while((found=strsep(&line,sep))!=NULL) strcpy(cols[i++],found);
   *ncols=i;
   return 0;
 }
@@ -1059,6 +1061,8 @@ int parseLine(char line[],char** cols,int *ncols)
   http://docs.astropy.org/en/stable/api/astropy.coordinates.Galactocentric.html
   for details
  */
+//TRUNCATION RADIUS OF THE SOLAR SYSTEM
+#define RTRUNC 1E5 //AU
 //GIVEN BY https://ui.adsabs.harvard.edu/#abs/2009ApJ…692.1075G/abstract
 #define ROSUN 8.3E3 //PC
 //#define ROSUN 8.0E3 //PC
@@ -1913,13 +1917,6 @@ double terminalDistance2(const gsl_vector *x,void *params)
   VPRINT(stdout,"Initial conditions:\n\t%s\n\t%s\n",
 	  vec2strn(x1[0],6,"%.5e "),vec2strn(x2[0],6,"%.5e "));
 
-  /*
-  polar2cart(x2[0],x2c);
-  polar2cart(x1[0],x1c);
-  fprintf(stdout,"Initial conditions:\n\t%s\n\t%s\n",
-	  vec2strn(x1c,6,"%.5e "),vec2strn(x2c,6,"%.5e "));
-  //*/
-
   //Integrate star
   integrateEoM(0,ps,h,2,t,6,EoMGalactic,ipars,ts,x1);
   VPRINT(stdout,"Integration result star: %s\n",vec2strn(x1[1],6,"%.5e "));
@@ -1941,22 +1938,9 @@ double terminalDistance2(const gsl_vector *x,void *params)
   dv=vnorm_c(dx+3);
   VPRINT(stdout,"Distance = %e, Velocity difference = %e\n",d,dv);
 
-  /*
-  fprintf(stdout,"Integration result star: %s\n",vec2strn(x1c,6,"%.5e "));
-  fprintf(stdout,"Integration result particle: %s\n",vec2strn(x2c,6,"%.5e "));
-  fprintf(stdout,"Integration result particle (polar): %s\n",vec2strn(x2[1],6,"%.5e "));
-  fprintf(stdout,"Distance = %e, Velocity difference = %e\n",d,dv);
-  //*/
-
   if(VERBOSE) getchar();
   
   if((int)ps[22]==1){
-    /*
-    for(int i=6;i-->0;){
-      ps[i]=x1[1][i];
-      ps[6+i]=x2[1][i];
-    }
-    */
     copyVec(ps,x1[1],6);
     copyVec(ps+6,x2[1],6);
   }
@@ -2013,7 +1997,8 @@ int minDistance2(double *xs,double *xp,double tmin0,
 
   //COMPUTE STATE AT MINIMIZE
   ps[22]=1;
-  *dmin=terminalDistance(*tmin,ps);
+  gsl_vector_set(x,0,*tmin);
+  *dmin=terminalDistance2(x,ps);
   VPRINT(stdout,"Final conditions:%s\n",vec2strn(ps,12,"%.5e "));
   copyVec(xs,ps,6);
   copyVec(xp,ps+6,6);
@@ -2041,6 +2026,121 @@ double wNormalization(double h)
   gsl_integration_workspace *w=gsl_integration_workspace_alloc(1000);
   gsl_function F={.function=&wFunction,.params=&h};
   gsl_integration_qags(&F,0.0,2*h,0.0,1e-7,1000,w,&norm,&error);
-  fprintf(stdout,"Normalization:%e +/- %e\n",norm,error);
   return 1/norm;
+}
+
+/*
+  Minimum and maximum using the Tournament Method
+
+  Adapted from: http://www.geeksforgeeks.org/maximum-and-minimum-in-an-array/
+
+  Number of comparisons: 3n/2 - 2
+  (Linear search takes 2n-3)
+ */
+int getMinMax(double array[],int left,int right,double *min,double *max,
+	      int stride=0,int period=1)
+{
+  int mid;
+  double minleft,maxleft;
+  double minright,maxright;
+    
+  *max = array[left*period+stride];
+  *min = array[left*period+stride];
+
+  if(right == left)
+    return 0; 
+  mid = (left + right)/2;  
+
+  getMinMax(array, left, mid, &minleft, &maxleft, stride, period);
+  getMinMax(array, mid+1, right, &minright, &maxright, stride, period);  
+    
+  if (maxleft > maxright)
+    *max = maxleft;
+  else
+    *max = maxright;    
+     
+  /* Take the minimum of both sub array */
+  if (minleft < minright)
+    *min = minleft;
+  else
+    *min = minright;     
+
+  return 0;
+}
+
+#define CVERBOSE 0
+int cloudProperties(double *xp,int Npart,
+		    double *radius,double *vradius,
+		    double *rinter,double *vinter)
+{
+  double x[6],xg[6],dx[6],xc[6*Npart];
+
+  //SPATIAL RADIUS
+    double Rmin,Rmax,qmin,qmax,zmin,zmax;
+  getMinMax(xp,0,Npart-1,&Rmin,&Rmax,0,6);
+  getMinMax(xp,0,Npart-1,&qmin,&qmax,1,6);
+  getMinMax(xp,0,Npart-1,&zmin,&zmax,2,6);
+  x[0]=Rmin;x[1]=Rmin*cos(qmin);x[2]=zmin;
+  xg[0]=Rmax;xg[1]=Rmax*cos(qmax);xg[2]=zmax;
+  if(CVERBOSE) fprintf(stdout,"\t\tR=(%e,%e),q=(%e,%e),z=(%e,%e)\n",
+	  Rmin,Rmax,qmin,qmax,zmin,zmax);
+  vsub_c(x,xg,dx);
+  *radius=vnorm_c(dx)/2;
+  
+  //CONVERSION TO CARTESIAN COORDINATES
+  int ip;
+  for(int i=0;i<Npart;i++){
+    ip=6*i;
+    polar2cart(xp+ip,xc+ip);
+  }
+  if(CVERBOSE) fprintf(stdout,"%s\n",vec2strn(xc,6*Npart,"%e "));
+
+  //VELOCITY RADIUS
+  double vxmin,vxmax,vymin,vymax,vzmin,vzmax;
+  getMinMax(xc,0,Npart-1,&vxmin,&vxmax,3,6);
+  getMinMax(xc,0,Npart-1,&vymin,&vymax,4,6);
+  getMinMax(xc,0,Npart-1,&vzmin,&vzmax,5,6);
+  if(CVERBOSE) fprintf(stdout,"\t\tvx=(%e,%e),vy=(%e,%e),vz=(%e,%e)\n",
+	  vxmin,vxmax,vymin,vymax,vzmin,vzmax);
+  x[0]=vxmin;x[1]=vymin;x[2]=vzmin;
+  xg[0]=vxmax;xg[1]=vymax;xg[2]=vzmax;
+  vsub_c(x,xg,dx);
+  *vradius=vnorm_c(dx)/2;
+
+  //INTEROBJECT SEPARATION IN SPACE
+  int jp;
+  double *xi,*xj;
+  double dmean=0,dstd=0,vmean=0,vstd=0,dminmean=0,vminmean=0,dint,vint;
+  int k=0;
+  for(int i=Npart;i-->0;){
+    ip=6*i;
+    xi=xc+ip;
+    double dmin=1e100,vmin=1e100;
+    for(int j=Npart;j-->0;){
+      if(j==i) continue;
+      jp=6*j;
+      xj=xc+jp;
+      vsubg_c(xi,xj,6,dx);
+      dint=vnorm_c(dx);
+      vint=vnorm_c(dx+3);
+      dmean+=dint;
+      vmean+=vint;
+      dstd+=dint*dint;
+      vstd+=vint*vint;
+      dmin=dint<dmin?dint:dmin;
+      vmin=vint<vmin?vint:vmin;
+      k++;
+    }
+    dminmean+=dmin;
+    vminmean+=vmin;
+    if(CVERBOSE) fprintf(stdout,"Minimum distance to %d:%e\n",i,dmin);
+  }
+  dminmean/=Npart;
+  vminmean/=Npart;
+  if(CVERBOSE) fprintf(stdout,"Average distance between particles:%e\n",dminmean);
+
+  *rinter=dminmean;
+  *vinter=vminmean;
+
+  return 0;
 }

@@ -78,3 +78,6 @@ def subPlots(panels,ncols=1,l=0.1,b=0.1,w=0.8,figsize=(8,6),dh=None,dw=None,fac=
             axs+=[axc]
             
     return fig,axs
+
+def uniform(a,b):
+    return a+np.random.rand()*(b-a)

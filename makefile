@@ -18,7 +18,7 @@ clean:cleancrap cleanexe
 
 %.exe:%.opp
 	$(CPP) $^ $(LFLAGS) -o $@
-#./$@
+	./$@
 
 %.opp:%.cpp %.conf
 	$(CPP) -c $(CFLAGS) $< -o $@

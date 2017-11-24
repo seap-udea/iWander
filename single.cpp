@@ -3,6 +3,27 @@ using namespace std;
 
 #define VERBOSE 1
 
+struct vinfpar {
+  double xmin,xmax;
+  gsl_interp_accel *a;
+  gsl_spline *s;
+};
+double vinfPosterior(double x,void *params)
+{
+  struct vinfpar *pars=(struct vinfpar*)params;
+  if(x<pars->xmin||x>pars->xmax) return 0;
+  double p=gsl_spline_eval(pars->s,x,pars->a);
+  return p;
+}
+double vinfProbability(double v1,double v2,void *params)
+{
+  gsl_integration_workspace *w=gsl_integration_workspace_alloc(1000);
+  gsl_function F={.function=vinfPosterior,.params=params};
+  double vint,vint_error;
+  gsl_integration_qags(&F,v1,v2,0,1e-5,1000,w,&vint,&vint_error);
+  return vint;
+}
+
 int main(int argc,char* argv[])
 {
   /*
@@ -20,7 +41,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   //CONFIGURATION
   ////////////////////////////////////////////////////
-  #include <probability.conf>
+  #include <single.conf>
 
   ////////////////////////////////////////////////////
   //INITIALIZE CSPICE
@@ -30,7 +51,8 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   //GENERAL VARIABLES
   ////////////////////////////////////////////////////
-  double tmp;
+  double D,Dmax=0,*xt1,*xt2,vrel;
+  double tmp,ting;
   char ctmp[100],line[MAXLINE],values[MAXLINE];
   int Ntimes,Ntimesp,Nobs,nsys,nsysp; 
   int ip,n;
@@ -39,7 +61,7 @@ int main(int argc,char* argv[])
   double hstep,duration;
   //MATRICES WITH INTEGRATIONS
   double *xnom0,*xnoms0,*xIntp0,*xIntc0,**xIntp,**xFullp,**xFullc,**xIntc;
-  double *xInt0,**xInt;
+  double *xInt0,**xInt,*xTraj0,**xTraj1,**xTraj2;
   double *tsp,*ts;
   //INITIAL CONDITIONS
   double *dxIntdt,*x,*xg,*xp1,*xp2,*xpmin,*dx,*x0;
@@ -123,7 +145,7 @@ int main(int argc,char* argv[])
 
   Ntimesp=10000;
   Ntimes=100;
-  Nobs=10;
+  Nobs=Nsur;
 
   x=(double*)malloc(6*sizeof(double));//LSR STATE VECTOR
   xg=(double*)malloc(6*sizeof(double));//GC STATE VECTOR
@@ -133,11 +155,17 @@ int main(int argc,char* argv[])
   xIntp0=(double*)malloc(nsysp*sizeof(double));
   xIntc0=(double*)malloc(nsysp*sizeof(double));
   xInt0=(double*)malloc(nsys*sizeof(double));
+  xTraj0=(double*)malloc(nsys*sizeof(double));
   xnom0=(double*)malloc(nsysp*sizeof(double));
   xnoms0=(double*)malloc(nsysp*sizeof(double));
   
   xInt=(double**)malloc(Ntimes*sizeof(double*));
   for(int j=0;j<Ntimes;j++) xInt[j]=(double*)malloc(nsys*sizeof(double));
+
+  xTraj1=(double**)malloc(Ntimesp*sizeof(double*));
+  for(int j=0;j<Ntimesp;j++) xTraj1[j]=(double*)malloc(nsys*sizeof(double));
+  xTraj2=(double**)malloc(Ntimesp*sizeof(double*));
+  for(int j=0;j<Ntimesp;j++) xTraj2[j]=(double*)malloc(nsys*sizeof(double));
 
   xIntp=(double**)malloc(Ntimesp*sizeof(double*));
   for(int j=0;j<Ntimesp;j++) xIntp[j]=(double*)malloc(nsysp*sizeof(double));
@@ -195,6 +223,8 @@ int main(int argc,char* argv[])
     tsp[i]=0.0;
     ip=6*i;
 
+    ting=atof(fields[Wanderer::TING])/UT;
+      
     n=Wanderer::XGAL;
     for(int k=0;k<6;k++) x[k]=atof(fields[n++]);
 
@@ -212,7 +242,8 @@ int main(int argc,char* argv[])
   fclose(fc);
   copyVec(xnoms0,xIntp0,6);
   fprintf(stdout,"Initial condition nominal test particle: %s\n",vec2strn(xIntp0,6,"%e "));
-  
+  fprintf(stdout,"Time of ingress: %e\n",ting);
+
   ////////////////////////////////////////////////////
   //READ PREINTEGRATED TEST PARTICLES
   ////////////////////////////////////////////////////
@@ -235,7 +266,27 @@ int main(int argc,char* argv[])
   }
   fclose(fc);
   fprintf(stdout,"Initial condition nominal test particle (preintegrated): %s\n",vec2strn(xFullp[0],6,"%e "));
-  
+
+  ////////////////////////////////////////////////////
+  //READ POSTERIOR EJECTION VELOCITY DISTRIBUTION
+  ////////////////////////////////////////////////////
+  FILE *fv=fopen("db/ejection-posterior.data","r");
+  double ul,um,ut,uv,vcan;
+  double pvs[MAXCOLS],vinfs[MAXCOLS];
+  int nv=0;
+  while(fgets(line,MAXLINE,fv)!=NULL){
+    parseLine(line,fields,&nfields," ");
+    vinfs[nv]=atof(fields[0]);
+    pvs[nv]=atof(fields[1]);
+    nv++;
+  }
+  gsl_interp_accel *acc=gsl_interp_accel_alloc();
+  gsl_spline *spline=gsl_spline_alloc(gsl_interp_cspline,nv);
+  gsl_spline_init(spline,vinfs,pvs,nv);
+  struct vinfpar vpar={.xmin=0,.xmax=vinfs[nv-1],.a=acc,.s=spline};
+  fprintf(stdout,"P(vinf=%e) = %e\n",0.2,vinfPosterior(0.2,&vpar));
+  fprintf(stdout,"Integral = %e +/- %e\n",vinfProbability(0,10,&vpar));
+
   ////////////////////////////////////////////////////
   //READING POTENTIAL OBJECTS
   ////////////////////////////////////////////////////
@@ -253,6 +304,19 @@ int main(int argc,char* argv[])
   FILE *fp=fopen("progenitors.csv","w");
   fprintf(fp,"Pprob,nomdmin,nomtmin,mindmin,maxdmin,velrelmin,velrelmax,%s",line);
 
+  //SAVE SURROGATES
+  FILE *fss=fopen("surrogate.csv","w");
+  fprintf(fss,"ra,dec,par,mura,mudec,vr,d,dummy\n");
+
+  //SAVE CLOUD AND SURROGATES
+  FILE *fso=fopen("surrogatenom.dat","w");
+
+  //SAVE TIMES AND DISTANCES AT MINIMA 
+  FILE *fsm=fopen("surrogatemin.csv","w");
+  fprintf(fsm,"tmin,dmin,vrel\n");
+
+  FILE *fst;
+
   int qinterrupt=0;
   while(fgets(line,MAXLINE,fc)!=NULL){
     
@@ -266,20 +330,14 @@ int main(int argc,char* argv[])
     parseLine(line,fields,&nfields);
     n++;
 
-    //if(strcmp(fields[TYCHO2_ID],"7774-308-1")!=0) continue;
-
-    /*
-    if(strcmp(fields[Candidates::HIP],"103749")!=0) continue;
+    //*
+    if(strcmp(fields[Candidates::HIP],hip_single)!=0) continue;
     else qinterrupt=1;
     //*/
 
     fprintf(stdout,"Star %d,%s,%s:\n",n,fields[Potential::HIP],fields[Potential::TYCHO2_ID]);
 
     //ESTIMATED TIME OF ENCOUNTER
-    /*
-    tmin=atof(fields[Potential::DYNTMIN]);
-    dmin=atof(fields[Potential::DYNDMIN]);
-    */
     tmin=atof(fields[Candidates::TMIN]);
     dmin=atof(fields[Candidates::DMIN]);
 
@@ -301,8 +359,8 @@ int main(int argc,char* argv[])
       continue;
     }
     
+    //PROPERTIES OF THE STAR
     if(fields[Candidates::RA][0]=='N'){
-      fprintf(stdout,"*************** USING DATA FROM HIPPARCOS ****************\n");
       int FChip[]={
 	Candidates::RA_HIP,
 	Candidates::RA_ERROR_HIP,
@@ -327,11 +385,6 @@ int main(int argc,char* argv[])
       };
       copyVecInt(FC,FChip,20);
     }
-    /*
-    else{
-      continue;
-    }
-    */
 
     //INFORMATION REQUIRED
     mobs[0]=ra=atof(fields[FC[RA]]);
@@ -401,7 +454,16 @@ int main(int argc,char* argv[])
     for(int i=0;i<6;i++)
       fprintf(stdout,"\t\t|%s|\n",vec2strn(cov[i],6,"%-+15.3e"));
 
+    //GENERATE THE REST
     generateMultivariate(cov,mobs,obs,6,Nobs);
+
+    //FIRST ONE IS ALWAYS THE NOMINAL ONE
+    obs[0][0]=ra;
+    obs[0][1]=dec;
+    obs[0][2]=par;
+    obs[0][3]=mura;
+    obs[0][4]=mudec;
+    obs[0][5]=vr;
 
     VPRINT(stdout,"\tSurrogate random properties:\n");
     for(int i=Nobs;i-->0;){
@@ -419,12 +481,26 @@ int main(int argc,char* argv[])
     vscl_c(1e3/UL,xg,xg);//SET UNITS
     vscl_c(1e3/UV,xg+3,xg+3);
     cart2polar(xg,xInt0,1.0);
+
+    //INTEGRATE STAR BACK TO TIME OF INGRESS
+    //*
+    hstep=fabs(ting)/10;
+    polar2cart(xInt0,x);
+    fprintf(stdout,"\t\tConditions at present: %s\n",vec2strn(xg,6,"%e "));
+    vscl_c(ting*UT*UV/PARSEC,xg+3,dx);
+    vadd_c(xg,dx,xg);
+    fprintf(stdout,"\t\tExpected final conditions: %s\n",vec2strn(xg,6,"%e "));
     params[0]=6;
+    integrateEoM(0,xInt0,hstep,2,ting,6,EoMGalactic,params,ts,xInt);
+    copyVec(xInt0,xInt[1],6);
+    polar2cart(xInt0,xg);
+    fprintf(stdout,"\t\tInitial conditions: %s\n",vec2strn(xg,6,"%e "));
+    //*/
+
+    //INITIAL CONDITION FOR TEST PARTICLES
     copyVec(xnom0,xnoms0,6);
 
-    //DISCRETE METHOD
-    //minDistanceDiscrete(xInt0,xFullc,tsp,Ntimesp,1.1*tmin0,params,&dmin,&tmin);
-
+    params[0]=6;
     try{
       minDistance2(xInt0,xnom0,tmin0,&dmin,&tmin,params);
     }catch(int e){
@@ -434,15 +510,6 @@ int main(int argc,char* argv[])
     fprintf(stdout,"\t\tMinimum distance from nominal to nominal (nom. t=%.6e, d=%.6e): t = %.6e, d = %.6e\n",tmin0,dmin0,tmin,dmin);
     nomdmin=dmin;
     nomtmin=tmin;
-
-    /*
-    int it=findTime(tmin,tsp,Ntimesp);
-    fprintf(stdout,"\t\tTime %e correspond to interval %d: [%e,%e]\n",tmin,it,tsp[it],tsp[it+1]);
-    double *xp1=xFullc[it];
-    double *xp2=xFullc[it+1];
-    fprintf(stdout,"\t\tNominal particle position 1 (%e):%s\n",tsp[it],vec2strn(xp1,6,"%.5e "));
-    fprintf(stdout,"\t\tNominal particle position 2 (%e):%s\n",tsp[it+1],vec2strn(xp2,6,"%.5e "));
-    */
 
     //CALCULATE PROBABILITIES
     Pprob=0;
@@ -474,17 +541,37 @@ int main(int argc,char* argv[])
 
       //INITIAL POLAR COORDINATES OF SURROGATE
       cart2polar(xg,xInt0,1.0);
+      
+      //INTEGRATE BACK TO TIME OF INGRESS
+      //*
+      hstep=fabs(ting)/10;
+      polar2cart(xInt0,x);
+      fprintf(stdout,"\t\tConditions at present: %s\n",vec2strn(xg,6,"%e "));
+      vscl_c(ting*UT*UV/PARSEC,xg+3,dx);
+      vadd_c(xg,dx,xg);
+      fprintf(stdout,"\t\tExpected final conditions: %s\n",vec2strn(xg,6,"%e "));
+      params[0]=6;
+      integrateEoM(0,xInt0,hstep,2,ting,6,EoMGalactic,params,ts,xInt);
+      copyVec(xInt0,xInt[1],6);
+      polar2cart(xInt0,xg);
+      fprintf(stdout,"\t\tInitial conditions: %s\n",vec2strn(xg,6,"%e "));
+      //*/
 
       VPRINT(stdout,"\t\ttmin0: %.6e\n",tmin0);
       VPRINT(stdout,"\t\tObservations: %s\n",vec2strn(obs[i],6,"%.5e "));
       VPRINT(stdout,"\t\tDistance: %e pc\n",d);
       VPRINT(stdout,"\t\tGalactic coordinates: l = %lf, b = %lf\n",l*RAD,b*RAD);
-      VPRINT(stdout,"\t\tInitial position cartesian: %s\n",vec2strn(x,6,"%.5e "));
-      VPRINT(stdout,"\t\tInitial position cylindrical: %s\n",vec2strn(xnom0,6,"%.5e "));
+      VPRINT(stdout,"\t\tInitial position cartesian: %s\n",vec2strn(xg,6,"%.5e "));
+      VPRINT(stdout,"\t\tInitial position cylindrical: %s\n",vec2strn(xInt0,6,"%.5e "));
 
+      //SAVE SURROGATE
+      fprintf(fss,"%.17e,%.17e,%.17e,%.17e,%.17e,%.17e,%.17e,",
+	      ra,dec,par,mura,mudec,vr,d);
+      
       //CALCULATE MINIMUM DISTANCE AND TIME OF NOMINAL SOLUTION TO SURROGATE
       params[0]=6;
 
+      copyVec(xTraj0,xInt0,6);
       try{
 	minDistance2(xInt0,xnom0,tmin0,&dmin,&tmin,params);
       }catch(int e){
@@ -503,15 +590,32 @@ int main(int argc,char* argv[])
       integrateEoM(0,xIntp0,h,2,tmin,6*Npart,EoMGalactic,params,ts,xIntp);
       VPRINT(stdout,"\t\tIntegration result for all particles: %s\n",vec2strn(xIntp[1],6*Npart,"%.5e "));
 
-      double D,Dmax=0,*xt1,*xt2,vrel;
-      
+      //COMPUTE THE SIZE OF THE CLOUD
+      double vradius,rinter,vinter;
+      cloudProperties(xIntp[1],Npart,&hprob,&vradius,&rinter,&vinter);
+      sigma=wNormalization(hprob);
+      fprintf(stdout,"\t\thprob = %e pc\n",hprob);
+      fprintf(stdout,"\t\tVel.radius = %e km/s\n",vradius*UV/1e3);
+      fprintf(stdout,"\t\tAverage distance = %e pc\n",rinter);
+      fprintf(stdout,"\t\tAverage velocity difference = %e km/s\n",vinter*UV/1e3);
+      fprintf(stdout,"\t\tDensity normalization = %e\n",sigma);
+      //getchar();
+
+      //SAVE POSITIONS
+      fprintf(fso,"%s",vec2strn(xInt0,6,"%e "));
+      fprintf(fso,"%s\n",vec2strn(xIntp[1],6*Npart,"%e "));
+
       //COMPUTE SPH-LIKE PROBABILITY
       double pd,pv;
       Psur=0.0;
       fvel=0.0;
       fprintf(stdout,"\t\tComparing test particle position with star position\n");
       for(int j=0;j<Npart;j++){
-	vsubg_c(xInt0,xIntp[1]+6*j,6,dx);
+	
+	polar2cart(xInt0,x);
+	polar2cart(xIntp[1]+6*j,xg);
+	vsubg_c(x,xg,6,dx);
+
 	D=vnorm_c(dx);
 	vrel=vnorm_c(dx+3);
 
@@ -525,31 +629,83 @@ int main(int argc,char* argv[])
 	  velrelmax=vrel;
 	}
 
-	fprintf(stdout,"\t\t\tDistance to test particle %d: d=%.6e,vrel=%.6e\n",j,D,vrel*UV/1e3);
+	fprintf(stdout,"\t\t\tDistance to test particle %d (hprob = %e): d=%.6e,vrel=%.6e\n",j,hprob,D,vrel*UV/1e3);
 	//CONTRIBUTION TO P FROM DISTANCE
-	pd=sigma*wFunction(D,&hprob);
+	pd=sigma*wFunction(D,&hprob)*rinter*rinter*rinter;
 
 	//CONTRIBUTION TO P FROM VELOCITY
-	pv=1.0;
-	
+	//Compute the actual scale of the velocity
+	ul=1*AU;
+	um=0.5*MSUN;
+	ut=sqrt(ul*ul*ul/(GCONST*um));
+	uv=ul/ut;
+	fprintf(stdout,"\t\t\tUnits of velocity: %e\n",uv);
+	vcan=vrel*UV/uv;
+	fprintf(stdout,"\t\t\tVelocity %e km/s in canonic units: %e\n",vrel*UV/1e3,vcan);
+	pv=vinfProbability(vcan-vinter*UV/uv,vcan+vinter*UV/uv,&vpar);
+
 	fprintf(stdout,"\t\t\t\tDistance probability: %.6e\n",pd);
 	fprintf(stdout,"\t\t\t\tVelocity probability: %.6e\n",pv);
+	fprintf(fsm,"%e,%e,%e\n",tmin,D,vrel*UV/1e3);
+	//getchar();
 
 	Psur+=pd*pv;
 	//COMPUTE CORRECTION FOR RELATIVE STELLAR VELOCITY
       }
 
+      //SAVE TRAJECTORIES
+      char fname[100];
+      sprintf(fname,"scratch/surrogatetraj-%02d.dat",i);
+      fst=fopen(fname,"w");
+
+      //NOMINAL PARTICLE TRAJECTORY
+      params[0]=6;
+      h=fabs(tmin)/100;
+      Ntimesp=1000;
+      integrateEoM(0,xIntp0,h,Ntimesp,2*tmin,6,EoMGalactic,params,ts,xTraj1);
+      integrateEoM(0,xTraj0,h,Ntimesp,2*tmin,6,EoMGalactic,params,ts,xTraj2);
+      for(int it=0;it<Ntimesp;it++){
+	//PRECISE
+	polar2cart(xTraj1[it],x);
+	polar2cart(xTraj2[it],xg);
+	vsub_c(xg,x,dx);
+	D=vnorm_c(dx);
+	fprintf(fst,"%e %e ",ts[it],D);
+	fprintf(fst,"%s",vec2strn(x,6,"%e "));
+	fprintf(fst,"%s",vec2strn(xg,6,"%e "));
+	//USING LMAX
+	polar2cart(xIntp0,x);
+	polar2cart(xTraj0,xg);
+	vscl_c(UV*ts[it]*YEAR/PARSEC,x+3,dx);
+	vadd_c(x,dx,x);
+	fprintf(fst,"%s",vec2strn(x,3,"%e "));
+	vscl_c(UV*ts[it]*YEAR/PARSEC,xg+3,dx);
+	vadd_c(xg,dx,xg);
+	fprintf(fst,"%s",vec2strn(xg,3,"%e "));
+	//DISTANCE BY LMA
+	vsub_c(xg,x,dx);
+	D=vnorm_c(dx);
+	fprintf(fst,"%e ",D);
+	fprintf(fst,"\n");
+      }
+      fclose(fst);
+
       //COMPUTE CORRECTION FOR STELLAR DISTANCE
-      fdist=1/(d*d);
+      fdist=(RTRUNC*AU/PARSEC)*(RTRUNC*AU/PARSEC)/(d*d);
+      fprintf(stdout,"\t\tProbability for distance d = %e, RT = %e: %e\n",
+	      d,(RTRUNC*AU/PARSEC),fdist);
       Psur*=fdist;
       
       //SURROGATE PROBABILITY
       fprintf(stdout,"\t\tSurrogate probability: %.6e\n",Psur);
-
+      //getchar();
+      
       //ACCUMULATE
       Pprob+=Psur;
-      //getchar();
+      getchar();
+      fprintf(fss,"\n");
     }
+    Pprob/=Nsur;
     fprintf(stdout,"Probability for star %d: %.6e\n",n,Pprob);
     fprintf(stdout,"Minimum distance (lma.dmin=%e,nom.dmin=%e): min.dmin = %e, max.dmin = %e\n",dmin0,nomdmin,mindmin,maxdmin);
 
@@ -562,6 +718,9 @@ int main(int argc,char* argv[])
   }
   fclose(fc);
   fclose(fp);
+  fclose(fss);
+  fclose(fso);
+  fclose(fsm);
 
   return 0;
 }

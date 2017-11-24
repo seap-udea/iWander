@@ -1,4 +1,14 @@
     /*
+    int it=findTime(tmin,tsp,Ntimesp);
+    fprintf(stdout,"\t\tTime %e correspond to interval %d: [%e,%e]\n",tmin,it,tsp[it],tsp[it+1]);
+    double *xp1=xFullc[it];
+    double *xp2=xFullc[it+1];
+    fprintf(stdout,"\t\tNominal particle position 1 (%e):%s\n",tsp[it],vec2strn(xp1,6,"%.5e "));
+    fprintf(stdout,"\t\tNominal particle position 2 (%e):%s\n",tsp[it+1],vec2strn(xp2,6,"%.5e "));
+    */
+
+
+    /*
     ra=(1+49./60+23.35579/3600)*15;
     dec=-(10+42./60+12.8593/3600.);
     mura=-144;dmura=3.4;

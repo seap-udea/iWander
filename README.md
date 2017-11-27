@@ -24,17 +24,23 @@ Getting the package
 
 You may obtain the package in different ways:
 
+- Get a "compact" version of the package and the associated data (650
+  MB) ready to be used from [this link](http://bit.ly)
+
 - Cloning anonymously the github repository:
+
 ```  
 git clone http://github.com/seap-udea/iWander.git
 ```  
 
 - Download the tarball:
+
 ```  
 wget http://github.com/seap-udea/iWander/archive/master.zip
 ```  
 
 - Cloning the package as developer (permissions required):
+
 ```  
 git clone git@github.com:seap-udea/iWander.git
 ```  
@@ -88,6 +94,7 @@ Quickstart
 
    ```  
    make wanderer.exe
+   ./wanderer.exe
    ```  
 
 2. Compute the minimum distance to all the stars in the input catalog
@@ -95,12 +102,14 @@ Quickstart
 
    ```  
    make encounters.exe
+   ./encounters.exe
    ```  
 
 3. Find progenitor candidates and compute their origin probability:
 
    ```  
    make probability.exe
+   ./probability.exe
    ```  
 
 The output of this process is the file ``progenitors.csv`` having
@@ -255,3 +264,4 @@ This package has been developed thanks to the incredible work made by
 previous scientist and developers. Most of the work of those who make
 this package possible has been cited in our papers.  Others are
 mentioned in the software itself.
+

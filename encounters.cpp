@@ -16,35 +16,33 @@ int main(int argc,char* argv[])
 
     2) Select the progenitor candidates.
 
-    Input: None
+    Input: 
+    * wanderer.csv
 
     Output: 
 
-    * encounters.csv
-      Cols:
-          0:i
-	  1-8:Initial elements, q,e,i,W,w,Mo,to,mu
-	  9-15:Asymptotic elements, q,e,i,W,w,Mo,to,mu
-	  16:ting (time of ingress, seconds)
-	  17-22:Position Ecliptic J2000
-	  23-28:Position J2000
-	  29-34:Position Galactic J2000
-	  35:RA(h) (ingress)
-	  36:DEC(deg)
-	  37:l(deg)
-	  38:b(deg)
+    * encounters.csv: all the columns of the input catalog (AstroRV)
+      plus:
 
-    * candidates.csv
       Cols:
           0: n
-          1-6: postar (present)
-	  7-9: pos.body periastro
-	  10-12: pos.star periastro
-	  13: dmin (pc)
-	  14: tmin1 (yr)
-	  14: tmin2 (yr)
-	  15-17: relative velocity (km/s)
-	  18: relative speed (km/s)
+	  1-6: Position and velocity of the star for LMA purposes
+	  7: Initial distance of the star, d
+	  8: Minimum LMA distance, dmin
+	  9: Minimum LMA time, tmin
+	  10-13: Relative velocity computed with LMA vrelx,vrely,vrelz,vrel,
+	  14-...: All fields in AstroRV catalog
+
+    * candidates.csv
+
+      Cols:
+          0: n
+	  1-6: Position and velocity of the star for LMA purposes
+	  7: Initial distance of the star, d
+	  8: Minimum LMA distance, dmin
+	  9: Minimum LMA time, tmin
+	  10-13: Relative velocity computed with LMA vrelx,vrely,vrelz,vrel,
+	  14-...: All fields in AstroRV catalog
   */
 
   ////////////////////////////////////////////////////
@@ -67,7 +65,7 @@ int main(int argc,char* argv[])
   int i,j,k,n,nfields;
   double p1[3],*d1;
 
-  int Nstars,Naccept;
+  int Nstars,Naccept=0,Ncand=0;
 
   //VARIABLES
   double tstar,dt;
@@ -105,6 +103,10 @@ int main(int argc,char* argv[])
   //READING WANDERERS
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   FILE *fc=fopen("wanderer.csv","r");
+  if(fc==NULL){
+    fprintf(stderr,"You must first propagate the wanderers\n");
+    exit(1);
+  }
   //HEADER
   fscanf(fc,"%s",line);
 
@@ -136,10 +138,11 @@ int main(int argc,char* argv[])
   //READING HEADER
   fscanf(fc,"%s",head);
 
-  fprintf(fe,"n,postarx,postary,postarz,velstarx,velstary,velstarz,posbodyperix,posbodyperiy,posbodyperiz,postarperix,postarperiy,postarperiz,d,dmin,tmin,vrelx,vrely,vrelz,vrel,%s\n",head);
-  fprintf(fg,"n,postarx,postary,postarz,velstarx,velstary,velstarz,posbodyperix,posbodyperiy,posbodyperiz,postarperix,postarperiy,postarperiz,d,dmin,tmin,vrelx,vrely,vrelz,vrel,%s\n",head);
+  fprintf(fe,"n,postarx,postary,postarz,velstarx,velstary,velstarz,d,dmin,tmin,vrelx,vrely,vrelz,vrel,%s\n",head);
+  fprintf(fg,"n,postarx,postary,postarz,velstarx,velstary,velstarz,d,dmin,tmin,vrelx,vrely,vrelz,vrel,%s\n",head);
 
   //COMPUTING LMA MINIMUM DISTANCE TO STARS
+  printHeader(stdout,"COMPUTING MINIMUM DISTANCE TO CATALOG STARS");
   int Nfreq=10000;
   n=0;
   k=0;
@@ -360,7 +363,6 @@ int main(int argc,char* argv[])
     //STORE INFORMATION
     fprintf(fe,"%d,",n);
     fprintf(fe,"%s%s",vec2str(p2,"%.5e,"),vec2str(UVW,"%.5e,"));
-    fprintf(fe,"%s%s",vec2str(c1,"%.5e,"),vec2str(c2,"%.5e,"));
     fprintf(fe,"%.5e,%.5e,%.5e,",d,dmin,tmin);
     fprintf(fe,"%s%.5e,",vec2str(vrel,"%.5e,"),vrelmag);
     fprintf(fe,"%s",aline);
@@ -372,11 +374,11 @@ int main(int argc,char* argv[])
     if(tmin<0 && dmin<=dthres && vrelmag<50.0){
       fprintf(fg,"%d,",n);
       fprintf(fg,"%s%s",vec2str(p2,"%.5e,"),vec2str(UVW,"%.5e,"));
-      fprintf(fg,"%s%s",vec2str(c1,"%.5e,"),vec2str(c2,"%.5e,"));
       fprintf(fg,"%.5e,%.5e,%.5e,",d,dmin,tmin);
       fprintf(fg,"%s%.5e,",vec2str(vrel,"%.5e,"),vrelmag);
       fprintf(fg,"%s",aline);
       fprintf(fg,"\n");
+      Ncand++;
     }
     k++;
     if(VERBOSE) break;
@@ -389,5 +391,6 @@ int main(int argc,char* argv[])
   Naccept=k;
   fprintf(stdout,"Total number of stars: %d\n",Nstars);
   fprintf(stdout,"Accepted stars: %d\n",Naccept);
+  fprintf(stdout,"Candidates: %d\n",Ncand);
   return 0;
 }

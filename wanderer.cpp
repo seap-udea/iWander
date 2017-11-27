@@ -6,16 +6,13 @@ using namespace std;
 int main(int argc,char* argv[])
 {
   /*
-    Example: ./wanderer.exe 10 1
-    Where:
-      10: Number of particles
-      1: Use diagonal covariance
+    Example: ./wanderer.exe
 
     Function: 
 
     This program perform three different tasks:
 
-    1) Calculate the time t_asymp when a single conic approximation is
+    1) Calculate the time t_asymp when the single conic approximation is
        good enough to predict the future position of the interstellar
        object.
 
@@ -32,19 +29,18 @@ int main(int argc,char* argv[])
 
     * wanderer.csv
       Rows: 1 is for nominal solution, the rest is for random particle
-
-      Cols:
-          0:i
-	  1-8:Initial elements, q,e,i,W,w,Mo,to,mu
-	  9-15:Asymptotic elements, q,e,i,W,w,Mo,to,mu
-	  16:ting (time of ingress, seconds)
-	  17-22:Position Ecliptic J2000
-	  23-28:Position J2000
-	  29-34:Position Galactic J2000
-	  35:RA(h) (ingress)
-	  36:DEC(deg)
-	  37:l(deg)
-	  38:b(deg)
+      Cols: 
+	  0:NUmber of the object (0 for nominal trajectory) 
+	  1-6:Initial random elements, q,e,i,W,w,Mo,to,mu
+	  7-12:Asymptotic elements, q,e,i,W,w,Mo,to,mu
+	  13:Time of ingress to Solar System
+	  14-19:Cartesian position at ingress wrt. Ecliptic J2000
+	  20-25:Cartesian position at ingress wrt. J2000
+	  26-31:Cartesian position at ingress wrt. Galactic
+	  32:Radiant at ingress RA(h) (terminal)
+	  33:Radiant at ingress DEC(deg)
+	  34:Radiant at ingress l(deg)
+	  35:Radiant at ingress b(deg)
   */
 
   ////////////////////////////////////////////////////
@@ -133,6 +129,8 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   //DISPERSION OF SURROGATE OBJECTS IN THE FUTURE
   ////////////////////////////////////////////////////
+  printHeader(stdout,"COMPUTING ASYMPTOTIC ELEMENTS");
+
   for(int j=0;j<=Ndisp+1;j++){
     if(j>0){
       if(qdiagonal) gsl_matrix_memcpy(L,D);
@@ -243,6 +241,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   //COMPUTE INGRESS TIME OF NOMINAL OBJECT
   ////////////////////////////////////////////////////
+  printHeader(stdout,"COMPUTING INGRESS TIME");
   conics_c(elemasymp,elemasymp[6],Xend);
   vasymp=vnorm_c(Xend+3);
   fprintf(stdout,"Asymptotic velocity: %e\n",vasymp);
@@ -264,6 +263,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   //COMPUTE POSITION AT INGRESS
   ////////////////////////////////////////////////////
+  printHeader(stdout,"GENERATING SURROGATE OBJECTS POSITION");
   FILE* fc=fopen("wanderer.csv","w");
   int Nfreq=ceil(Npart/10);
   Nfreq=Nfreq==0?1:Nfreq;
@@ -404,4 +404,6 @@ int main(int argc,char* argv[])
     fprintf(fc,"\n");
   }
   fclose(fc);
+
+  printHeader(stdout,"DONE.","!");
 }

@@ -84,60 +84,41 @@ make unpack
 Quickstart
 ----------
 
-The travel of an 'interstellar wanderer' starts in the Solar System.
-The first step to follow the path of the body is to propagate their
-initial conditions into the far realms of our planetary system.
+1. Generate the surrogate objects and propagate them until the time of ingress.
 
-This is achieved using the program `wanderer.exe`.  In order to run
-the program execute:
+   ```  
+   make wanderer.exe
+   ```  
 
-```  
-make wanderer.exe
-```  
+2. Compute the minimum distance to all the stars in the input catalog
+   and select the candidates.
 
-If you want to modify the options of the program edit the file
-`wanderer.conf`.
+   ```  
+   make encounters.exe
+   ```  
 
-This program start with the initial elements of the body (which are
-fully specified in the configuration file) and propagate the orbit
-into the distant future or past (this is specified with the variable
-`duration`).
+3. Find progenitor candidates and compute their origin probability:
 
-Since the initial position of the body is always uncertain, the
-program allows you to integrate the path of many test particles with
-orbital elements compatible to those of your body.
+   ```  
+   make probability.exe
+   ```  
 
-Once the integration is fully completed the results are stored in the
-file `wanderer.csv`.
-
-For a fully explanation about the input options and output information see
-components section.
-
-Once you have propagated your wanderer out of the Solar System is time
-to check if it found or will find any star in their path.  This
-achieved by running the program:
-
-```  
-make encounters.exe
-```  
-
-This will create a list of stars in the huge database included with
-the package, to which the wanderer will flyby to a maximum distance
-defined by the user in a desired time window.
+The output of this process is the file ``progenitors.csv`` having
+a list of the progenitor candidates with their respective origin
+probability.
 
 Structure of the package
 ------------------------
 
-The package is made of three components: programs, scripts and
-databases.  
+The package is made of three type of components: programs, scripts and
+databases.
 
-Programs are the components used to compute the core functions
-(propagate wanderers, find encounters, compute procedence or capture
-probabilities, etc.)
+Programs are used to compute the core functions (propagate wanderers,
+find encounters, compute interstellar origin probabilities, etc.)
 
 Scripts are used for pre and post processing of the information
-required or produced by the package.  Here we mainly use python and
-Ipython scripts.
+required or produced by the package.  Here we mainly use python
+scripts and Ipython notebooks.
 
 Databases contain the information required to run some of the
 functionalities of the package.
@@ -148,35 +129,117 @@ Components
 - **wanderer**: This program integrate the orbit of a moving object
   inside the Solar System.
   
-  * Usage: 
+  * Function: 
 
-    ``
-    make wanderer.exe
-    ``
+    This program perform three different tasks:
 
-  * Input information: wanderer.conf
+    1) Calculate the time t_asymp when the single conic approximation is
+       good enough to predict the future position of the interstellar
+       object.
+
+    2) Calculate the time t_ingress at which the object was at a half
+       of the truncation tidal radius of the Solar System, ie. 100,000
+       AU.
+
+    3) Predict the position and velocity of the surrogate objects at
+       t_ingress.
+
+  * Input: None
 
   * Output: 
 
-    + File: wanderer.csv.  Contains the solution of the
-      backward/forward integration of the wanderer and/or the test
-      particles created from their errors.
+    + wanderer.csv
 
-     ```
-	  0:i
-	  1-6:Initial elements, q,e,i,W,w,Mo,to,mu
-	  7:tdb (terminal)
-	  8-13:Position Ecliptic J2000
-	  14-19:Position J2000
-	  20-25:Position Galactic J2000
-	  26:RA(h) (terminal)
-	  27:DEC(deg)
-	  28:l(deg)
-	  29:b(deg)
-	  30:d(AU)
-	  31-36:Asymptotic elements, q,e,i,W,w,Mo,to,mu
-    ```
+      Rows: 1 is for nominal solution, the rest is for random particle
 
+      Cols: 
+
+      ```
+	  0:NUmber of the object (0 for nominal trajectory) 
+	  1-6:Initial random elements, q,e,i,W,w,Mo,to,mu
+	  7-12:Asymptotic elements, q,e,i,W,w,Mo,to,mu
+	  13:Time of ingress to Solar System
+	  14-19:Cartesian position at ingress wrt. Ecliptic J2000
+	  20-25:Cartesian position at ingress wrt. J2000
+	  26-31:Cartesian position at ingress wrt. Galactic
+	  32:Radiant at ingress RA(h) (terminal)
+	  33:Radiant at ingress DEC(deg)
+	  34:Radiant at ingress l(deg)
+	  35:Radiant at ingress b(deg)
+      ```
+
+- **encounters**: This program integrate the orbit of a moving object
+  inside the Solar System.
+  
+  * Function: 
+
+    This program perform two different tasks:
+
+    1) Compute the LMA minimum distance and time to all stars in the
+       AstroRV catalogue..
+
+    2) Select the progenitor candidates.
+
+  * Input: 
+    + wanderer.csv
+
+  * Output: 
+
+    + encounters.csv: all the columns of the input catalog (AstroRV)
+      plus:
+
+      Cols:
+
+      ```
+          0: n
+	  1-6: Position and velocity of the star for LMA purposes
+	  7: Initial distance of the star, d
+	  8: Minimum LMA distance, dmin
+	  9: Minimum LMA time, tmin
+	  10-13: Relative velocity computed with LMA vrelx,vrely,vrelz,vrel,
+	  14-...: All fields in AstroRV catalog
+      ```
+
+    + candidates.csv
+
+      Cols:
+
+      ```
+          0: n
+	  1-6: Position and velocity of the star for LMA purposes
+	  7: Initial distance of the star, d
+	  8: Minimum LMA distance, dmin
+	  9: Minimum LMA time, tmin
+	  10-13: Relative velocity computed with LMA vrelx,vrely,vrelz,vrel,
+	  14-...: All fields in AstroRV catalog
+      ```
+
+- **probability**: This program integrate the orbit of a moving object
+  inside the Solar System.
+
+  * Function: calculate the IOP for a list of candidates.
+
+  * Input:
+    + wanderer.csv
+    + candidates.csv
+
+  * Output: 
+    + progenitors.csv
+
+      Cols:
+
+      ```
+          0: IOP for this candidate, Pprob
+	  1: Average position probability, Psmed
+	  2: Average velocity probability, Pvmed
+	  3: Probability distance factor, fdist
+	  4-6: Nominal minimum time, minimum distance, relative velocity
+	  7,8: Minimum and maximum tmin
+	  9,10: Minimum and maximum dmin
+	  11,12: Minimum and maximum vrel
+	  13...: Same as candidates.csv
+  
+      ```
 
 For the developer
 -----------------

@@ -2164,3 +2164,12 @@ int cloudProperties(double *xp,int Npart,
 
   return 0;
 }
+
+int printHeader(FILE* stream,char msg[],char mark[]="*",int n=60)
+{
+  char* bar;
+  bar=(char*)malloc(MAXLINE*sizeof(char));
+  for(int i=n;i-->0;) sprintf(bar,"%s%s",mark,bar);
+  fprintf(stream,"%s\n%s\n%s\n",bar,msg,bar);
+  return 0;
+}

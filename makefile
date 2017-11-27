@@ -11,7 +11,7 @@ cleancrap:
 
 cleanexe:
 	@echo "Cleaning executable..."
-	@rm -rf *.pyc *.out *.exe *.log
+	@rm -rf *.pyc *.out *.{exe,o,opp} *.log .[a-zA-Z0-9]*.{exe,o,opp}
 
 clean:cleancrap cleanexe
 	@echo "Cleaning..."
@@ -22,12 +22,6 @@ clean:cleancrap cleanexe
 
 %.opp:%.cpp %.conf
 	$(CPP) -c $(CFLAGS) $< -o $@
-
-%.out:%.o
-	$(CC) $^ $(LFLAGS) -o $@
-
-%.o:%.c
-	$(CC) -c $(CFLAGS) $^ -o $@
 
 commit:
 	@echo "Commiting..."

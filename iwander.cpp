@@ -2006,6 +2006,17 @@ int minDistance2(double *xs,double *xp,double tmin0,
   return 0;
 }
 
+double wFunction2(double d,void *params)
+{
+  double h=*(double*)params;
+  double q=d/h;
+  double w;
+
+  w=1/(h*h*h)*exp(-d*d/(h*h));
+
+  return w;
+}
+
 double wFunction(double d,void *params)
 {
   double h=*(double*)params;
@@ -2026,6 +2037,15 @@ double wNormalization(double h)
   gsl_integration_workspace *w=gsl_integration_workspace_alloc(1000);
   gsl_function F={.function=&wFunction,.params=&h};
   gsl_integration_qags(&F,0.0,2*h,0.0,1e-7,1000,w,&norm,&error);
+  return 1/norm;
+}
+
+double wNormalization2(double h)
+{
+  double norm,error;
+  gsl_integration_workspace *w=gsl_integration_workspace_alloc(1000);
+  gsl_function F={.function=&wFunction2,.params=&h};
+  gsl_integration_qagiu(&F,0.0,0.0,1e-7,1000,w,&norm,&error);
   return 1/norm;
 }
 

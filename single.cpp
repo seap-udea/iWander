@@ -11,7 +11,10 @@ struct vinfpar {
 double vinfPosterior(double x,void *params)
 {
   struct vinfpar *pars=(struct vinfpar*)params;
-  if(x<pars->xmin||x>pars->xmax) return 0;
+
+  if(x<pars->xmin) x=pars->xmin;
+  if(x>pars->xmax) x=pars->xmax;
+
   double p=gsl_spline_eval(pars->s,x,pars->a);
   return p;
 }
@@ -271,7 +274,7 @@ int main(int argc,char* argv[])
   //READ POSTERIOR EJECTION VELOCITY DISTRIBUTION
   ////////////////////////////////////////////////////
   FILE *fv=fopen("db/ejection-posterior.data","r");
-  double ul,um,ut,uv,vcan;
+  double ul,um,ut,uv,vcan,vradiuscan;
   double pvs[MAXCOLS],vinfs[MAXCOLS];
   int nv=0;
   while(fgets(line,MAXLINE,fv)!=NULL){
@@ -330,12 +333,16 @@ int main(int argc,char* argv[])
     parseLine(line,fields,&nfields);
     n++;
 
-    //*
+    /*
     if(strcmp(fields[Candidates::HIP],hip_single)!=0) continue;
     else qinterrupt=1;
     //*/
+    //*
+    if(strcmp(fields[Candidates::TYCHO2_ID],tyc_single)!=0) continue;
+    else qinterrupt=1;
+    //*/
 
-    fprintf(stdout,"Star %d,%s,%s:\n",n,fields[Potential::HIP],fields[Potential::TYCHO2_ID]);
+    fprintf(stdout,"Star %d,%s,%s:\n",n,fields[Candidates::HIP],fields[Candidates::TYCHO2_ID]);
 
     //ESTIMATED TIME OF ENCOUNTER
     tmin=atof(fields[Candidates::TMIN]);
@@ -593,7 +600,7 @@ int main(int argc,char* argv[])
       //COMPUTE THE SIZE OF THE CLOUD
       double vradius,rinter,vinter;
       cloudProperties(xIntp[1],Npart,&hprob,&vradius,&rinter,&vinter);
-      sigma=wNormalization(hprob);
+      sigma=wNormalization2(hprob);
       fprintf(stdout,"\t\thprob = %e pc\n",hprob);
       fprintf(stdout,"\t\tVel.radius = %e km/s\n",vradius*UV/1e3);
       fprintf(stdout,"\t\tAverage distance = %e pc\n",rinter);
@@ -631,7 +638,10 @@ int main(int argc,char* argv[])
 
 	fprintf(stdout,"\t\t\tDistance to test particle %d (hprob = %e): d=%.6e,vrel=%.6e\n",j,hprob,D,vrel*UV/1e3);
 	//CONTRIBUTION TO P FROM DISTANCE
-	pd=sigma*wFunction(D,&hprob)*rinter*rinter*rinter;
+	//pd=sigma*wFunction2(D,&hprob)*rinter*rinter*rinter;
+	pd=sigma*wFunction2(D,&hprob)*deltaV;
+	fprintf(stdout,"\t\t\tdV (variable) = %e\n",rinter*rinter*rinter);
+	fprintf(stdout,"\t\t\tdV (fixed) = %e\n",deltaV);
 
 	//CONTRIBUTION TO P FROM VELOCITY
 	//Compute the actual scale of the velocity
@@ -641,8 +651,11 @@ int main(int argc,char* argv[])
 	uv=ul/ut;
 	fprintf(stdout,"\t\t\tUnits of velocity: %e\n",uv);
 	vcan=vrel*UV/uv;
+	vradiuscan=vradius*UV/uv;
 	fprintf(stdout,"\t\t\tVelocity %e km/s in canonic units: %e\n",vrel*UV/1e3,vcan);
-	pv=vinfProbability(vcan-vinter*UV/uv,vcan+vinter*UV/uv,&vpar);
+	fprintf(stdout,"\t\t\tVelocity radius %e km/s in canonic units: %e\n",vradius*UV/1e3,vradiuscan);
+	//pv=vinfProbability(vcan-vinter*UV/uv,vcan+vinter*UV/uv,&vpar);
+	pv=vinfPosterior(vcan,&vpar)*vradiuscan;
 
 	fprintf(stdout,"\t\t\t\tDistance probability: %.6e\n",pd);
 	fprintf(stdout,"\t\t\t\tVelocity probability: %.6e\n",pv);
@@ -652,6 +665,7 @@ int main(int argc,char* argv[])
 	Psur+=pd*pv;
 	//COMPUTE CORRECTION FOR RELATIVE STELLAR VELOCITY
       }
+      Psur/=Npart;
 
       //SAVE TRAJECTORIES
       char fname[100];
@@ -702,7 +716,7 @@ int main(int argc,char* argv[])
       
       //ACCUMULATE
       Pprob+=Psur;
-      getchar();
+      //getchar();
       fprintf(fss,"\n");
     }
     Pprob/=Nsur;
@@ -713,7 +727,7 @@ int main(int argc,char* argv[])
     fprintf(fp,"%s",values);
     fflush(fp);
 
-    //if(VERBOSE) getchar();
+    if(VERBOSE) getchar();
     if(qinterrupt) break;
   }
   fclose(fc);

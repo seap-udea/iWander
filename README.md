@@ -25,7 +25,7 @@ Getting the package
 You may obtain the package in different ways:
 
 - Get a "compact" version of the package and the associated data (650
-  MB) ready to be used from [this link](http://bit.ly)
+  MB) ready to be used from [this link](http://bit.ly/iWander)
 
 - Cloning anonymously the github repository:
 

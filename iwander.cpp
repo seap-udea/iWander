@@ -249,14 +249,14 @@ double UL,UM,UT,UV;
 //////////////////////////////////////////
 //ROUTINES
 //////////////////////////////////////////
-//void errorGSL(const char * reason,const char * file,int line,int gsl_errno){throw(1);}
+void errorGSL(const char * reason,const char * file,int line,int gsl_errno){throw(1);}
 int initWander(void)
 {
   SpiceInt i,n;
   SpiceDouble radii[3];
   
   //INITIALIZE GSL ERROR HANDLER
-  //gsl_set_error_handler(&errorGSL); 
+  gsl_set_error_handler(&errorGSL); 
 
   //KERNELS
   furnsh_c("db/kernels/kernels.txt");

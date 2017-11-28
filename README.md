@@ -201,7 +201,7 @@ Components
       Cols:
 
       ```
-          0: n
+	  0: n
 	  1-6: Position and velocity of the star for LMA purposes
 	  7: Initial distance of the star, d
 	  8: Minimum LMA distance, dmin

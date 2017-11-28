@@ -16,8 +16,9 @@ If you use or adapt the package for any scientific purpose please
 refer to [this paper](https://arxiv.org/abs/1711.09397):
 
 > Zuluaga,Sánchez-Hernández, Sucerquia & Ignacio Ferrin, A general
-> method for assesing the procedence of an interstellar small
-> body: the case of 1I/´Oumuamuaa (1I/2017 U1), arXiv:1711.09397.
+> method for assesing the procedence of an interstellar small body:
+> the case of 1I/´Oumuamuaa (1I/2017 U1),
+> [arXiv:1711.09397](https://arxiv.org/abs/1711.09397).
 
 Getting the package
 -------------------

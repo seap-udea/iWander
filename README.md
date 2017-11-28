@@ -1,5 +1,5 @@
 # iWander
-Dynamics of Interstellar Wanderers
+### Dynamics of Interstellar Wanderers
 
 Presentation
 ------------

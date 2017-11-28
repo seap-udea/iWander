@@ -22,10 +22,16 @@ refer to this paper:
 > the case of 1I/´Oumuamuaa (1I/2017 U1),
 > [arXiv:1711.09397](https://arxiv.org/abs/1711.09397).
 
-Candidates
--------------------
+Progenitor Candidates
+----------------------
 
-For a list of progenitor candidates and their corresponding probabilities see [this file](CANDIDATES.md).
+A list of the progenitor candidates of the interstellar object
+**1I/2017 U1 (Oumuamua)**, identified using this method and their
+corresponding probabilities are available (and will be updated) [in
+this file](CANDIDATES.md).
+
+> **NOTE**: This list could change when better astrometric information
+  or improvements on the method be available. Stay tuned!
 
 Getting the package
 -------------------

@@ -1,5 +1,6 @@
-
 # Progenitor Candidates of 1I/2017 U1
+
+Latest update: Tue Nov 28 07:13:28 2017
 
 |HIP/TYCHO|Name|tmin|dmin|vrel|tmin|dmin|vrel|Ppos|Pvmed|Pdist|Pprob|
 |--|--|--|--|--|--|--|--|--|--|--|--|

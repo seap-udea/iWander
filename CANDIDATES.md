@@ -1,6 +1,6 @@
 # Progenitor Candidates of 1I/2017 U1 
 
-|  HIP/TYCHO  |  Name      | tmin | dmin | vrel | tmin | dmin | vrel | <Ppos> | <Pvmed> | Pdist | Pprob |
+|  HIP/TYCHO  |  Name      | tmin | dmin | vrel | tmin | dmin | vrel | Ppos | Pvmed | Pdist | Pprob |
 |-------------|------------|------|------|------|------|------|------|--------|---------|-------|-------|
 |  HIP 103749 |  HD 200325 | -3.9 | 0.6 | 12 | [-4.9,-3.3] | [0.1,6.6] | [10,14] | -3.4 | -2.5 | -4.1 | -7.4 |
 |  HIP 17288 |  HD 23121 | -6.7 | 5.5 | 15 | [-7.1,-5.8] | [1.5,16.7] | [14,16] | -4.7 | -2.7 | -4.6 | -9.3 |

@@ -22,6 +22,11 @@ refer to this paper:
 > the case of 1I/´Oumuamuaa (1I/2017 U1),
 > [arXiv:1711.09397](https://arxiv.org/abs/1711.09397).
 
+Candidates
+-------------------
+
+For a list of progenitor candidates and their corresponding probabilities see [this file](CANDIDATES.md).
+
 Getting the package
 -------------------
 

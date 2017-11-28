@@ -15,7 +15,7 @@ in general for studying the dynamics of an interstellar vagabond
 object (small-body, interstellar spaceship and even stars).
 
 If you use or adapt the package for any scientific purpose please
-refer to [this paper](https://arxiv.org/abs/1711.09397):
+refer to this paper:
 
 > Zuluaga,Sánchez-Hernández, Sucerquia & Ignacio Ferrin, A general
 > method for assesing the procedence of an interstellar small body:

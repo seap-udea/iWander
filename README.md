@@ -241,16 +241,15 @@ Components
       Cols:
 
       ```
-          0: IOP for this candidate, Pprob
-	  1: Average position probability, Psmed
-	  2: Average velocity probability, Pvmed
-	  3: Probability distance factor, fdist
-	  4-6: Nominal minimum time, minimum distance, relative velocity
-	  7,8: Minimum and maximum tmin
-	  9,10: Minimum and maximum dmin
-	  11,12: Minimum and maximum vrel
-	  13...: Same as candidates.csv
-  
+      0: IOP for this candidate, Pprob
+      1: Average position probability, Psmed
+      2: Average velocity probability, Pvmed
+      3: Probability distance factor, fdist
+      4-6: Nominal minimum time, minimum distance, relative velocity
+      7,8: Minimum and maximum tmin
+      9,10: Minimum and maximum dmin
+      11,12: Minimum and maximum vrel
+      13...: Same as candidates.csv
       ```
 
 For the developer
@@ -270,7 +269,7 @@ mentioned in the software itself.
 
 License
 --------------
-Copyright (C) 2017 Jorge I. Zuluaha, Oscar Sanchez-Hernandez, Mario Sucerquia & Ignacio Ferrin
+Copyright (C) 2017 Jorge I. Zuluaga, Oscar Sanchez-Hernandez, Mario Sucerquia & Ignacio Ferrin
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and the databases associated (the "Package"),

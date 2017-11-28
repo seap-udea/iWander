@@ -1,8 +1,8 @@
 
 # Progenitor Candidates of 1I/2017 U1
 
-|ID|Nominal|Range|
-|----|--------|--|
+|ID||Nominal|||Range|||log(P)||||
+|--|--|--|--|--|--|--|--|--|--|--|--|
 |HIP/TYCHO|Name|tmin|dmin|vrel|tmin|dmin|vrel|Ppos|Pvmed|Pdist|Pprob|
 |--|--|--|--|--|--|--|--|--|--|--|--|
 |  HIP 103749 |  [HD 200325](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20200325) | -3.9 | 0.6 | 12 | [-4.9,-3.3] | [0.1,6.6] | [10,14] | -3.4 | -2.5 | -4.1 | -7.4 |

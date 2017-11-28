@@ -1,6 +1,8 @@
 # iWander
 ### Dynamics of Interstellar Wanderers
 
+[![arXiv](http://img.shields.io/badge/arXiv-1711.09397-orange.svg?style=flat)](http://arxiv.org/abs/1711.09397)
+
 Presentation
 ------------
 

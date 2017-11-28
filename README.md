@@ -268,3 +268,27 @@ previous scientist and developers. Most of the work of those who make
 this package possible has been cited in our papers.  Others are
 mentioned in the software itself.
 
+License
+--------------
+Copyright (C) 2017 Jorge I. Zuluaha, Oscar Sanchez-Hernandez, Mario Sucerquia & Ignacio Ferrin
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and the databases associated (the "Package"),
+to deal in the Package without restriction, including without
+limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Package, and to
+permit persons to whom the Package is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Package.  A
+reference to the Package shall be included in all scientific
+publications that make use of the Package.
+
+THE PACKAGE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE DATABASE OR THE USE OR OTHER DEALINGS IN THE DATABASE.

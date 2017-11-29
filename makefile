@@ -27,6 +27,12 @@ clean:cleancrap cleanexe
 %.opp:%.cpp %.conf
 	$(CPP) -c $(CFLAGS) $< -o $@
 
+dev:
+	@git checkout dev
+
+master:
+	@git checkout master
+
 commit:
 	@echo "Commiting..."
 	@-git commit -am "Commit"

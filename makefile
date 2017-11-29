@@ -33,6 +33,7 @@ commit:
 	@-git push origin $(BRANCH)
 
 pull:
+	@echo "Pulling latest version..."
 	@-git reset --hard HEAD
 	@-git pull origin $(BRANCH)
 

@@ -1,8 +1,12 @@
 include compiler.in
+BRANCH=$(shell bash .getbranch)
 
 test:
 	@make .test.exe 
 	@echo "It works!"
+
+branch:
+	@echo $(BRANCH)
 
 cleancrap:
 	@echo "Cleaning crap..."
@@ -26,11 +30,11 @@ clean:cleancrap cleanexe
 commit:
 	@echo "Commiting..."
 	@-git commit -am "Commit"
-	@-git push origin master
+	@-git push origin $(BRANCH)
 
 pull:
 	@-git reset --hard HEAD
-	@-git pull
+	@-git pull origin $(BRANCH)
 
 pack:
 	@echo "Packing data..."

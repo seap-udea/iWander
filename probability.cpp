@@ -324,7 +324,6 @@ int main(int argc,char* argv[])
   FILE *fp=fopen("progenitors.csv","w");
   fprintf(fp,"Pprob,Psurmed,Pvelmed,Pdist,nomtmin,nomdmin,nomvrel,mintmin,maxtmin,mindmin,maxdmin,minvrel,maxvrel,%s",line);
 
-  FILE *fcl=fopen("cloudsize.data","w");
   int qinterrupt=0;
 
   printHeader(stdout,"CALCULATING PROBABILITIES");
@@ -642,7 +641,7 @@ int main(int argc,char* argv[])
       VPRINT(stdout,"\t\tAverage distance = %e pc\n",rinter);
       VPRINT(stdout,"\t\tAverage velocity difference = %e km/s\n",vinter*UV/1e3);
       VPRINT(stdout,"\t\tDensity normalization = %e\n",sigma);
-      VPRINT(fcl,"%e %e %e %e %e\n",tmin,hprob,rinter,vradius*UV/1e3,vinter*UV/1e3);
+      //VPRINT(fcl,"%e %e %e %e %e\n",tmin,hprob,rinter,vradius*UV/1e3,vinter*UV/1e3);
       //getchar();
       
       //COMPUTE SPH-LIKE PROBABILITY
@@ -737,7 +736,7 @@ int main(int argc,char* argv[])
   }
   fclose(fc);
   fclose(fp);
-  fclose(fcl);
+  //fclose(fcl);
   VPRINT(stdout,"DONE.\n");
   return 0;
 }

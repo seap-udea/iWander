@@ -27,6 +27,17 @@ clean:cleancrap cleanexe
 %.opp:%.cpp %.conf
 	$(CPP) -c $(CFLAGS) $< -o $@
 
+dev:
+	@git checkout dev
+
+master:
+	@git checkout master
+
+merge:	
+	@echo "Merging branches..."
+	@make master
+	@git merge dev
+
 commit:
 	@echo "Commiting..."
 	@-git commit -am "Commit"

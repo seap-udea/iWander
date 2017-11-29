@@ -33,6 +33,11 @@ dev:
 master:
 	@git checkout master
 
+merge:	
+	@echo "Merging branches..."
+	@make master
+	@git merge dev
+
 commit:
 	@echo "Commiting..."
 	@-git commit -am "Commit"

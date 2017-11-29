@@ -28,15 +28,15 @@ clean:cleancrap cleanexe
 	$(CPP) -c $(CFLAGS) $< -o $@
 
 dev:
-	@git checkout dev
+	@-git checkout dev
 
 master:
-	@git checkout master
+	@-git checkout master
 
 merge:	
 	@echo "Merging branches..."
-	@make master
-	@git merge dev
+	@-make master
+	@-git merge dev
 
 commit:
 	@echo "Commiting..."

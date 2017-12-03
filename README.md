@@ -295,13 +295,12 @@ package either suggested by the reviewers of the paper, by colleagues
 or by the community.  These are the most important
 ones in the available versions of the manuscript.
 
-v0.1
-****
+### v0.1
+
 
 Initial version.
 
-v0.2
-****
+### v0.2
 
 Post-submission version.  These are the changes introduced to the
 package:

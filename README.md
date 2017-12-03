@@ -306,6 +306,8 @@ package:
 * The output files from the main programs have as suffix the name of
   the wanderer, eg. wanderer-Oumuamua.csv, candidates-Oumuamua.csv.
 
+* We have included new rules to makefile: all, cleandata, cleanall.
+
 Acknowledgements
 ----------------
 

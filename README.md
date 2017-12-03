@@ -22,6 +22,8 @@ refer to this paper:
 > the case of 1I/´Oumuamuaa (1I/2017 U1),
 > [arXiv:1711.09397](https://arxiv.org/abs/1711.09397).
 
+The paper is under review for publication in the Astronomical Journal.
+
 > **NOTE** As the revision process is undergoing, un updated version
   of the paper will be available in [this
   link](doc/Zuluaga_et_al_2017-AssesingOriginProbability.pdf).

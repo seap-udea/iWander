@@ -46,6 +46,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   //CONFIGURATION
   ////////////////////////////////////////////////////
+  #include <iwander.conf>
   #include <wanderer.conf>
 
   ////////////////////////////////////////////////////
@@ -77,6 +78,7 @@ int main(int argc,char* argv[])
   double ds,dp,Xref[6],Xdif[6],Ndisp=50,dpasymp,elemasymp[8];
   double tdur,dtdur,X0s[6],Xend[6],tfut,durasymp,dasymp,tasymp,dtasymp;
   double during,durold,ting,ding,dold,vasymp;
+  char filename[100];
 
   ////////////////////////////////////////////////////
   //VARIABLES BASED ON CONFIGURATION
@@ -264,7 +266,10 @@ int main(int argc,char* argv[])
   //COMPUTE POSITION AT INGRESS
   ////////////////////////////////////////////////////
   printHeader(stdout,"GENERATING SURROGATE OBJECTS POSITION");
-  FILE* fc=fopen("wanderer.csv","w");
+
+  sprintf(Filename,"wanderer-%s.csv",WANDERER);
+  FILE* fc=fopen(Filename,"w");
+
   int Nfreq=ceil(Npart/10);
   Nfreq=Nfreq==0?1:Nfreq;
 

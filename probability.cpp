@@ -63,6 +63,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   //CONFIGURATION
   ////////////////////////////////////////////////////
+  #include <iwander.conf>
   #include <probability.conf>
 
   ////////////////////////////////////////////////////
@@ -233,7 +234,10 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   printHeader(stdout,"READING SURROGATE OBJECTS");
   FILE *fc;
-  fc=fopen("wanderer.csv","r");
+
+  sprintf(Filename,"wanderer-%s.csv",WANDERER);
+  fc=fopen(Filename,"r");
+
   fgets(line,MAXLINE,fc);//HEADER
 
   int i=0;
@@ -318,10 +322,15 @@ int main(int argc,char* argv[])
   double sigma=wNormalization(hprob);
 
   n=0;
-  fc=fopen("candidates.csv","r");
+
+  sprintf(Filename,"candidates-%s.csv",WANDERER);
+  fc=fopen(Filename,"r");
+
   fgets(line,MAXLINE,fc);//HEADER
 
-  FILE *fp=fopen("progenitors.csv","w");
+  sprintf(Filename,"progenitors-%s.csv",WANDERER);
+  FILE *fp=fopen(Filename,"w");
+
   fprintf(fp,"Pprob,Psurmed,Pvelmed,Pdist,nomtmin,nomdmin,nomvrel,mintmin,maxtmin,mindmin,maxdmin,minvrel,maxvrel,%s",line);
 
   int qinterrupt=0;

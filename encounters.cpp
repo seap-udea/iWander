@@ -48,6 +48,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   //CONFIGURATION
   ////////////////////////////////////////////////////
+  #include <iwander.conf>
   #include <encounters.conf>
 
   ////////////////////////////////////////////////////
@@ -102,7 +103,9 @@ int main(int argc,char* argv[])
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   //READING WANDERERS
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  FILE *fc=fopen("wanderer.csv","r");
+  sprintf(Filename,"wanderer-%s.csv",WANDERER);
+  FILE *fc=fopen(Filename,"r");
+
   if(fc==NULL){
     fprintf(stderr,"You must first propagate the wanderers\n");
     exit(1);
@@ -132,8 +135,12 @@ int main(int argc,char* argv[])
   //READING GAIA DATABASE
   ////////////////////////////////////////////////////
   fc=fopen("db/src/AstroRV.csv","r");
-  FILE* fe=fopen("encounters.csv","w");
-  FILE* fg=fopen("candidates.csv","w");
+
+  sprintf(Filename,"encounters-%s.csv",WANDERER);
+  FILE* fe=fopen(Filename,"w");
+
+  sprintf(Filename,"candidates-%s.csv",WANDERER);
+  FILE* fg=fopen(Filename,"w");
 
   //READING HEADER
   fscanf(fc,"%s",head);

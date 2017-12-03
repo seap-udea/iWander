@@ -110,31 +110,38 @@ make unpack
 Quickstart
 ----------
 
-1. Generate the surrogate objects and propagate them until the time of ingress.
+1. Edit the general configuration files ``iwander.conf`` and
+   ``wanderer.conf`` for setting up the name of the wanderer and its
+   properties.
+
+2. Compile the key programs:
 
    ```  
-   make wanderer.exe
+   make all
+   ```  
+
+2. Generate the surrogate objects and propagate them until the time of ingress.
+
+   ```  
    ./wanderer.exe
    ```  
 
-2. Compute the minimum distance to all the stars in the input catalog
+3. Compute the minimum distance to all the stars in the input catalog
    and select the candidates.
 
    ```  
-   make encounters.exe
    ./encounters.exe
    ```  
 
-3. Find progenitor candidates and compute their origin probability:
+4. Find progenitor candidates and compute their origin probability:
 
    ```  
-   make probability.exe
    ./probability.exe
    ```  
 
-The output of this process is the file ``progenitors.csv`` having
-a list of the progenitor candidates with their respective origin
-probability.
+The output of this process is the file ``progenitors-<wanderer>.csv``
+having a list of the progenitor candidates with their respective
+origin probability.
 
 Structure of the package
 ------------------------

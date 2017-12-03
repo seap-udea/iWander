@@ -35,7 +35,7 @@ all:
 %.exe:%.opp
 	$(CPP) $^ $(LFLAGS) -o $@
 
-%.opp:%.cpp %.conf
+%.opp:%.cpp %.conf iwander.conf
 	$(CPP) -c $(CFLAGS) $< -o $@
 
 dev:

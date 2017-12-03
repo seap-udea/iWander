@@ -7,7 +7,7 @@ int main(int argc,char* argv[])
 {
   /*
     Example: ./wanderer.exe
-
+    
     Function: 
 
     This program perform three different tasks:

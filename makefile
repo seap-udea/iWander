@@ -1,5 +1,6 @@
 include compiler.in
 BRANCH=$(shell bash .getbranch)
+PROGRAMS=wanderer encounters probability
 
 test:
 	@make .test.exe 
@@ -15,11 +16,21 @@ cleancrap:
 
 cleanexe:
 	@echo "Cleaning executable..."
-	@rm -rf *.pyc *.out *.{exe,o,opp} *.log .[a-zA-Z0-9]*.{exe,o,opp}
+	@rm -rf *.pyc *.out *.exe *.o *opp *.log .[a-zA-Z0-9]*.exe
+
+cleandata:
+	@echo "Cleaning data..."
+	@rm *.csv
 
 clean:cleancrap cleanexe
 	@echo "Cleaning..."
 	@rm -rf *.png *.dat
+
+cleanall:clean cleandata
+
+all:
+	@echo "Compiling main programs..."
+	for program in $(PROGRAMS);do make $$program.exe;done
 
 %.exe:%.opp
 	$(CPP) $^ $(LFLAGS) -o $@

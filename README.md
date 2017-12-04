@@ -314,6 +314,13 @@ package:
 
 * We have included new rules to makefile: all, cleandata, cleanall.
 
+* Include elements of Voyager 1 and Voyager 2.
+
+* New  scripts: 
+  
+  * progenitors.py: create a table of progenitor candidates in format
+    markdown.
+
 Acknowledgements
 ----------------
 

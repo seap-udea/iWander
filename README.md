@@ -34,7 +34,7 @@ Progenitor Candidates
 A list of the progenitor candidates of the interstellar object
 **1I/2017 U1 (Oumuamua)**, identified using this method along with
 their corresponding origin probabilities are available (and will be
-updated) [in this file](CANDIDATES.md).
+updated) [in this file](CANDIDATES-Oumuamua.md).
 
 > **NOTE**: This list could change when better astrometric information
   or improvements on the methodology be available. Stay tuned!

@@ -27,7 +27,7 @@ progsort[progsort.Pprob>0][["hip","tycho2_id","name_simbad","source",'Pprob', 'P
 
 # MD Table
 f=open("CANDIDATES-%s.md"%conf["WANDERER"],"w")
-f.write("""# Progenitor Candidates of 1I/2017 U1
+f.write("""# Progenitor Candidates of %s
 
 [![arXiv](http://img.shields.io/badge/arXiv-1711.09397-orange.svg?style=flat)](http://arxiv.org/abs/1711.09397)
 
@@ -35,7 +35,7 @@ _Latest update_: ``%s``
 
 |HIP/TYCHO|Name|tmin|dmin|vrel|tmin|dmin|vrel|Ppos|Pvmed|Pdist|Pprob|
 |--|--|--|--|--|--|--|--|--|--|--|--|
-"""%(time.strftime("%c")))
+"""%(conf["WANDERER_NAME"],time.strftime("%c")))
 
 i=1
 for index in progsort.index:

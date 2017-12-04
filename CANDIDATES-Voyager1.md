@@ -1,4 +1,4 @@
-# Progenitor Candidates of 1I/2017 U1
+# Progenitor Candidates of Voyager 1
 
 [![arXiv](http://img.shields.io/badge/arXiv-1711.09397-orange.svg?style=flat)](http://arxiv.org/abs/1711.09397)
 

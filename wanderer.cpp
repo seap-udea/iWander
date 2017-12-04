@@ -69,6 +69,7 @@ int main(int argc,char* argv[])
   SpiceDouble posFutureJ2000[6],posFuture[6],posFutureGalactic[6];
   double RAfut,DECfut,lfut,bfut,dfut;
   double h,t_start,t_step,tend,t_stop,t;
+  SpiceChar dend[100];
   double h_used,h_next,h_adjust,deltat;
   int i,status;
   //INITIAL CONDITIONS
@@ -132,7 +133,6 @@ int main(int argc,char* argv[])
   //DISPERSION OF SURROGATE OBJECTS IN THE FUTURE
   ////////////////////////////////////////////////////
   printHeader(stdout,"COMPUTING ASYMPTOTIC ELEMENTS");
-
   for(int j=0;j<=Ndisp+1;j++){
     if(j>0){
       if(qdiagonal) gsl_matrix_memcpy(L,D);
@@ -181,6 +181,13 @@ int main(int argc,char* argv[])
   ds*=1e3/AU;//AVERAGE DISTANCE IN AU
   fprintf(stdout,"Average distance between surrograte at (t = %e, d = %e): %e AU\n",duration*UT/YEAR,vnorm_c(Xu)*1e3/AU,ds);
 
+  //DATE
+  tend=tini+duration*UT;
+  deltet_c(tend,"ET",&deltat);
+  tend+=deltat;
+  et2utc_c(tend,"C",2,100,dend);
+  VPRINT(stdout,"Position of nominal object at t = %e yr (%.17e, %s): %s\n",duration*UT/YEAR,tend,dend,vec2strn(Xref,6,"%.17e "));
+  
   ////////////////////////////////////////////////////
   //CALCULATE TIME OF ASYMPTOTIC ELEMENTS
   ////////////////////////////////////////////////////
@@ -205,8 +212,10 @@ int main(int argc,char* argv[])
   durasymp=duration;
   dtdur=0.05*YEAR;
   copyVec(X0s,X0,6);
-  for(tdur=-0.01*YEAR;tdur>=duration*UT;tdur-=dtdur){
 
+  //for(tdur=-0.01*YEAR;tdur>=duration*UT;tdur-=dtdur){
+  tdur=direction*0.01*YEAR;
+  do{
     VPRINT(stdout,"Dur.=%e\n",tdur/YEAR);
 
     //CALCULATE POSITION ASSUMING DURATION = TDUR
@@ -220,7 +229,7 @@ int main(int argc,char* argv[])
     VPRINT(stdout,"Conic approximation=%s\n",vec2strn(Xend,6,"%e "));
     vsub_c(Xend,Xref,Xdif);
     dp=vnorm_c(Xdif)*1e3/UL;
-    VPRINT(stdout,"Dur.aymp.=%e\n",dp);
+    VPRINT(stdout,"Difference in position at asymptotic time=%e\n",dp);
       
     //COMPARE DIFFERENCE BETWEEN CONIC AND RIGOROUS SOLUTION
     if(dp<(ds/10)){
@@ -230,13 +239,19 @@ int main(int argc,char* argv[])
       dpasymp=dp;
       break;
     }
-  }
+    tdur+=direction*dtdur;
+    dtdur*=2;
+  }while(direction*(tdur-1*duration*UT)<0);
   fprintf(stdout,"Conic approximation can be calculated from t = %e years, when dist. = %e (dp = %e)\n",durasymp/YEAR,dasymp,dpasymp);
 
   //ASYMPTOTIC ELEMENTS
   copyVec(elemasymp,elts,8);
-  fprintf(stdout,"Asymptotic elements: (q = %.10lf AU, e = %.10lf, i = %.10lf deg, Omega = %.10lf deg, omega = %.10lf deg, M = %.10lf deg, to = %.3lf, mu = %.10e\n",
-	  elemasymp[0]*1e3/AU,elemasymp[1],elemasymp[2]*RAD,
+  tend=tini+tdur;
+  deltet_c(tend,"ET",&deltat);
+  tend+=deltat;
+  et2utc_c(tend,"C",2,100,dend);
+  fprintf(stdout,"Asymptotic elements at t = %s: (q = %.10lf AU, e = %.10lf, i = %.10lf deg, Omega = %.10lf deg, omega = %.10lf deg, M = %.10lf deg, to = %.3lf, mu = %.10e)\n",
+	  dend,elemasymp[0]*1e3/AU,elemasymp[1],elemasymp[2]*RAD,
 	  elemasymp[3]*RAD,elemasymp[4]*RAD,elemasymp[5]*RAD,
 	  unitim_c(elemasymp[6],"TDB","JDTDB"),elemasymp[7]);
 
@@ -249,7 +264,7 @@ int main(int argc,char* argv[])
   fprintf(stdout,"Asymptotic velocity: %e\n",vasymp);
   during=truncation/(vasymp*1e3);
   fprintf(stdout,"Estimated time of ingress: %e\n",during/YEAR);
-  conics_c(elemasymp,elemasymp[6]-during,Xend);
+  conics_c(elemasymp,elemasymp[6]+direction*during,Xend);
   ding=vnorm_c(Xend);
   fprintf(stdout,"Estimated distance at ingress: %e\n",ding*1e3/AU);
   while((ding*1e3/AU)<(truncation/AU)){
@@ -364,7 +379,7 @@ int main(int argc,char* argv[])
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     //INGRESS POSITION
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-    conics_c(elts,elts[6]-during,Xu);
+    conics_c(elts,elts[6]+direction*during,Xu);
     ding=vnorm_c(Xu);
     VPRINT(stdout,"\tIngress distance : %e\n",ding*1e3/AU);
 
@@ -395,7 +410,7 @@ int main(int argc,char* argv[])
     //ASYMPTOTIC ELEMENTS
     fprintf(fc,"%s",vec2strn(elements,8,"%.17e,"));
     //TIME OF INGRESS
-    fprintf(fc,"%.17e,",elts[6]-during);
+    fprintf(fc,"%.17e,",elts[6]+direction*during);
     //POSITION ECLIPJ2000
     fprintf(fc,"%s",vec2strn(Xu,6,"%.17e,"));
     //POSITION J2000

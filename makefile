@@ -17,6 +17,7 @@ cleancrap:
 cleanexe:
 	@echo "Cleaning executable..."
 	@rm -rf *.pyc *.out *.exe *.o *opp *.log .[a-zA-Z0-9]*.exe
+	@rm -rf __pycache__
 
 cleandata:
 	@echo "Cleaning data..."

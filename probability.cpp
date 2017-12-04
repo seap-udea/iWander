@@ -263,6 +263,8 @@ int main(int argc,char* argv[])
     i++;
     if(i==Npart) break;
   }
+  Npart=i;
+  fprintf(stdout,"Npart = %d\n",Npart);
   fclose(fc);
   copyVec(xnoms0,xIntp0,6);
   VPRINT(stdout,"Initial condition nominal test particle: %s\n",vec2strn(xIntp0,6,"%e "));
@@ -383,7 +385,6 @@ int main(int argc,char* argv[])
     VPRINT(stdout,"\tEncounter estimated time, tmin = %.6e\n",tmin);
     VPRINT(stdout,"\t\tTesting range = [%.6e,%.6e]\n",mint,maxt);
     VPRINT(stdout,"\tEncounter estimated distance, dmin = %.6e\n",dmin);
-    
     if(!(fabs(tmin0)>0)){
       fprintf(stdout,"\tThis star is too close\n");
       continue;

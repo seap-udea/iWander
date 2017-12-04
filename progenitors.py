@@ -19,7 +19,8 @@ progenitors=pd.read_csv("progenitors-%s.csv"%conf["WANDERER"])
 print("Number of progenitors:",len(progenitors))
 
 #SELECT COLUMNS
-progsort=progenitors.sort_values(by='Psurmed',ascending=False)
+#progsort=progenitors.sort_values(by='Psurmed',ascending=False)
+progsort=progenitors.sort_values(by='nomdmin',ascending=True)
 progsort[progsort.Pprob>0][["hip","tycho2_id","name_simbad","source",'Pprob', 'Psurmed', 'Pvelmed', 'Pdist', 'nomtmin', 'nomdmin',
        'nomvrel', 'mintmin', 'maxtmin', 'mindmin', 'maxdmin', 'minvrel',
        'maxvrel']]

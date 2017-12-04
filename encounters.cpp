@@ -61,7 +61,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   double tmp;
   char ctmp[100],line[10000],aline[10000],head[10000];
-  double posbody[6],tbody;
+  double posbody[6],tbody,direction;
   char **fields=charMatrixAllocate(MAXCOLS,MAXTEXT);
   int i,j,k,n,nfields;
   double p1[3],*d1;
@@ -119,6 +119,7 @@ int main(int argc,char* argv[])
 
   for(i=Wanderer::XGAL,j=0;i<=Wanderer::VZGAL;i++) posbody[j++]=atof(fields[i]);
   tbody=atof(fields[Wanderer::TING]);
+  direction=tbody/fabs(tbody);
 
   VPRINT(stdout,"TIME (year): %e\n",tbody/YEAR);
   VPRINT(stdout,"POS.GAL. (km): %s\n",vec2strn(posbody,3,"%.17e "));
@@ -324,44 +325,26 @@ int main(int argc,char* argv[])
     VPRINT(stdout,"\tPosition star: %s\n",vec2str(p2,"%.17lf,"));
     VPRINT(stdout,"\tVelocity star: %s\n",vec2str(d2,"%.5lf,"));
 
-    vsub_c(p1,p2,p1mp2);
-    ucrss_c(d1,d2,nv);
-    VPRINT(stdout,"\tNormal vector to skew lines: %s\n",vec2str(nv,"%.5f "));
-    dmin=fabs(vdot_c(nv,p1mp2));
-    VPRINT(stdout,"\tMinimum distance = %.17e\n",dmin);
-
-    //POINT OF MINIMUM DISTANCE
-    ucrss_c(d1,nv,nv1);
-    ucrss_c(d2,nv,nv2);
-    d1n2=vdot_c(d1,nv2);
-    d2n1=vdot_c(d2,nv1);
-    vscl_c(-vdot_c(p1mp2,nv2)/d1n2,d1,dc1);
-    vadd_c(p1,dc1,c1);
-    vscl_c(+vdot_c(p1mp2,nv1)/d2n1,d2,dc2);
-    vadd_c(p2,dc2,c2);
-    VPRINT(stdout,"\tPoint of peristar (body): %s\n",vec2str(c1,"%.5f "));
-    VPRINT(stdout,"\tPoint of peristar (star): %s\n",vec2str(c2,"%.5f "));
-    vsub_c(c1,p1,drp);
-    VPRINT(stdout,"\tDistance traveleded by body until crossing point: %s\n",vec2str(drp,"%.5f "));
-
-    //TIME OF MINIMUM DISTANCE
-    tmin1=(c1[0]-p1[0])/(d1[0]*1e3/KC1);
-    tmin2=(c2[0]-p2[0])/(d2[0]*1e3/KC1);
-    VPRINT(stdout,"\tTime for minimum distance 1 = %.17e\n",tmin1);
-    VPRINT(stdout,"\tTime for minimum distance 2 = %.17e\n",tmin2);
-
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //CALCULATE PERISTAR
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    //r1-r2
+    vsub_c(p1,p2,p1mp2);
+    //v1-v2
     vsub_c(d1,d2,d1md2);
+
+    //Compute time at minimum
     vscl_c(1e3/KC1,d1md2,d1md2);
     dvnorm=vnorm_c(d1md2);
     tmin=-vdot_c(p1mp2,d1md2)/(dvnorm*dvnorm);
     VPRINT(stdout,"\tTime for minimum distance dynamic = %.17e\n",tmin);
+
+    //Compute minimum distance
     vscl_c(tmin,d1md2,d1md2);
     vadd_c(p1mp2,d1md2,r1mr2);
     dmin=vnorm_c(r1mr2);
     VPRINT(stdout,"\tMinimum distance dynamic = %.17e\n",dmin);
+    //if(dmin<10) getchar();
     
     //RELATIVE VELOCITY AT MINIMUM DISTANCE
     vsub_c(d2,d1,vrel);
@@ -378,7 +361,7 @@ int main(int argc,char* argv[])
     //CONDITION FOR CANDIDATES
     dthres=d<10*dmax1?0.1*d:dmax1;
     VPRINT(stdout,"\tDistance threshold (d = %e):%e\n",d,dthres);
-    if(tmin<0 && dmin<=dthres && vrelmag<50.0){
+    if(direction*tmin>0 && dmin<=dthres && vrelmag<50.0){
       fprintf(fg,"%d,",n);
       fprintf(fg,"%s%s",vec2str(p2,"%.5e,"),vec2str(UVW,"%.5e,"));
       fprintf(fg,"%.5e,%.5e,%.5e,",d,dmin,tmin);

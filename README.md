@@ -115,20 +115,20 @@ Quickstart
    make all
    ```  
 
-2. Generate the surrogate objects and propagate them until the time of ingress.
+3. Generate the surrogate objects and propagate them until the time of ingress.
 
    ```  
    ./wanderer.exe
    ```  
 
-3. Compute the minimum distance to all the stars in the input catalog
+4. Compute the minimum distance to all the stars in the input catalog
    and select the candidates.
 
    ```  
    ./encounters.exe
    ```  
 
-4. Find progenitor candidates and compute their origin probability:
+5. Find progenitor candidates and compute their origin probability:
 
    ```  
    ./probability.exe
@@ -140,7 +140,7 @@ origin probability.
 
 Optionally you can:
 
-5. Sort out the candidates according to position probability or
+6. Sort out the candidates according to position probability or
    minimum distance:
 
    ```  

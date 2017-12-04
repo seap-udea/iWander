@@ -78,43 +78,31 @@ For installing the package run:
 bash install.sh
 ```  
 
-Before you start
-----------------
+Installation perform several operations required to start using the
+package:
 
-Before you start using the package set up the `makefile`.  Create a
-local copy of `compiler.in.temp`:
+1. Copy the template files in ``template`` to the package directory.
 
-```  
-cp compiler.in.temp compiler.in
-```  
+2. Install the required linus and python packages.
 
-Edit the file to properly choose your system architecture.  You just
-need to comment/uncomment the proper line in the file:
+3. Unpack large files.  Large files are splitted in 20MB chunks of
+   data inside the `.store` directory.  Before you use some critical
+   modules you must unpack those large files:
 
-```  
-###################################################
-#CHOOSE YOUR ARCHITECTURE
-###################################################
-#ARCH=32
-ARCH=64
-```  
+   ```  
+   make unpack
+   ```  
 
-Test it:
+4. Try to compile a small test program.  If compilation fails
+   comment/uncomment the proper line in the file ``compiler.in``:
 
-```  
-make
-```  
-
-Unpacking large files
----------------------
-
-Large files are splitted in 20MB chunks of data inside the `.store`
-directory.  Before you use some critical modules you must unpack those
-large files:
-
-```  
-make unpack
-```  
+   ```  
+   ###################################################
+   #CHOOSE YOUR ARCHITECTURE
+   ###################################################
+   #ARCH=32
+   ARCH=64
+   ```  
 
 Quickstart
 ----------

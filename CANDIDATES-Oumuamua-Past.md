@@ -1,8 +1,8 @@
-# Progenitor Candidates of 1I/2017 U1
+# Progenitor candidates of 1I/2017 U1
 
 [![arXiv](http://img.shields.io/badge/arXiv-1711.09397-orange.svg?style=flat)](http://arxiv.org/abs/1711.09397)
 
-_Latest update_: ``Mon Dec  4 07:56:01 2017``
+_Latest update_: ``Mon Dec  4 11:47:51 2017``
 
 |HIP/TYCHO|Name|tmin|dmin|vrel|tmin|dmin|vrel|Ppos|Pvmed|Pdist|Pprob|
 |--|--|--|--|--|--|--|--|--|--|--|--|

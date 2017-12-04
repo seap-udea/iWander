@@ -13,6 +13,25 @@ from iwander import *
 conf=readConf("iwander.conf");
 
 ############################################################
+#PAST OR FUTURE
+############################################################
+qpast=1
+if conf["duration"][0]=="-":
+    candtxt="Progenitor candidates"
+else:
+    qpast=0
+    candtxt="Future close encounters"
+
+if qpast:
+    pcols="Ppos|Pvmed|Pdist|Pprob|"
+    lcols="--|--|--|--|"
+    suffix="Past"
+else:
+    pcols="Ppos|"
+    lcols="--|"
+    suffix="Future"
+
+############################################################
 #LOAD PROGENITORS
 ############################################################
 progenitors=pd.read_csv("progenitors-%s.csv"%conf["WANDERER"])
@@ -26,16 +45,16 @@ progsort[progsort.Pprob>0][["hip","tycho2_id","name_simbad","source",'Pprob', 'P
        'maxvrel']]
 
 # MD Table
-f=open("CANDIDATES-%s.md"%conf["WANDERER"],"w")
-f.write("""# Progenitor Candidates of %s
+f=open("CANDIDATES-%s-%s.md"%(conf["WANDERER"],suffix),"w")
+f.write("""# %s of %s
 
 [![arXiv](http://img.shields.io/badge/arXiv-1711.09397-orange.svg?style=flat)](http://arxiv.org/abs/1711.09397)
 
 _Latest update_: ``%s``
 
-|HIP/TYCHO|Name|tmin|dmin|vrel|tmin|dmin|vrel|Ppos|Pvmed|Pdist|Pprob|
-|--|--|--|--|--|--|--|--|--|--|--|--|
-"""%(conf["WANDERER_NAME"],time.strftime("%c")))
+|HIP/TYCHO|Name|tmin|dmin|vrel|tmin|dmin|vrel|%s
+|--|--|--|--|--|--|--|--|%s
+"""%(candtxt,conf["WANDERER_NAME"],time.strftime("%c"),pcols,lcols))
 
 i=1
 for index in progsort.index:
@@ -62,9 +81,12 @@ for index in progsort.index:
                                                                     mbf,p.mindmin,p.maxdmin,
                                                                     mbf,p.minvrel,p.maxvrel)
     logPsurmed="%s%.1f"%(mbf,np.log10(p.Psurmed)) if p.Psurmed>0 else '--'
-    logPvelmed="%s%.1f"%(mbf,np.log10(p.Pvelmed)) if p.Pvelmed>0 else '--'
-    logPdist="%s%.1f"%(mbf,np.log10(p.Pdist)) if p.Pdist>0 else '--'
-    logPprob="%s%.1f"%(mbf,np.log10(p.Pprob)) if p.Pprob>0 else '--'
-    row+=r"%s | %s | %s | %s |"%(logPsurmed,logPvelmed,logPdist,logPprob)
+    if qpast:
+        logPvelmed="%s%.1f"%(mbf,np.log10(p.Pvelmed)) if p.Pvelmed>0 else '--'
+        logPdist="%s%.1f"%(mbf,np.log10(p.Pdist)) if p.Pdist>0 else '--'
+        logPprob="%s%.1f"%(mbf,np.log10(p.Pprob)) if p.Pprob>0 else '--'
+        row+=r"%s | %s | %s | %s |"%(logPsurmed,logPvelmed,logPdist,logPprob)
+    else:
+        row+=r"%s |"%(logPsurmed)
     f.write(row+"\n")
     i+=1

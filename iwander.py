@@ -202,15 +202,47 @@ def parse2dict(node):
 
     return result
 
+verbose=0
+def readValue(val):
+    if verbose:print("Analysing:",val)
+    result=""
+
+    try:val["_nodetype"]
+    except:return result
+
+    if val["_nodetype"]=="Constant":
+        result=eval("%s"%val["value"])
+        
+    if val["_nodetype"]=="ID":
+        result=val["name"]
+
+    if val["_nodetype"]=="UnaryOp":
+        pass
+
+    if val["_nodetype"]=="BinaryOp":
+        op=val["op"]
+        term1=readValue(val["left"]);
+        term2=readValue(val["right"]);
+        result=term1+op+term2
+
+    if val["_nodetype"]=="UnaryOp":
+        op=val["op"]
+        term1=val["expr"]["value"];
+        result=op+term1
+
+    if verbose:print("Result:",result)
+    return result
+
 def readConf(filename):
-    from pycparser import parse_file
+    from pycparser import parse_file,c_generator
     os.system("grep -v '^//' %s > .ccode"%filename)
     confori=parse2dict(parse_file(".ccode"))
     conf=dict()
     for val in confori["ext"]:
-        try:conf[val["name"]]=eval(val["init"]["value"])
-        except:conf[val["name"]]=""
-        #print(val["init"])
-        #print("*"*50)
+        name=val["name"]
+        if verbose:print("Reading node:",name)
+        if verbose:print("String:",val["init"])
+        conf[val["name"]]=readValue(val["init"])
+        if verbose:print("Value:",conf[val["name"]])
+        if verbose:print("*"*50)
     return conf
-    

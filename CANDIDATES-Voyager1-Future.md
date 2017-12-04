@@ -1,0 +1,77 @@
+# Future close encounters of Voyager 1
+
+[![arXiv](http://img.shields.io/badge/arXiv-1711.09397-orange.svg?style=flat)](http://arxiv.org/abs/1711.09397)
+
+_Latest update_: ``Mon Dec  4 11:48:29 2017``
+
+|HIP/TYCHO|Name|tmin|dmin|vrel|tmin|dmin|vrel|Ppos|
+|--|--|--|--|--|--|--|--|--|
+|  TYC 7507-792-1 |  -- | 8.2 | 24.8 | 39 | [6.2,12.0] | [3.9,218.7] | [35,53] | -- |
+|  TYC 5853-1202-1 |  -- | 8.6 | 41.3 | 45 | [7.1,10.3] | [23.6,83.3] | [41,50] | -- |
+|  TYC 7060-1110-1 |  -- | 5.3 | 23.6 | 46 | [3.3,13.6] | [11.8,81.2] | [18,72] | -- |
+|  TYC 4907-121-1 |  -- | 3.8 | 3.7 | 42 | [2.8,6.8] | [2.5,61.4] | [39,46] | -- |
+|  TYC 5038-757-1 |  -- | 4.4 | 9.5 | 41 | [3.4,5.5] | [3.1,31.4] | [39,43] | -- |
+|  TYC 5031-58-1 |  -- | 5.4 | 7.2 | 28 | [4.7,6.0] | [4.4,12.1] | [26,30] | -- |
+|  TYC 5028-444-1 |  -- | 9.8 | 44.6 | 21 | [8.7,10.8] | [33.2,62.6] | [19,23] | -- |
+|  TYC 6747-1579-1 |  -- | 5.8 | 24.6 | 46 | [4.5,8.9] | [4.0,87.2] | [44,48] | -- |
+|  TYC 6178-956-1 |  -- | 6.4 | 26.5 | 30 | [5.4,8.3] | [11.4,37.6] | [29,32] | -- |
+|  TYC 6171-840-1 |  -- | 8.9 | 56.0 | 34 | [7.3,11.1] | [39.0,83.8] | [32,37] | -- |
+|  TYC 5608-232-1 |  -- | 6.2 | 22.8 | 39 | [5.5,7.2] | [16.6,36.5] | [37,40] | -- |
+|  TYC 5577-527-1 |  -- | 6.7 | 21.3 | 21 | [6.1,7.6] | [14.9,29.0] | [18,23] | -- |
+|  TYC 5028-208-1 |  -- | 6.8 | 25.7 | 22 | [6.2,7.5] | [16.1,35.5] | [20,24] | -- |
+|  TYC 5572-501-1 |  -- | 8.7 | 21.8 | 23 | [7.3,10.8] | [14.2,39.9] | [21,25] | -- |
+|  TYC 6965-855-1 |  -- | 4.9 | 7.7 | 42 | [3.5,6.6] | [3.2,119.1] | [40,47] | -- |
+|  TYC 7953-667-1 |  -- | 7.7 | 41.8 | 39 | [6.4,9.4] | [17.2,125.3] | [37,43] | -- |
+|  HIP 20917 |  [HD 28343](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%2028343) | 0.5 | 6.6 | 22 | [0.5,0.5] | [6.6,6.7] | [22,23] | -- |
+|  HIP 2509 |  [HD 2814](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%202814) | 9.7 | 15.2 | 22 | [8.2,11.6] | [11.4,33.7] | [19,25] | -- |
+|  HIP 54721 |  [HD 97138](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%2097138) | 5.0 | 14.0 | 22 | [4.0,6.4] | [11.5,17.2] | [18,27] | -- |
+|  HIP 80302 |  [V* V894 Her](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=V*%20V894%20Her) | 3.8 | 13.6 | 51 | [3.5,4.4] | [9.5,20.6] | [46,54] | -- |
+|  HIP 81977 |  [HD 151216](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20151216) | 9.4 | 19.9 | 35 | [8.0,11.0] | [4.5,49.5] | [32,37] | -- |
+|  HIP 65933 |  [V* PP Com](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=V*%20PP%20Com) | 3.6 | 8.8 | 29 | [3.1,4.2] | [7.6,12.6] | [25,32] | -- |
+|  HIP 67596 |  [HD 120818](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20120818) | 4.8 | 11.3 | 19 | [2.8,10.0] | [5.3,31.0] | [10,32] | -- |
+|  HIP 64516 |  [BD+28 2198](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=BD+28%202198) | 4.8 | 19.8 | 41 | [3.7,6.5] | [3.1,90.0] | [37,45] | -- |
+|  HIP 64420 |  [HD 114778](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20114778) | 4.6 | 12.5 | 22 | [4.3,4.9] | [9.5,16.1] | [20,23] | -- |
+|  HIP 68905 |  [HD 123399](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20123399) | 8.1 | 29.5 | 31 | [7.5,9.1] | [27.0,40.5] | [30,32] | -- |
+|  HIP 61277 |  [HD 109304](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20109304) | 2.1 | 4.1 | 50 | [1.9,2.3] | [2.1,5.8] | [47,53] | -- |
+|  HIP 61481 |  [V* DO CVn](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=V*%20DO%20CVn) | 2.0 | 5.0 | 15 | [1.5,2.6] | [4.4,5.5] | [11,20] | -- |
+|  HIP 74913 |  [HD 136728](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20136728) | 8.8 | 17.2 | 22 | [6.8,10.4] | [13.1,25.5] | [18,26] | -- |
+|  HIP 97019 |  [HD 186343](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20186343) | 5.7 | 14.5 | 33 | [3.5,10.2] | [10.2,23.5] | [20,53] | -- |
+|  HIP 96184 |  [HD 184403](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20184403) | 1.2 | 6.3 | 42 | [1.1,1.2] | [6.3,6.4] | [41,42] | -- |
+|  HIP 96063 |  [HD 184150](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20184150) | 5.7 | 22.1 | 44 | [5.0,6.5] | [18.4,27.0] | [40,48] | -- |
+|  HIP 94311 |  [* 19 Lyr](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=*%2019%20Lyr) | 6.8 | 12.2 | 45 | [4.3,9.3] | [9.3,21.4] | [42,49] | -- |
+|  HIP 93514 |  [IDS 18589+3115](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=IDS%2018589+3115) | 5.5 | 10.2 | 29 | [4.8,6.3] | [7.7,15.2] | [25,31] | -- |
+|  HIP 91782 |  [HD 173399](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20173399) | 2.3 | 3.0 | 49 | [2.2,2.5] | [1.2,5.2] | [48,51] | -- |
+|  HIP 91783 |  [BD+44 2974](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=BD+44%202974) | 2.7 | 11.9 | 50 | [2.5,3.0] | [8.9,16.9] | [46,53] | -- |
+|  HIP 82339 |  [V* V1010 Oph](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=V*%20V1010%20Oph) | 1.4 | 1.0 | 50 | [1.2,1.6] | [0.7,1.7] | [46,54] | -- |
+|  HIP 93743 |  [HD 177552](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20177552) | 1.0 | 5.9 | 49 | [1.0,1.0] | [5.8,5.9] | [48,50] | -- |
+|  HIP 83901 |  [HD 154945](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20154945) | 2.2 | 16.0 | 48 | [2.0,2.3] | [13.7,18.0] | [46,49] | -- |
+|  HIP 81770 |  [HD 150616](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20150616) | 5.4 | 16.4 | 37 | [4.5,6.5] | [10.9,28.7] | [34,40] | -- |
+|  HIP 82316 |  [HD 151796](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20151796) | 3.7 | 18.1 | 33 | [3.2,4.2] | [13.6,22.7] | [32,34] | -- |
+|  HIP 78840 |  [HD 144426](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20144426) | 3.7 | 8.3 | 37 | [3.3,4.5] | [4.9,15.9] | [36,38] | -- |
+|  HIP 87939 |  [HD 163792](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20163792) | 4.5 | 10.1 | 43 | [4.0,5.4] | [9.2,12.0] | [40,47] | -- |
+|  HIP 88862 |  [HD 166095](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20166095) | 5.4 | 4.5 | 28 | [4.4,7.4] | [3.7,11.2] | [24,32] | -- |
+|  HIP 87768 |  [BD+18 3497](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=BD+18%203497) | 0.6 | 2.1 | 46 | [0.5,0.6] | [2.0,2.2] | [46,46] | -- |
+|  HIP 90307 |  [HD 169720](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20169720) | 8.6 | 16.4 | 37 | [6.9,13.4] | [11.6,17.5] | [36,38] | -- |
+|  HIP 90669 |  [HD 170651](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20170651) | 8.2 | 11.9 | 25 | [7.0,10.3] | [11.3,17.3] | [24,25] | -- |
+|  HIP 89684 |  [HD 168270](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20168270) | 6.3 | 24.9 | 43 | [4.6,8.1] | [18.9,32.4] | [40,47] | -- |
+|  HIP 90077 |  [HD 169246](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20169246) | 7.0 | 13.9 | 44 | [6.1,8.2] | [8.2,24.0] | [44,45] | -- |
+|  HIP 83308 |  [V* V451 Her](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=V*%20V451%20Her) | 3.0 | 12.3 | 48 | [2.3,3.8] | [9.0,17.4] | [41,56] | -- |
+|  HIP 87069 |  [HD 161921](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20161921) | 3.6 | 16.4 | 40 | [3.2,4.3] | [14.3,19.0] | [38,42] | -- |
+|  HIP 88624 |  [HD 165569](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20165569) | 4.9 | 20.8 | 42 | [4.2,6.1] | [18.3,24.2] | [38,46] | -- |
+|  HIP 88568 |  [HD 165435](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20165435) | 4.8 | 16.2 | 48 | [2.8,7.3] | [11.7,22.1] | [35,70] | -- |
+|  HIP 87278 |  [HD 162428](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20162428) | 9.8 | 33.6 | 32 | [7.9,14.3] | [23.4,88.7] | [29,36] | -- |
+|  HIP 91026 |  [HD 171520](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20171520) | 6.7 | 27.8 | 36 | [5.7,8.6] | [22.8,39.2] | [32,40] | -- |
+|  HIP 88821 |  [HD 166093](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20166093) | 8.8 | 47.1 | 43 | [7.5,10.9] | [33.6,82.6] | [42,44] | -- |
+|  HIP 87052 |  [HD 161959](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20161959) | 5.6 | 28.3 | 50 | [3.6,9.5] | [20.4,44.1] | [32,70] | -- |
+|  HIP 98069 |  [HD 188377](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20188377) | 3.9 | 6.6 | 21 | [3.5,4.3] | [5.8,8.2] | [19,23] | -- |
+|  HIP 17881 |  [V* SS Cep](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=V*%20SS%20Cep) | 5.1 | 4.9 | 49 | [3.7,6.7] | [2.5,37.8] | [48,49] | -- |
+|  HIP 30745 |  [HD 45004](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%2045004) | 1.5 | 4.6 | 44 | [1.3,1.7] | [3.0,8.2] | [42,45] | -- |
+|  HIP 34912 |  [V* UY Lyn](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=V*%20UY%20Lyn) | 4.8 | 13.0 | 48 | [3.2,7.5] | [1.0,113.0] | [47,50] | -- |
+|  HIP 65378 |  [* zet UMa](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=*%20zet%20UMa) | 1.8 | 8.2 | 14 | [1.5,2.3] | [7.7,9.0] | [11,17] | -- |
+|  HIP 68498 |  [HR 5262](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HR%205262) | 3.1 | 9.2 | 28 | [2.7,3.6] | [4.3,16.5] | [24,31] | -- |
+|  HIP 77875 |  [HD 142455](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20142455) | 5.0 | 9.1 | 23 | [4.0,7.1] | [1.4,48.9] | [22,24] | -- |
+|  HIP 86041 |  [* 56 Oph](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=*%2056%20Oph) | 2.6 | 12.5 | 46 | [2.1,3.1] | [9.7,17.0] | [42,50] | -- |
+|  HIP 87105 |  [HD 162094](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=HD%20162094) | 9.2 | 25.6 | 45 | [7.1,13.6] | [2.7,146.9] | [42,53] | -- |
+|  HIP 95947 |  [* bet Cyg A](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=*%20bet%20Cyg%20A) | 3.1 | 14.9 | 38 | [2.8,3.7] | [11.9,16.3] | [38,39] | -- |
+|  HIP 98110 |  [* eta Cyg](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=*%20eta%20Cyg) | 1.2 | 4.4 | 39 | [1.1,1.3] | [4.2,4.7] | [38,40] | -- |
+|  HIP 98110 |  [* eta Cyg](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=*%20eta%20Cyg) | 1.2 | 4.4 | 40 | [1.1,1.3] | [3.9,4.7] | [38,41] | -- |

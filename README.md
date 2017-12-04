@@ -81,9 +81,10 @@ bash install.sh
 Installation perform several operations required to start using the
 package:
 
-1. Copy the template files in ``template`` to the package directory.
+1. Copy the template files in the ``templates`` directory to the
+   package directory.
 
-2. Install the required linus and python packages.
+2. Install the required linux and python packages.
 
 3. Unpack large files.  Large files are splitted in 20MB chunks of
    data inside the `.store` directory.  Before you use some critical

@@ -27,12 +27,16 @@ else
     echo "Unpacking..."
     for file in $(cat $storedir/$confile |grep -v "#")
     do
-	echo -e "\tUnpacking $file..."
+	echo -en "\tUnpacking $file..."
 	fname=$(basename $file)
 	dname=$(dirname $file)
 	uname=$(echo $dname |sed -e s/\\//_/)
 	sdir="$storedir/$uname--$fname"
-	#echo "cat \"$sdir\"/$fname-* > $dname/$fname"
-	cat "$sdir"/$fname-* > $dname/$fname
+	if [ -e $dname/$fname ];then
+	    echo "file already unpacked"
+	else
+	    cat "$sdir"/$fname-* > $dname/$fname
+	    echo
+	fi
     done
 fi

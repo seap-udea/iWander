@@ -69,6 +69,15 @@ The size of the package is large (several hundreds of MBs).  This is
 mainly due to the data required to run some of the modules (GAIA and
 Radial velocities databases, SPICE Kernels, etc.).  
 
+Installation
+----------------
+
+For installing the package run:
+
+```  
+bash install.sh
+```  
+
 Before you start
 ----------------
 

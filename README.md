@@ -44,9 +44,6 @@ Getting the package
 
 You may obtain the package in different ways:
 
-- Get a "compact" version of the package and the associated data (650
-  MB) ready to be used from [this link](http://bit.ly/iWander)
-
 - Cloning anonymously the github repository:
 
 ```  
@@ -140,6 +137,15 @@ Quickstart
 The output of this process is the file ``progenitors-<wanderer>.csv``
 having a list of the progenitor candidates with their respective
 origin probability.
+
+Optionally you can:
+
+5. Sort out the candidates according to position probability or
+   minimum distance:
+
+   ```  
+   python3 progenitors.py
+   ```  
 
 Structure of the package
 ------------------------

@@ -82,7 +82,7 @@ int main(int argc,char* argv[])
   int ip,n;
   int nfields;
   double params[10],mparams[23];
-  double hstep,duration;
+  double hstep;
   //MATRICES WITH INTEGRATIONS
   double *xnom0,*xnoms0,*xIntp0,*xIntc0,**xIntp,**xFullp,**xFullc,**xIntc;
   double *xInt0,**xInt;
@@ -166,7 +166,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   //GLOBAL ALLOCATION
   ////////////////////////////////////////////////////
-  nsysp=6*Npart;
+  nsysp=6*Ntest;
   nsys=6;
 
   Ntimesp=10000;
@@ -261,10 +261,10 @@ int main(int argc,char* argv[])
 
     VPRINT(stdout,"\tInitial condition for particle %d: %s\n",i,vec2strn(xIntp0+ip,6,"%e "));
     i++;
-    if(i==Npart) break;
+    if(i==Ntest) break;
   }
-  Npart=i;
-  fprintf(stdout,"Npart = %d\n",Npart);
+  Ntest=i;
+  fprintf(stdout,"Ntest = %d\n",Ntest);
   fclose(fc);
   copyVec(xnoms0,xIntp0,6);
   VPRINT(stdout,"Initial condition nominal test particle: %s\n",vec2strn(xIntp0,6,"%e "));
@@ -293,7 +293,7 @@ int main(int argc,char* argv[])
   //READ PREINTEGRATED TEST PARTICLES
   ////////////////////////////////////////////////////
   /*
-  VPRINT(stdout,"Reading preintegrated %d test particles:\n",Npart);
+  VPRINT(stdout,"Reading preintegrated %d test particles:\n",Ntest);
   fc=fopen("cloud.csv","r");
   fgets(line,MAXLINE,fc);//HEADER
   i=0;
@@ -301,7 +301,7 @@ int main(int argc,char* argv[])
     parseLine(line,fields,&nfields);
     tsp[i]=atof(fields[0]);
     n=1;
-    for(int j=0;j<Npart;j++){
+    for(int j=0;j<Ntest;j++){
       ip=6*j;
       x=xFullp[i]+ip;
       for(int k=0;k<6;k++) x[k]=atof(fields[n++]);
@@ -635,15 +635,15 @@ int main(int argc,char* argv[])
       }
 
       //PROPAGATE ALL TEST PARTICLE
-      params[0]=6*Npart;
+      params[0]=6*Ntest;
       h=fabs(tmin)/100;
-      VPRINT(stdout,"\t\tInitial conditions for all particles: %s\n",vec2strn(xIntp0,6*Npart,"%.5e "));
-      integrateEoM(0,xIntp0,h,2,tmin,6*Npart,EoMGalactic,params,ts,xIntp);
-      VPRINT(stdout,"\t\tIntegration result for all particles: %s\n",vec2strn(xIntp[1],6*Npart,"%.5e "));
+      VPRINT(stdout,"\t\tInitial conditions for all particles: %s\n",vec2strn(xIntp0,6*Ntest,"%.5e "));
+      integrateEoM(0,xIntp0,h,2,tmin,6*Ntest,EoMGalactic,params,ts,xIntp);
+      VPRINT(stdout,"\t\tIntegration result for all particles: %s\n",vec2strn(xIntp[1],6*Ntest,"%.5e "));
 
       //COMPUTE THE SIZE OF THE CLOUD
       double vradius,rinter,vinter;
-      cloudProperties(xIntp[1],Npart,&hprob,&vradius,&rinter,&vinter);
+      cloudProperties(xIntp[1],Ntest,&hprob,&vradius,&rinter,&vinter);
       sigma=wNormalization2(hprob);
       VPRINT(stdout,"\t\tSize of cloud at = %e Myr\n",tmin);
       VPRINT(stdout,"\t\thprob = %e pc\n",hprob);
@@ -660,7 +660,7 @@ int main(int argc,char* argv[])
       fvel=0.0;
       VPRINT(stdout,"\t\tComparing test particle position with star position\n");
       Pvmed=0.0;
-      for(int j=0;j<Npart;j++){
+      for(int j=0;j<Ntest;j++){
 
 	polar2cart(xInt0,x);
 	polar2cart(xIntp[1]+6*j,xg);
@@ -706,8 +706,8 @@ int main(int argc,char* argv[])
 	Psur+=pd*pv;
 	//COMPUTE CORRECTION FOR RELATIVE STELLAR VELOCITY
       }
-      Pvmed/=Npart;
-      Psur/=Npart;
+      Pvmed/=Ntest;
+      Psur/=Ntest;
       Psmed+=Psur;
 
       //COMPUTE CORRECTION FOR STELLAR DISTANCE

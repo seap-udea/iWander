@@ -33,6 +33,12 @@ all:
 	@echo "Compiling main programs..."
 	for program in $(PROGRAMS);do make $$program.exe;done
 
+analysis:all
+	./wanderer.exe
+	./encounters.exe
+	./probability.exe
+	python3 progenitors.py
+
 %.exe:%.opp
 	$(CPP) $^ $(LFLAGS) -o $@
 

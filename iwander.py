@@ -235,7 +235,7 @@ def readValue(val):
 
 def readConf(filename):
     from pycparser import parse_file,c_generator
-    os.system("grep -v '^//' %s > .ccode"%filename)
+    os.system("grep -v '^/' %s > .ccode"%filename)
     confori=parse2dict(parse_file(".ccode"))
     conf=dict()
     for val in confori["ext"]:

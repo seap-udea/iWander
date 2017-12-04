@@ -35,3 +35,12 @@ package:
   
   * progenitors.py: create a table of progenitor candidates in format
     markdown.
+
+* The package allows now to compute the progenitor candidates and the
+  future close encounters.  This is achieved by changing the sign of
+  the ``duration```vairble in iwander.conf.
+
+* List of candidates generated with progenitors.py, are different if
+  they will be progenitor candidates or future close encounter
+  candidates.
+

@@ -2,7 +2,7 @@
 
 [![arXiv](http://img.shields.io/badge/arXiv-1711.09397-orange.svg?style=flat)](http://arxiv.org/abs/1711.09397)
 
-_Latest update_: ``Mon Dec  4 12:18:43 2017``
+_Latest update_: ``Thu Dec  7 12:55:38 2017``
 
 |HIP/TYCHO|Name|tmin|dmin|vrel|tmin|dmin|vrel|Ppos|Pvmed|Pdist|Pprob|
 |--|--|--|--|--|--|--|--|--|--|--|--|

@@ -256,7 +256,7 @@ int initWander(void)
   SpiceDouble radii[3];
   
   //INITIALIZE GSL ERROR HANDLER
-  //gsl_set_error_handler(&errorGSL); 
+  gsl_set_error_handler(&errorGSL); 
 
   //KERNELS
   furnsh_c("db/kernels/kernels.txt");

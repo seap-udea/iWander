@@ -309,7 +309,7 @@ int main(int argc,char* argv[])
   sprintf(Filename,"progenitors-%s.csv",WANDERER);
   FILE *fp=fopen(Filename,"w");
 
-  fprintf(fp,"Pprob,Psurmed,Pvelmed,Pdist,nomtmin,nomdmin,nomvrel,mintmin,maxtmin,mindmin,maxdmin,minvrel,maxvrel,%s",line);
+  fprintf(fp,"Pprob,Psurmed,Pvelmed,Pdist,nomtmin,nomdmin,nomvrel,tminl,tminmed,tminu,dminl,dminmed,dminu,vrell,vrelmed,vrelu,%s",line);
 
   int qinterrupt=0;
 
@@ -317,9 +317,11 @@ int main(int argc,char* argv[])
   while(fgets(line,MAXLINE,fc)!=NULL){
     
     //LOCAL MINIMA
+    int nt;
     double mindmin=1e100,maxdmin=-1e100;
     double minvrel=1e100,maxvrel=-1e100;
     double mintmin=1e100,maxtmin=-1e100;
+    double dmins[Ntest*Nsur],tmis[Ntest*Nsur],vrels[Ntest*Nsur];
 
     //PARSE FIELDS
     strcpy(values,line);
@@ -546,6 +548,7 @@ int main(int argc,char* argv[])
     Pprob=0;
     Psmed=0;
     Nsur_acc=0;
+    nt=0;
     for(int i=0;i<Nsur;i++){
 
       VPRINT(stdout,"\tSurrogate %d:\n",i);
@@ -661,6 +664,10 @@ int main(int argc,char* argv[])
 	maxtmin=MAX(tmin,maxtmin);
 	minvrel=MIN(vrel,minvrel);
 	maxvrel=MAX(vrel,maxvrel);
+	dmins[nt]=D;
+	tmis[nt]=tmin;
+	vrels[nt]=vrel;
+	nt++;
 
 	VPRINT(stdout,"\t\t\tDistance to test particle %d (hprob = %e): d=%.6e,vrel=%.6e\n",j,hprob,D,vrel*UV/1e3);
 
@@ -713,16 +720,34 @@ int main(int argc,char* argv[])
     Pprob/=Nsur;
     fprintf(stdout,"\tNumber of accepted surrogates: %d/%d\n",Nsur_acc,Nsur);
     fprintf(stdout,"\tPsmed = %e, Pvmed = %e, fdist = %e, Pprob = %e\n",Psmed,Pvmed,fdist,Pprob);
+
+    double dminmin,dminmax,dminmed,dminl,dminu;
+    double tminmin,tminmax,tminmed,tminl,tminu;
+    double vrelmin,vrelmax,vrelmed,vrell,vrelu;
+    quantilesVector(dmins,nt,&dminmin,&dminmax,&dminmed,&dminl,&dminu);
+    quantilesVector(tmis,nt,&tminmin,&tminmax,&tminmed,&tminl,&tminu);
+    quantilesVector(vrels,nt,&vrelmin,&vrelmax,&vrelmed,&vrell,&vrelu);
+    fprintf(stdout,"\tMinimum distance: %e\n",dminmin);
+    fprintf(stdout,"\tMaximum distance: %e\n",dminmax);
+    fprintf(stdout,"\tMedian distance: %e\n",dminmed);
+    fprintf(stdout,"\t95%% CL: %e,%e\n",dminl,dminu);
+    /*
+    FILE*fmin=fopen("dmins.dat","w");
+    VPRINT(fmin,"%s\n",vec2strn(dmins,nt,"%e\n"));
+    fclose(fmin);
+    */
+
     VPRINT(stdout,"Probability for star %d: %.6e\n",n,Pprob);
     VPRINT(stdout,"Minimum distance (lma.dmin=%e,nom.dmin=%e): min.dmin = %e, max.dmin = %e\n",dmin0,nomdmin,mindmin,maxdmin);
 
-    fprintf(fp,"%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,",
+    
+    fprintf(fp,"%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,",
 	    Pprob,Psmed,Pvmed,fdist,
 	    nomtmin,nomdmin,nomvrel*UV/1e3,
-	    mintmin,maxtmin,
-	    mindmin,maxdmin,
-	    minvrel*UV/1e3,maxvrel*UV/1e3);
-
+	    tminl,tminmed,tminu,
+	    dminl,dminmed,dminu,
+	    vrell*UV/1e3,vrelmed*UV/1e3,vrelu*UV/1e3);
+    
     fprintf(fp,"%s",values);
     fflush(fp);
 

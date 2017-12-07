@@ -44,3 +44,12 @@ package:
   they will be progenitor candidates or future close encounter
   candidates.
 
+* ``probability.exe`` now calculates the 5%,50% and 95% percentiles of
+  the critical quantities, tmin, dmin and vrel.
+
+* ``probability.exe`` now uses the HIP2 properties in the database
+  that are updated astrometric properties.
+
+* We have added a new program to the package: ``reconstruct.cpp``.
+  This program reconstruct the trajectories of the test particles and
+  the progenitor candidates.

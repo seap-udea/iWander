@@ -41,9 +41,6 @@ print("Number of progenitors:",len(progenitors))
 sorting=conf["Sorting"].split(",")
 
 progsort=progenitors.sort_values(by=sorting[0],ascending=eval(sorting[1]))
-progsort[progsort.Pprob>0][["hip","tycho2_id","name_simbad","source",'Pprob', 'Psurmed', 'Pvelmed', 'Pdist', 'nomtmin', 'nomdmin',
-       'nomvrel', 'mintmin', 'maxtmin', 'mindmin', 'maxdmin', 'minvrel',
-       'maxvrel']]
 
 # MD Table
 f=open("CANDIDATES-%s-%s.md"%(conf["WANDERER"],suffix),"w")
@@ -79,9 +76,9 @@ for index in progsort.index:
                               bf,simbad,
                             )
     row+=r"%s%.1f | %s%.1f | %s%.0f | "%(mbf,p.nomtmin/1e6,mbf,p.nomdmin,mbf,p.nomvrel)
-    row+=r"%s[%.1f,%.1f] | %s[%.1f,%.1f] | %s[%.0f,%.0f] | "%(mbf,p.mintmin/1e6,p.maxtmin/1e6,
-                                                                    mbf,p.mindmin,p.maxdmin,
-                                                                    mbf,p.minvrel,p.maxvrel)
+    row+=r"%s[%.1f,%.1f,%.1f] | %s[%.1f,%.1f,%.1f] | %s[%.0f,%.0f,%.0f] | "%(mbf,p.tminl/1e6,p.tminmed/1e6,p.tminu/1e6,
+                                                                             mbf,p.dminl,p.dminmed,p.dminu,
+                                                                             mbf,p.vrell,p.vrelmed,p.vrelu)
     logPsurmed="%s%.1f"%(mbf,np.log10(p.Psurmed)) if p.Psurmed>0 else '--'
     if qpast:
         logPvelmed="%s%.1f"%(mbf,np.log10(p.Pvelmed)) if p.Pvelmed>0 else '--'

@@ -2173,3 +2173,44 @@ int printHeader(FILE* stream,char msg[],char mark[]="*",int n=60)
   fprintf(stream,"%s\n%s\n%s\n",bar,msg,bar);
   return 0;
 }
+
+//Taken from: https://en.wikiversity.org/wiki/C_Source_Code/Find_the_median_and_mean
+int quantilesVector(double x[],int n,double *min,double *max,
+		    double *q050,double *q005,double *q095) 
+{
+  double temp;
+  int i, j;
+
+  for(i=0; i<n-1; i++) {
+    for(j=i+1; j<n; j++) {
+      if(x[j] < x[i]) {
+	temp = x[i];
+	x[i] = x[j];
+	x[j] = temp;
+      }
+    }
+  }
+
+  //MIN PERC
+
+  //MEDIAN
+  if(n%2==0) {
+    *q050=((x[n/2] + x[n/2 - 1]) / 2.0);
+  } else {
+    *q050=x[n/2];
+  }
+
+  //LOWER
+  int nl=(int)floor(0.05*n);
+  *q005=(x[nl]+x[nl+1])/2;
+  nl=nl==(n-1)?(n-2):nl;
+  
+  //UPPER
+  int nu=(int)ceil(0.95*n);
+  nu=nu==0?1:nu;
+  *q095=(x[nu]+x[nu-1])/2;
+
+  //MINIMUM AND MAXIMUM
+  *min=x[0];
+  *max=x[n-1];
+}

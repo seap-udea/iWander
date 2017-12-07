@@ -174,6 +174,7 @@ int main(int argc,char* argv[])
     //if(n<243520) continue;
     //if(n<14053 && VERBOSE) continue;
     //if(!(strcmp(fields[Stars::HIP],"43667")==0)) continue;
+    //if(!(strcmp(fields[Stars::HIP],"103749")==0)) continue;
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //ID
@@ -352,9 +353,9 @@ int main(int argc,char* argv[])
 
     //STORE INFORMATION
     fprintf(fe,"%d,",n);
-    fprintf(fe,"%s%s",vec2str(p2,"%.5e,"),vec2str(UVW,"%.5e,"));
-    fprintf(fe,"%.5e,%.5e,%.5e,",d,dmin,tmin);
-    fprintf(fe,"%s%.5e,",vec2str(vrel,"%.5e,"),vrelmag);
+    fprintf(fe,"%s%s",vec2str(postar,"%.17e,"),vec2str(UVW,"%.17e,"));
+    fprintf(fe,"%.17e,%.17e,%.17e,",d,dmin,tmin);
+    fprintf(fe,"%s%.17e,",vec2str(vrel,"%.17e,"),vrelmag);
     fprintf(fe,"%s",aline);
     fprintf(fe,"\n");
 
@@ -363,9 +364,9 @@ int main(int argc,char* argv[])
     VPRINT(stdout,"\tDistance threshold (d = %e):%e\n",d,dthres);
     if(direction*tmin>0 && dmin<=dthres && vrelmag<50.0){
       fprintf(fg,"%d,",n);
-      fprintf(fg,"%s%s",vec2str(p2,"%.5e,"),vec2str(UVW,"%.5e,"));
-      fprintf(fg,"%.5e,%.5e,%.5e,",d,dmin,tmin);
-      fprintf(fg,"%s%.5e,",vec2str(vrel,"%.5e,"),vrelmag);
+      fprintf(fg,"%s%s",vec2str(postar,"%.17e,"),vec2str(UVW,"%.17e,"));
+      fprintf(fg,"%.17e,%.17e,%.17e,",d,dmin,tmin);
+      fprintf(fg,"%s%.17e,",vec2str(vrel,"%.17e,"),vrelmag);
       fprintf(fg,"%s",aline);
       fprintf(fg,"\n");
       Ncand++;

@@ -1604,8 +1604,8 @@ int EoMGalactic(double t,double y[],double dydt[],void *params)
     //*/
 
     //*
-    VPRINT(stdout,"\tR = %e, q = %e, z = %e, dphidR = %e, dphidq = %e, dphidz = %e\n",
-	   R,q,z,dphidR,dphidq,dphidz);
+    VPRINT(stdout,"\tR = %e, vR = %e, q = %e, uq = %e, z = %e, vz = %e, dphidR = %e, dphidq = %e, dphidz = %e, nsys = %d\n",
+	   R,vR,q,uq,z,vz,dphidR,dphidq,dphidz,nsys);
     VPRINT(stdout,"\ty = %s\n\tdydt = %s\n",
 	   vec2strn(y,nsys,"%.17e "),
 	   vec2strn(dydt,nsys,"%.17e "));

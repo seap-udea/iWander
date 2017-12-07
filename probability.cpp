@@ -228,6 +228,7 @@ int main(int argc,char* argv[])
   params[ip++]=GGLOBAL*MHALO*MSUN/UM;
   params[ip++]=0.0;
   params[ip++]=BHALO*PARSEC/UL;
+  fprintf(stdout,"Params = %s\n",vec2strn(params,10,"%e "));
 
   ////////////////////////////////////////////////////
   //READ PARTICLES POSITION
@@ -268,7 +269,7 @@ int main(int argc,char* argv[])
   fclose(fc);
   copyVec(xnoms0,xIntp0,6);
   VPRINT(stdout,"Initial condition nominal test particle: %s\n",vec2strn(xIntp0,6,"%e "));
-
+  
   ////////////////////////////////////////////////////
   //READ POSTERIOR EJECTION VELOCITY DISTRIBUTION
   ////////////////////////////////////////////////////
@@ -289,31 +290,6 @@ int main(int argc,char* argv[])
   VPRINT(stdout,"P(vinf=%e) = %e\n",0.2,vinfPosterior(0.2,&vpar));
   VPRINT(stdout,"Integral = %e +/- %e\n",vinfProbability(0,10,&vpar));
 
-  ////////////////////////////////////////////////////
-  //READ PREINTEGRATED TEST PARTICLES
-  ////////////////////////////////////////////////////
-  /*
-  VPRINT(stdout,"Reading preintegrated %d test particles:\n",Ntest);
-  fc=fopen("cloud.csv","r");
-  fgets(line,MAXLINE,fc);//HEADER
-  i=0;
-  while(fgets(line,MAXLINE,fc)!=NULL){
-    parseLine(line,fields,&nfields);
-    tsp[i]=atof(fields[0]);
-    n=1;
-    for(int j=0;j<Ntest;j++){
-      ip=6*j;
-      x=xFullp[i]+ip;
-      for(int k=0;k<6;k++) x[k]=atof(fields[n++]);
-      x=xFullc[i]+ip;
-      for(int k=0;k<6;k++) x[k]=atof(fields[n++]);
-    }
-    i++;
-  }
-  fclose(fc);
-  VPRINT(stdout,"Initial condition nominal test particle (preintegrated): %s\n",vec2strn(xFullp[0],6,"%e "));
-  */
-  
   ////////////////////////////////////////////////////
   //READING POTENTIAL OBJECTS
   ////////////////////////////////////////////////////
@@ -361,8 +337,12 @@ int main(int argc,char* argv[])
     //*/
     //*
     if(qsingle){
-      if(strcmp(fields[Candidates::TYCHO2_ID],tyc_single)!=0) continue;
-      else qinterrupt=1;
+      if(strlen(hip_single)==0)
+	if(strcmp(fields[Candidates::TYCHO2_ID],tyc_single)!=0) continue;
+	else qinterrupt=1;
+      else
+	if(strcmp(fields[Candidates::HIP],hip_single)!=0) continue;
+	else qinterrupt=1;
     }
     //*/
     fprintf(stdout,"Computing probabilities for candidate star %d (%s,%s)...\n",
@@ -389,28 +369,28 @@ int main(int argc,char* argv[])
       fprintf(stdout,"\tThis star is too close\n");
       continue;
     }
-    
+
     if(fields[Candidates::RA][0]=='N'){
       fprintf(stdout,"\tUsing data from Hipparcos...\n");
       int FChip[]={
-	Candidates::RA_HIP,
+	Candidates::RA_HIP2,
 	Candidates::RA_ERROR_HIP,
 	Candidates::RA_DEC_CORR_HIP,
 	Candidates::RA_PARALLAX_CORR_HIP,
 	Candidates::RA_PMRA_CORR_HIP,
 	Candidates::RA_PMDEC_CORR_HIP,
-	Candidates::DEC_HIP,
+	Candidates::DEC_HIP2,
 	Candidates::DEC_ERROR_HIP,
 	Candidates::DEC_PARALLAX_CORR_HIP,
 	Candidates::DEC_PMRA_CORR_HIP,
 	Candidates::DEC_PMDEC_CORR_HIP,
-	Candidates::PMRA_HIP,
+	Candidates::PMRA_HIP2,
 	Candidates::PMRA_ERROR_HIP,
 	Candidates::PMRA_PMDEC_CORR_HIP,
-	Candidates::PMDEC_HIP,
+	Candidates::PMDEC_HIP2,
 	Candidates::PMDEC_ERROR_HIP,
-	Candidates::PARALLAX_HIP,
-	Candidates::PARALLAX_ERROR_HIP,
+	Candidates::PARALLAX_HIP2,
+	Candidates::PARALLAX_ERROR_HIP2,
 	Candidates::PARALLAX_PMRA_CORR_HIP,
 	Candidates::PARALLAX_PMDEC_CORR
       };
@@ -507,29 +487,34 @@ int main(int argc,char* argv[])
 
     //COMPUTE THE NOMINAL CONDITIONS
     d=AU/tan(par/(60*60*1000.0)*DEG)/PARSEC;
+    VPRINT(stdout,"\t\tDistance: %e\n",d);
     radrec_c(d,ra*DEG,dec*DEG,xg);
     mxv_c(M_J2000_Galactic,xg,x);
     recrad_c(x,&tmp,&l,&b);
     calcUVW(ra,dec,par,dpar,mura,dmura,mudec,dmudec,vr,dvr,x+3,dx+3);
+    VPRINT(stdout,"\t\tConditions at present (heliocentric): %s\n",vec2strn(x,6,"%e "));
     vscl_c(PARSEC/1e3,x,x);
     LSR2GC(x,xg);
     vscl_c(1e3/UL,xg,xg);//SET UNITS
     vscl_c(1e3/UV,xg+3,xg+3);
     cart2polar(xg,xInt0,1.0);
-    params[0]=6;
 
     //INTEGRATE BACK TO TIME OF INGRESS
     //*
     hstep=fabs(ting)/10;
     polar2cart(xInt0,x);
-    VPRINT(stdout,"\t\tConditions at present: %s\n",vec2strn(xg,6,"%e "));
+    VPRINT(stdout,"\t\tConditions at present: %s\n",vec2strn(xInt0,6,"%e "));
     vscl_c(ting*UT*UV/PARSEC,xg+3,dx);
     vadd_c(xg,dx,xg);
-    VPRINT(stdout,"\t\tExpected final conditions: %s\n",vec2strn(xg,6,"%e "));
+    VPRINT(stdout,"\t\tExpected final conditions (ting = %e, hstep = %e): %s\n",ting,hstep,vec2strn(xg,6,"%e "));
+    params[0]=6;
     integrateEoM(0,xInt0,hstep,2,ting,6,EoMGalactic,params,ts,xInt);
+    VPRINT(stdout,"\t\tTimes: %s\n",vec2strn(ts,2,"%e "));
     copyVec(xInt0,xInt[1],6);
     polar2cart(xInt0,xg);
     VPRINT(stdout,"\t\tInitial conditions: %s\n",vec2strn(xg,6,"%e "));
+    VPRINT(stdout,"\t\tInitial conditions (polar): %s\n",vec2strn(xInt0,6,"%e "));
+    //exit(0);
     //*/
 
     //INITIAL CONDITION FOR TEST PARTICLES

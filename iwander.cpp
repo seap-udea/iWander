@@ -2165,12 +2165,12 @@ int cloudProperties(double *xp,int Npart,
   return 0;
 }
 
-int printHeader(FILE* stream,char msg[],char mark[]="*",int n=60)
+int printHeader(FILE* stream,const char *msg,char mark='*',int n=60)
 {
-  char* bar;
-  bar=(char*)malloc(MAXLINE*sizeof(char));
-  for(int i=n;i-->0;) sprintf(bar,"%s%s",mark,bar);
-  fprintf(stream,"%s\n%s\n%s\n",bar,msg,bar);
+  for(int i=n;i-->0;) fprintf(stream,"%c",mark);
+  fprintf(stream,"\n%s\n",msg);
+  for(int i=n;i-->0;) fprintf(stream,"%c",mark);
+  fprintf(stream,"\n");
   return 0;
 }
 

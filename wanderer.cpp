@@ -425,5 +425,5 @@ int main(int argc,char* argv[])
   }
   fclose(fc);
 
-  printHeader(stdout,"DONE.","!");
+  printHeader(stdout,"DONE.",'!');
 }

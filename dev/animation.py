@@ -12,6 +12,10 @@ RAGC=(17+45./60+40.04/3600)*15
 DECGC=-(29+0./60+28.1/3600)
 ETAGC=58.5986320306
 
+#OBJECT
+#nwanderer="Oumuamua";fwanderer="Oumuamua";twanderer="1.8 kyr"
+nwanderer="Voyayer 1";fwanderer="Voyager1";twanderer="1.8 kyr"
+
 #SCENE PROPERTIES
 scale=200.0 #PC
 srange=2*scale #PC
@@ -23,7 +27,7 @@ wcolor=color.yellow
 
 #VIEW PARAMETERS
 phi0=radians(165.0)
-dphi=np.pi/2
+dphi=-np.pi
 
 theta0=radians(85.0)
 thetamax=radians(10.0)
@@ -40,12 +44,12 @@ options=dict(q5retain=500)
 qaxis=1
 
 #NUMBER OF OBJECTS
-maxnum=1
+maxnum=200
 
 #ANIMATION
 twait=1.0
 trate=100
-dmax=3.0
+dmax=5.0
 
 #FONT
 font="monospace"
@@ -112,7 +116,7 @@ class star(object):
 view=setView(0,1,phi0=phi0,theta0=theta0)
 scene = display(title='Interstellar Simulation',
                 x=0,y=0,width=1080, height=720,
-                center=(0,scale/2,0),
+                center=(0,0,0),
                 background=(0,0,0),
                 forward=view["forward"],
                 range=srange,
@@ -128,7 +132,7 @@ invisible=[]
 
 tsize=scale/10
 
-title=label(text="Oumuamua galactic adventure",
+title=label(text="%s galactic adventure"%nwanderer,
             align='center',
             pos=(0,scene.center[1]+scale,0),
             box=False,opacity=0,height=50)
@@ -151,6 +155,13 @@ if qaxis:
     for r in np.arange(10,scale,50):
         c=circle(r=r,lw=scale/500)
         invisible+=[c]
+    l=label(pos=(0,0,160),text="%.0f pc"%r,box=False,
+            line=0,opacity=0,height=10,yoffset=5*rstar)
+    invisible+=[l]
+    l=label(pos=(0,0,-160),text="-%.0f pc"%r,box=False,
+            line=0,opacity=0,height=10,yoffset=5*rstar)
+    invisible+=[l]
+    
 
 ###############################################################
 #MILKYWAY BACKGROUND
@@ -165,8 +176,8 @@ sky1.rotate(angle=radians(ETAGC),origin=(0,0,0),axis=(1,0,0))
 ###############################################################
 #READ OBJECTS
 ###############################################################
-info=pd.read_csv(BASE_DIR+"simstars-Oumuamua.csv")
-data=pd.read_csv(BASE_DIR+"simulation-Oumuamua.csv")
+info=pd.read_csv(BASE_DIR+"simstars-%s.csv"%fwanderer)
+data=pd.read_csv(BASE_DIR+"simulation-%s.csv"%fwanderer)
 ntimes=len(data)
 nobjs=int((data.shape[1]-2)/6)
 #print("Ntimes = ",ntimes)
@@ -193,14 +204,14 @@ invisible+=[sunlabel]
 
 oort=sphere(pos=(0,0,0),radius=0.5,opacity=0.20,color=color.blue)
 
-tlabel=label(text="t=-18.04 kyr",
+tlabel=label(text="t=%s"%twanderer,
             align='center',
             pos=(0,scene.center[1]-1*scale,0),
             box=False,opacity=1,height=20)
 
 wanderer=sphere(pos=robjs[1,0,:],radius=0.5*rstar,
                 color=wcolor,make_trail=True,**options)
-olabel=label(pos=wanderer.pos,text="Oumumua",yoffset=+10*rstar,
+olabel=label(pos=wanderer.pos,text=nwanderer,yoffset=+10*rstar,
              color=color.red,opacity=1,box=False)
 invisible+=[olabel]
 
@@ -241,7 +252,7 @@ for i in range(3,nobjs):
 ev=scene.waitfor('keydown')
 
 for inv in invisible:
-    #inv.visible=False
+    inv.visible=False
     pass
 tlabel.opacity=0
 zlabel.opacity=0
@@ -256,11 +267,16 @@ for it,t in enumerate(ts):
     wanderer.pos=pwanderer
 
     #Scene transformation
-    #scene.center=pwanderer
+    scene.center=pwanderer
     view=setView(it,ntimes,
                  phi0=phi0,dphi=dphi,
                  theta0=theta0,dtheta=dtheta,thetamax=thetamax)
     scene.forward=view["forward"]
+
+    #Label location
+    title.pos=scene.center+vector(0,+1*scale,0)
+    zlabel.pos=scene.center+vector(0,-1.2*scale,0)
+    tlabel.pos=scene.center+vector(0,-1*scale,0)
 
     k=0
     for i in range(3,nobjs):
@@ -275,7 +291,7 @@ for it,t in enumerate(ts):
         dstar=np.linalg.norm(pstar-pwanderer)
 
         #Set label
-        """
+        #"""
         if dstar==dmins[k] and dmins[k]<dmax:
             labels[k].opacity=1.0
             labels[k].box=True
@@ -288,7 +304,7 @@ for it,t in enumerate(ts):
             #vicinity.visible=False
             #sleep(1.0)
             labels[k].visible=False
-        """
+        #"""
         
         k+=1
         if i>maxnum:break

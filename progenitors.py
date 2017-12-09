@@ -64,8 +64,12 @@ for index in progsort.index:
     else:sid="HIP "+str(int(p.hip))
     
     bf="";mbf=""
+
     if p.Psurmed!=0:
-        if np.log10(p.Psurmed)<-10:continue
+        if np.log10(p.Psurmed)<-20:continue
+    else:
+        continue
+    print(p.Psurmed)
     
     simbad=str(p.name_simbad).replace('nan','--').replace('_',' ')
     if simbad!="--":

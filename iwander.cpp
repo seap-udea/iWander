@@ -1062,12 +1062,14 @@ int parseLine(char line[],char** cols,int *ncols,char sep[]=",")
   for details
  */
 //TRUNCATION RADIUS OF THE SOLAR SYSTEM
-#define RTRUNC 1E5 //AU
+#define RTRUNC 1E4 //AU
 //GIVEN BY https://ui.adsabs.harvard.edu/#abs/2009ApJ…692.1075G/abstract
-#define ROSUN 8.3E3 //PC
+//REPLACED BY https://academic.oup.com/mnras/article-abstract/465/1/472/2417491?redirectedFrom=PDF
+#define ROSUN 8.2E3 //PC
 //#define ROSUN 8.0E3 //PC
 //GIVEN BY https://ui.adsabs.harvard.edu/#abs/2001ApJ…553..184C/abstract
-#define ZSUN 27.0 //PC, 
+//REPLACED BY: https://academic.oup.com/mnras/article-abstract/465/1/472/2417491?redirectedFrom=PDF
+#define ZSUN 17.0 //PC, 
 //#define ZSUN 10.0 //PC, 
 #define PHISUN 0.0 //DEG
 //GIVEN BY: https://ui.adsabs.harvard.edu/#abs/2010MNRAS.403.1829S/abstract

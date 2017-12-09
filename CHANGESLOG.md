@@ -53,3 +53,6 @@ package:
 * We have added a new program to the package: ``reconstruct.cpp``.
   This program reconstruct the trajectories of the test particles and
   the progenitor candidates.
+
+* The latest JPL solution for the Oumumua orbit in the Solar System
+  has been included.

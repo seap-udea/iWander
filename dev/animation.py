@@ -15,9 +15,11 @@ ETAGC=58.5986320306
 #SCENE PROPERTIES
 scale=200.0 #PC
 srange=2*scale #PC
-rstar=scale/100.0 #PC
+rstar=scale/150.0 #PC
 axradius=1
 retain=1e100
+
+wcolor=color.yellow
 
 #VIEW PARAMETERS
 phi0=radians(165.0)
@@ -35,15 +37,15 @@ mopacity=1.0
 options=dict(q5retain=500)
 
 #SHOW NO SHOW
-qaxis=0
+qaxis=1
 
 #NUMBER OF OBJECTS
-maxnum=200
+maxnum=1
 
 #ANIMATION
 twait=1.0
 trate=100
-dmax=5.0
+dmax=3.0
 
 #FONT
 font="monospace"
@@ -97,6 +99,9 @@ class star(object):
     def set_radius(self,radius):
         for i,s in enumerate(self.spheres):
             s.radius=self.rlayers[i]*radius
+    def set_color(self,color):
+        for i,s in enumerate(self.spheres):
+            s.color=color
     def set_opacity(self,opacity):
         for i,s in enumerate(self.spheres):
             s.opacity=opacity/self.olayers[i]
@@ -114,11 +119,12 @@ scene = display(title='Interstellar Simulation',
                 ambient=color.gray(0.5),
                 lights=[]
                 )
-label(text="Zuluaga et al. (2017) [arXiv:1711.09397]",
+zlabel=label(text="Zuluaga et al. (2017) [arXiv:1711.09397]",
       align='center',
       pos=(0,scene.center[1]-1.2*scale,0),
-      box=False,opacity=0,)
+      box=False,opacity=1)
 
+invisible=[]
 
 tsize=scale/10
 
@@ -127,31 +133,24 @@ title=label(text="Oumuamua galactic adventure",
             pos=(0,scene.center[1]+scale,0),
             box=False,opacity=0,height=50)
 
-"""
-title=text(text="Oumuamua galactic adventure",
-           align='center',pos=(0,scene.center[1]+scale,0),
-           width=tsize,height=tsize,depth=tsize/10,spacing=0.08,
-           font=font,
-           color=color.white)
-title.rotate(angle=np.pi/2-view["phi"],origin=title.pos,axis=(0,1,0))
-"""
-
 ###############################################################
 #AXIS AND SCALES
 ###############################################################
 if qaxis:
-    xaxis=cylinder(pos=(0,0,0),axis=(scale,0,0),radius=axradius)
-    xaxis=cylinder(pos=(0,0,0),axis=(-scale,0,0),radius=axradius)
-    label(text='x',align='center',pos=(scale,0,0),box=False,opacity=0)
-    yaxis=cylinder(pos=(0,0,0),axis=(0,scale,0),radius=axradius)
-    yaxis=cylinder(pos=(0,0,0),axis=(0,-scale,0),radius=axradius)
-    label(text='y',align='center',pos=(0,scale,0),box=False,opacity=0)
-    zaxis=cylinder(pos=(0,0,0),axis=(0,0,scale),radius=axradius)
-    zaxis=cylinder(pos=(0,0,0),axis=(0,0,-scale),radius=axradius)
-    label(text='z',align='center',pos=(0,0,scale),box=False,opacity=0)
-
-    for r in np.arange(10,srange,50):
-        circle(r=r,lw=scale/500)
+    xaxis1=cylinder(pos=(0,0,0),axis=(scale,0,0),radius=axradius)
+    xaxis2=cylinder(pos=(0,0,0),axis=(-scale,0,0),radius=axradius)
+    xl=label(text='x',align='center',pos=(scale,0,0),box=False,opacity=0)
+    yaxis1=cylinder(pos=(0,0,0),axis=(0,scale,0),radius=axradius)
+    yaxis2=cylinder(pos=(0,0,0),axis=(0,-scale,0),radius=axradius)
+    zl=label(text='z',align='center',pos=(0,scale,0),box=False,opacity=0)
+    zaxis1=cylinder(pos=(0,0,0),axis=(0,0,scale),radius=axradius)
+    zaxis2=cylinder(pos=(0,0,0),axis=(0,0,-scale),radius=axradius)
+    yl=label(text='y',align='center',pos=(0,0,+scale),box=False,opacity=0)
+    invisible+=[xaxis1,xaxis2,yaxis1,yaxis2,zaxis1,zaxis2,xl,yl,zl]
+    
+    for r in np.arange(10,scale,50):
+        c=circle(r=r,lw=scale/500)
+        invisible+=[c]
 
 ###############################################################
 #MILKYWAY BACKGROUND
@@ -177,9 +176,9 @@ robjs=np.zeros((nobjs,ntimes,3))
 for i in range(nobjs):
     if i==2:continue
     pref="x%d"%i
-    robjs[i]=np.vstack((data["%s_0"%pref].values,
-                        data["%s_1"%pref].values,
-                        data["%s_2"%pref].values)).transpose()
+    robjs[i]=np.vstack((+data["%s_0"%pref].values,
+                        +data["%s_2"%pref].values,
+                        +data["%s_1"%pref].values)).transpose()
 rsuns=robjs[0]
 rnoms=robjs[1]
 
@@ -189,27 +188,21 @@ rnoms=robjs[1]
 #GET THE RANGES
 sun=star(pos=(0,0,0),radius=2*rstar)
 sunlabel=label(pos=(0,0,0),text="The Solar System",yoffset=-10*rstar,
-             color=color.yellow,opacity=0)
+             color=color.yellow,opacity=1,box=False)
+invisible+=[sunlabel]
 
 oort=sphere(pos=(0,0,0),radius=0.5,opacity=0.20,color=color.blue)
 
 tlabel=label(text="t=-18.04 kyr",
             align='center',
             pos=(0,scene.center[1]-1*scale,0),
-            box=False,opacity=0,height=20)
-"""
-tlabel=text(text="t=18.07 kyr",
-            align='center',pos=(0,scene.center[1]-1.0*scale,0),
-            width=tsize,height=tsize,depth=tsize/10,spacing=0.08,
-            font=font,
-            color=color.white)
-tlabel.rotate(angle=np.pi/2-view["phi"],origin=title.pos,axis=(0,1,0))
-"""
+            box=False,opacity=1,height=20)
 
 wanderer=sphere(pos=robjs[1,0,:],radius=0.5*rstar,
-                color=color.red,make_trail=True,**options)
-olabel=label(pos=(0,0,0),text="Oumumua",yoffset=+10*rstar,
-             color=color.red,opacity=0)
+                color=wcolor,make_trail=True,**options)
+olabel=label(pos=wanderer.pos,text="Oumumua",yoffset=+10*rstar,
+             color=color.red,opacity=1,box=False)
+invisible+=[olabel]
 
 stars=[]
 labels=[]
@@ -218,7 +211,7 @@ dmins=[]
 k=0
 for i in range(3,nobjs):
     stars+=[star(pos=robjs[i,0,:],radius=rstar,color=color.white)]
-    labels+=[label(pos=robjs[i,0,:],text="",xoffset=-5*rstar,line=0,box=False,opacity=0.0)]
+    labels+=[label(pos=robjs[i,0,:],text="",height=14,xoffset=-5*rstar,line=0,box=False,opacity=0.0)]
     
     #Get minimum distances
     dmin=min([np.linalg.norm(robjs[i,it,:]-robjs[1,it,:]) for it in range(len(ts))])
@@ -246,8 +239,12 @@ for i in range(3,nobjs):
 ###############################################################
 #Wait for starting
 ev=scene.waitfor('keydown')
-sunlabel.visible=False
-olabel.visible=False
+
+for inv in invisible:
+    #inv.visible=False
+    pass
+tlabel.opacity=0
+zlabel.opacity=0
 
 oldphi=view["phi"]
 for it,t in enumerate(ts):
@@ -264,13 +261,7 @@ for it,t in enumerate(ts):
                  phi0=phi0,dphi=dphi,
                  theta0=theta0,dtheta=dtheta,thetamax=thetamax)
     scene.forward=view["forward"]
-    deltaphi=view["phi"]-oldphi
-    """
-    for vlabel in title,tlabel:
-        vlabel.rotate(angle=-deltaphi,origin=title.pos,axis=(0,1,0))
-        """
-    oldphi=view["phi"]
-    
+
     k=0
     for i in range(3,nobjs):
         
@@ -284,17 +275,20 @@ for it,t in enumerate(ts):
         dstar=np.linalg.norm(pstar-pwanderer)
 
         #Set label
+        """
         if dstar==dmins[k] and dmins[k]<dmax:
             labels[k].opacity=1.0
             labels[k].box=True
-            labels[k].text=slabels[k]+", d=%.1f"%dmins[k]
+            labels[k].text=slabels[k]+", d=%.1f pc"%dmins[k]
             labels[k].pos=pstar
-            stars[k].setp("color","color.red")
-            vicinity=sphere(pos=pstar,radius=dmins[k],color=color.red,
+            stars[k].set_color(wcolor)
+            vicinity=sphere(pos=pstar,radius=dmins[k],color=wcolor,
                             opacity=0.3)
             ev=scene.waitfor('keydown')
             #vicinity.visible=False
+            #sleep(1.0)
             labels[k].visible=False
+        """
         
         k+=1
         if i>maxnum:break

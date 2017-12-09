@@ -55,9 +55,10 @@ package:
   the progenitor candidates.
 
 * The latest JPL solution for the Oumumua orbit in the Solar System
-  has been included.
+  (JPL-13 orbit) has been included.
 
 * The solar galactocentric distance and its height above the mid
   galactic plane has been changed to updated values of RSUN = 8.2 kpc
   and ZSUN = 17 pc (Karim & Mamajek, 2016).
 
+* The truncation radius has been reduced to 10^4 AU.

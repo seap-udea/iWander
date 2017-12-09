@@ -69,7 +69,6 @@ for index in progsort.index:
         if np.log10(p.Psurmed)<-20:continue
     else:
         continue
-    print(p.Psurmed)
     
     simbad=str(p.name_simbad).replace('nan','--').replace('_',' ')
     if simbad!="--":

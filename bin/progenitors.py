@@ -34,7 +34,12 @@ else:
 ############################################################
 #LOAD PROGENITORS
 ############################################################
-progenitors=pd.read_csv("progenitors-%s.csv"%conf["WANDERER"])
+try:
+    progenitors=pd.read_csv("scratch/progenitors-%s.csv"%conf["WANDERER"])
+except FileNotFoundError:
+    print("No analysis has been found for wanderer %s"%conf["WANDERER"])
+    exit(1)
+
 print("Number of progenitors:",len(progenitors))
 
 #SELECT COLUMNS
@@ -43,7 +48,7 @@ sorting=conf["Sorting"].split(",")
 progsort=progenitors.sort_values(by=sorting[0],ascending=eval(sorting[1]))
 
 # MD Table
-f=open("CANDIDATES-%s-%s.md"%(conf["WANDERER"],suffix),"w")
+f=open("scratch/CANDIDATES-%s-%s.md"%(conf["WANDERER"],suffix),"w")
 f.write("""# %s of %s
 
 [![arXiv](http://img.shields.io/badge/arXiv-1711.09397-orange.svg?style=flat)](http://arxiv.org/abs/1711.09397)

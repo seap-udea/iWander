@@ -18,6 +18,16 @@ test:
 	@make .test.exe 
 	@echo "It works!"
 
+all:
+	@echo "Compiling main programs..."
+	for program in $(PROGRAMS);do make $$program.exe;done
+
+analysis:all
+	./wanderer.exe
+	./encounters.exe
+	./probability.exe
+	$(PYTHON) bin/progenitors.py
+
 branch:
 	@echo $(BRANCH)
 
@@ -40,16 +50,6 @@ clean:cleancrap cleanexe
 	@rm -rf *.png *.dat
 
 cleanall:clean cleandata
-
-all:
-	@echo "Compiling main programs..."
-	for program in $(PROGRAMS);do make $$program.exe;done
-
-analysis:all
-	./wanderer.exe
-	./encounters.exe
-	./probability.exe
-	$(PYTHON) bin/progenitors.py
 
 %.exe:%.opp
 	$(CPP) $^ $(LFLAGS) -o $@

@@ -74,3 +74,4 @@ Paper revision 1 version
 * Configuration files for several objects has been added in the
   directory objects.  In the same directory the CANDIDATES tables will
   be stored.
+

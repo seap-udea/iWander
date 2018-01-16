@@ -14,14 +14,14 @@ from collections import OrderedDict
 try:
     short=argv[1]
     body=argv[2]
-    jplfile="%s.jpl"%short
+    jplfile="objects/%s.jpl"%short
 except:
     print("You must provide a short and a long object name:")
     print("\tOumuamua \"1I/2017 U1 ('Oumuamua)\"")
     exit(1)
 
 if not os.path.isfile(jplfile):
-    print("You must first prepare the JPL file '%s' for object:"%jplfile)
+    print("You must first prepare the JPL file 'objects/%s' for object:"%jplfile)
     print(copy)
     exit(2)
 
@@ -137,7 +137,7 @@ for prop in "e","q","tp","node","peri","i":
 lines=lines.strip(",")
 lines+="};"
 
-fconf="%s.conf"%short
+fconf="objects/%s.conf"%short
 print("Configuration file '%s' written"%fconf)
 f=open(fconf,"w")
 f.write(lines)

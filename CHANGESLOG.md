@@ -12,8 +12,7 @@ ones in the available versions of the manuscript.
 
 ### v0.1
 
-
-Initial version.
+This is the initial version.
 
 ### v0.2
 
@@ -62,3 +61,13 @@ package:
   and ZSUN = 17 pc (Karim & Mamajek, 2016).
 
 * The truncation radius has been reduced to 10^4 AU.
+
+### v0.3
+
+Paper revision 1 version
+
+* A new script intended to create the configuration file for a given
+  object has been developed. The script is called JPL2iWander.py. A
+  file called "<object>.jpl" must be provided and the script convert
+  it to an "<object>.conf" file that is load in wanderer.conf.
+

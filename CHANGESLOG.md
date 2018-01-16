@@ -64,7 +64,7 @@ package:
 
 ### v0.3
 
-Paper revision 1 version
+Version published after revision 1 of the paper:
 
 * A new script intended to create the configuration file for a given
   object has been developed. The script is called JPL2iWander.py. A

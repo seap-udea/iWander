@@ -144,7 +144,7 @@ Optionally you can:
    minimum distance:
 
    ```  
-   python3 progenitors.py
+   python3 bin/progenitors.py
    ```  
 
 Structure of the package

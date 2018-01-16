@@ -75,3 +75,4 @@ Version published after revision 1 of the paper:
   directory objects.  In the same directory the CANDIDATES tables will
   be stored.
 
+* Now all output files are redirected to scratch dir.

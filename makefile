@@ -1,3 +1,15 @@
+#########################################################
+#    _ _       __                __         		#
+#   (_) |     / /___ _____  ____/ /__  _____		#
+#  / /| | /| / / __ `/ __ \/ __  / _ \/ ___/		#
+# / / | |/ |/ / /_/ / / / / /_/ /  __/ /    		#
+#/_/  |__/|__/\__,_/_/ /_/\__,_/\___/_/     		#
+# Dynamics of Interestellar Wanderers			#
+# Jorge I. Zuluaga et al. [)] 2017			#
+# http://github.com/seap-udea/iWander.git		#
+#########################################################
+# Makefile
+#########################################################
 include compiler.in
 BRANCH=$(shell bash .getbranch)
 PROGRAMS=wanderer encounters probability
@@ -37,7 +49,7 @@ analysis:all
 	./wanderer.exe
 	./encounters.exe
 	./probability.exe
-	python3 progenitors.py
+	$(PYTHON) bin/progenitors.py
 
 %.exe:%.opp
 	$(CPP) $^ $(LFLAGS) -o $@

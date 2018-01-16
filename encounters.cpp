@@ -1,3 +1,17 @@
+/*
+#########################################################
+#    _ _       __                __         		#
+#   (_) |     / /___ _____  ____/ /__  _____		#
+#  / /| | /| / / __ `/ __ \/ __  / _ \/ ___/		#
+# / / | |/ |/ / /_/ / / / / /_/ /  __/ /    		#
+#/_/  |__/|__/\__,_/_/ /_/\__,_/\___/_/     		#
+# Dynamics of Interestellar Wanderers			#
+# Jorge I. Zuluaga et al. [)] 2017			#
+# http://github.com/seap-udea/iWander.git		#
+#########################################################
+# Compute encounters
+#########################################################
+*/
 #include <iwander.cpp>
 using namespace std;
 #define VERBOSE 0
@@ -103,7 +117,7 @@ int main(int argc,char* argv[])
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   //READING WANDERERS
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  sprintf(Filename,"wanderer-%s.csv",WANDERER);
+  sprintf(Filename,"scratch/wanderer-%s.csv",WANDERER);
   FILE *fc=fopen(Filename,"r");
 
   if(fc==NULL){
@@ -137,10 +151,10 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   fc=fopen("db/src/AstroRV.csv","r");
 
-  sprintf(Filename,"encounters-%s.csv",WANDERER);
+  sprintf(Filename,"scratch/encounters-%s.csv",WANDERER);
   FILE* fe=fopen(Filename,"w");
 
-  sprintf(Filename,"candidates-%s.csv",WANDERER);
+  sprintf(Filename,"scratch/candidates-%s.csv",WANDERER);
   FILE* fg=fopen(Filename,"w");
 
   //READING HEADER

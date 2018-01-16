@@ -71,3 +71,6 @@ Paper revision 1 version
   file called "<object>.jpl" must be provided and the script convert
   it to an "<object>.conf" file that is load in wanderer.conf.
 
+* Configuration files for several objects has been added in the
+  directory objects.  In the same directory the CANDIDATES tables will
+  be stored.

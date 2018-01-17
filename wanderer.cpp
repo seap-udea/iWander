@@ -51,10 +51,16 @@ int main(int argc,char* argv[])
 	  14-19:Cartesian position at ingress wrt. Ecliptic J2000
 	  20-25:Cartesian position at ingress wrt. J2000
 	  26-31:Cartesian position at ingress wrt. Galactic
-	  32:Radiant at ingress RA(h) (terminal)
-	  33:Radiant at ingress DEC(deg)
+	  32:Radiant at ingress RA(h) 
+	  33:Radiant at ingress DEC (deg)
 	  34:Radiant at ingress l(deg)
 	  35:Radiant at ingress b(deg)
+
+     * ingress.dat: a summary of the ingress orbit properties
+       including the epoch of asymptotic elements and their covariance
+       matrix, the time of ingress, the radiant and velocity at
+       ingress.
+
   */
 
   ////////////////////////////////////////////////////
@@ -90,7 +96,8 @@ int main(int argc,char* argv[])
   double X0[6],X[6],Xu[6],as,tdyn;
   //ELEMENTS
   double elts[8];
-  double ds,dp,Xref[6],Xdif[6],Ndisp=50,dpasymp,elemasymp[8];
+  int Ndisp=50,Ncov=500;
+  double ds,dp,Xref[6],Xdif[6],dpasymp,elemasymp[8];
   double tdur,dtdur,X0s[6],Xend[6],tfut,durasymp,dasymp,tasymp,dtasymp;
   double during,durold,ting,ding,dold,vasymp;
   char filename[100];
@@ -142,11 +149,24 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   pxform_c("ECLIPJ2000","GALACTIC",t,M_Eclip_Galactic);
   pxform_c("ECLIPJ2000","J2000",0,M_Eclip_J2000);
-
+  sprintf(Filename,"scratch/ingress-%s.dat",WANDERER);
+  FILE* fi=fopen(Filename,"w");
+  fprintf(fi,"Epoch=%.1f\n",ini_to_jed);
+  fprintf(fi,"Epoch_Date='%s'\n",ini_to_date);
+  fprintf(fi,"Reference='%s'\n",reference_solution);
+  fprintf(fi,"truncation=%.1e\n",truncation/AU);
+  fprintf(fi,"q_nom=%.17e\n",ini_q);
+  fprintf(fi,"e_nom=%.17e\n",ini_e);
+  fprintf(fi,"i_nom=%.17e\n",ini_i);
+  fprintf(fi,"W_nom=%.17e\n",ini_W);
+  fprintf(fi,"w_nom=%.17e\n",ini_w);
+  fprintf(fi,"M_nom=%.17e\n",ini_M);
+  fprintf(fi,"mu_nom=%.17e\n",mu);
+  
   ////////////////////////////////////////////////////
   //DISPERSION OF SURROGATE OBJECTS IN THE FUTURE
   ////////////////////////////////////////////////////
-  printHeader(stdout,"COMPUTING ASYMPTOTIC ELEMENTS");
+  printHeader(stdout,"COMPUTING ERROR IN ELEMENTS");
   for(int j=0;j<=Ndisp+1;j++){
     if(j>0){
       if(qdiagonal) gsl_matrix_memcpy(L,D);
@@ -173,7 +193,7 @@ int main(int argc,char* argv[])
       /*M=*/elements[5]=ini_M*DEG;
       /*to=*/elements[6]=to;
       /*mu=*/elements[7]=mu;
-    }      
+    }
     conics_c(elements,to,position);
     spkezr_c("SUN",to,"ECLIPJ2000","NONE",SSB,sun,&ltmp);
     vaddg_c(position,sun,6,position);
@@ -193,7 +213,10 @@ int main(int argc,char* argv[])
   }
   ds/=Ndisp;
   ds*=1e3/AU;//AVERAGE DISTANCE IN AU
-  fprintf(stdout,"Average distance between surrograte at (t = %e, d = %e): %e AU\n",duration*UT/YEAR,vnorm_c(Xu)*1e3/AU,ds);
+  fprintf(stdout,"Typical size of the cloud at (t = %e, d = %e): %e AU\n",duration*UT/YEAR,vnorm_c(Xu)*1e3/AU,2*ds);
+  fprintf(fi,"t_test=%.17e\n",duration*UT/YEAR);
+  fprintf(fi,"d_test=%.17e\n",vnorm_c(Xu)*1e3/AU);
+  fprintf(fi,"dr_test=%.17e\n",2*ds);
 
   //DATE
   tend=tini+duration*UT;
@@ -227,7 +250,6 @@ int main(int argc,char* argv[])
   dtdur=0.05*YEAR;
   copyVec(X0s,X0,6);
 
-  //for(tdur=-0.01*YEAR;tdur>=duration*UT;tdur-=dtdur){
   tdur=direction*0.01*YEAR;
   do{
     VPRINT(stdout,"Dur.=%e\n",tdur/YEAR);
@@ -269,6 +291,111 @@ int main(int argc,char* argv[])
 	  elemasymp[3]*RAD,elemasymp[4]*RAD,elemasymp[5]*RAD,
 	  unitim_c(elemasymp[6],"TDB","JDTDB"),elemasymp[7]);
 
+  fprintf(fi,"dt_asy=%.17e\n",durasymp/YEAR);
+  fprintf(fi,"q_asy=%.17e\n",elemasymp[0]*1e3/AU);
+  fprintf(fi,"e_asy=%.17e\n",elemasymp[1]);
+  fprintf(fi,"i_asy=%.17e\n",elemasymp[2]*RAD);
+  fprintf(fi,"W_asy=%.17e\n",elemasymp[3]*RAD);
+  fprintf(fi,"w_asy=%.17e\n",elemasymp[4]*RAD);
+  fprintf(fi,"M_asy=%.17e\n",elemasymp[5]*RAD);
+  fprintf(fi,"mu_asy=%.17e\n",elemasymp[7]);
+  fprintf(fi,"t_asy=%.17e\n",unitim_c(elemasymp[6],"TDB","JDTDB"));
+  fprintf(fi,"date_asy='%s'\n",dend);
+
+  ////////////////////////////////////////////////////
+  //COMPUTE ERROR OF ASYMPTOTIC ELEMENTS
+  ////////////////////////////////////////////////////
+  fprintf(stdout,"Calculating elements at t = %f\n",durasymp/YEAR);
+  double qs[Ncov],es[Ncov],tps[Ncov],Ws[Ncov],ws[Ncov],is[Ncov];
+  for(int j=0;j<=Ncov+1;j++){
+
+    if(qdiagonal) gsl_matrix_memcpy(L,D);
+    else gsl_matrix_memcpy(L,Lo);
+    gsl_linalg_cholesky_decomp1(L);
+    gsl_ran_multivariate_gaussian(RAND,ielements,L,relements);
+    n=ini_n+gsl_ran_gaussian(RAND,ini_dn);
+    tp=gsl_vector_get(relements,2);
+    Mo=n*(ini_to_jed-tp);
+    /*q=*/elements[0]=gsl_vector_get(relements,1)*AU/1e3;
+    /*e=*/elements[1]=gsl_vector_get(relements,0);
+    /*i=*/elements[2]=gsl_vector_get(relements,5)*DEG;
+    /*W=*/elements[3]=gsl_vector_get(relements,3)*DEG;
+    /*w=*/elements[4]=gsl_vector_get(relements,4)*DEG;
+    /*M=*/elements[5]=Mo*DEG;
+    /*to=*/elements[6]=to;
+    /*mu=*/elements[7]=mu;
+
+    /*
+    //Uncomment if you want to check covariance computation
+    qs[j]=elements[0]*1e3/AU;
+    es[j]=elements[1];
+    tps[j]=tp;
+    is[j]=elements[2]*RAD;
+    Ws[j]=elements[3]*RAD;
+    ws[j]=elements[4]*RAD;
+    */
+
+    conics_c(elements,to,position);
+    spkezr_c("SUN",to,"ECLIPJ2000","NONE",SSB,sun,&ltmp);
+    vaddg_c(position,sun,6,position);
+    vpack_c(position[0]*1E3/UL,position[1]*1E3/UL,position[2]*1E3/UL,X0);
+    vpack_c(position[3]*1E3/UV,position[4]*1E3/UV,position[5]*1E3/UV,X0+3);
+    as=vnorm_c(X0);
+    tdyn=2*M_PI*sqrt(as*as*as/(GGLOBAL*MSUN/UM));
+    h=tdyn/1000.0;
+    integrateEoM(tini/UT,X0,h,npoints,durasymp/UT,6,EoM,params,ts,Xout);
+    vscl_c(UL/1E3,Xout[1],Xu);vscl_c(UV/1E3,Xout[1]+3,Xu+3);
+
+    //CALCULATE ELEMENTS
+    oscelt_c(Xu,to*DAY,munom,elts);
+    qs[j]=elts[0]*1e3/AU;
+    es[j]=elts[1];
+    is[j]=elts[2]*RAD;
+    Ws[j]=elts[3]*RAD;
+    ws[j]=elts[4]*RAD;
+
+    //Compute tp
+    a=qs[j]*AU/1e3/(es[j]-1);//km
+    n=sqrt(munom/(a*a*a))*RAD*DAY;//deg/day
+    Mo=elts[5]*RAD;
+    tp=ini_to_jed+durasymp/DAY-Mo/n;
+    tps[j]=tp;
+    
+    if(j==0){
+      copyVec(Xref,Xu,6);
+    }else{
+      vsub_c(Xref,Xu,Xdif);
+      ds+=vnorm_c(Xdif);
+    }
+  }
+  ds/=Ncov;
+  ds*=1e3/AU;//AVERAGE DISTANCE IN AU
+  fprintf(stdout,"Typical size of the cloud at asymptotic time: %e\n",2*ds);
+
+  //Compute covariances
+  fprintf(fi,"#actual covariance and original covariance\n");
+  fprintf(fi,"cov_ee=%.17e,%.17e\n",gsl_stats_covariance(es,1,es,1,Ncov),ini_cov[0][0]);
+  fprintf(fi,"cov_eq=%.17e,%.17e\n",gsl_stats_covariance(es,1,qs,1,Ncov),ini_cov[0][1]);
+  fprintf(fi,"cov_et=%.17e,%.17e\n",gsl_stats_covariance(es,1,tps,1,Ncov),ini_cov[0][2]);
+  fprintf(fi,"cov_eW=%.17e,%.17e\n",gsl_stats_covariance(es,1,Ws,1,Ncov),ini_cov[0][3]);
+  fprintf(fi,"cov_ew=%.17e,%.17e\n",gsl_stats_covariance(es,1,ws,1,Ncov),ini_cov[0][4]);
+  fprintf(fi,"cov_ei=%.17e,%.17e\n",gsl_stats_covariance(es,1,is,1,Ncov),ini_cov[0][5]);
+  fprintf(fi,"cov_qq=%.17e,%.17e\n",gsl_stats_covariance(qs,1,qs,1,Ncov),ini_cov[1][1]);
+  fprintf(fi,"cov_qt=%.17e,%.17e\n",gsl_stats_covariance(qs,1,tps,1,Ncov),ini_cov[1][2]);
+  fprintf(fi,"cov_qW=%.17e,%.17e\n",gsl_stats_covariance(qs,1,Ws,1,Ncov),ini_cov[1][3]);
+  fprintf(fi,"cov_qw=%.17e,%.17e\n",gsl_stats_covariance(qs,1,ws,1,Ncov),ini_cov[1][4]);
+  fprintf(fi,"cov_qi=%.17e,%.17e\n",gsl_stats_covariance(qs,1,is,1,Ncov),ini_cov[1][5]);
+  fprintf(fi,"cov_tt=%.17e,%.17e\n",gsl_stats_covariance(tps,1,tps,1,Ncov),ini_cov[2][2]);
+  fprintf(fi,"cov_tW=%.17e,%.17e\n",gsl_stats_covariance(tps,1,Ws,1,Ncov),ini_cov[2][3]);
+  fprintf(fi,"cov_tw=%.17e,%.17e\n",gsl_stats_covariance(tps,1,ws,1,Ncov),ini_cov[2][4]);
+  fprintf(fi,"cov_ti=%.17e,%.17e\n",gsl_stats_covariance(tps,1,is,1,Ncov),ini_cov[2][5]);
+  fprintf(fi,"cov_WW=%.17e,%.17e\n",gsl_stats_covariance(Ws,1,Ws,1,Ncov),ini_cov[3][3]);
+  fprintf(fi,"cov_Ww=%.17e,%.17e\n",gsl_stats_covariance(Ws,1,ws,1,Ncov),ini_cov[3][4]);
+  fprintf(fi,"cov_Wi=%.17e,%.17e\n",gsl_stats_covariance(Ws,1,is,1,Ncov),ini_cov[3][5]);
+  fprintf(fi,"cov_ww=%.17e,%.17e\n",gsl_stats_covariance(ws,1,ws,1,Ncov),ini_cov[4][4]);
+  fprintf(fi,"cov_wi=%.17e,%.17e\n",gsl_stats_covariance(ws,1,is,1,Ncov),ini_cov[4][5]);
+  fprintf(fi,"cov_ii=%.17e,%.17e\n",gsl_stats_covariance(is,1,is,1,Ncov),ini_cov[5][5]);
+
   ////////////////////////////////////////////////////
   //COMPUTE INGRESS TIME OF NOMINAL OBJECT
   ////////////////////////////////////////////////////
@@ -290,7 +417,69 @@ int main(int argc,char* argv[])
   }
   during=durold+(during-durold)/(ding-dold)*(truncation/1e3-dold);
   fprintf(stdout,"Time of ingress: %e\n",during/YEAR);
+  fprintf(fi,"t_ing=%.17e\n",during/YEAR);
+
+  //COMPUTING THE HELIOCENTRIC ACCELERATION
+  conics_c(elemasymp,elemasymp[6]-during,Xend);
+  double accel[6],accel_sun[6];
+  spkezr_c("SUN",to,"ECLIPJ2000","NONE",SSB,sun,&ltmp);
+  vaddg_c(Xend,sun,6,position);
+  vpack_c(position[0]*1E3/UL,position[1]*1E3/UL,position[2]*1E3/UL,X0);
+  vpack_c(position[3]*1E3/UV,position[4]*1E3/UV,position[5]*1E3/UV,X0+3);
+  EoM(0,X0,accel,params);
+  vscl_c(UL/(UT*UT),accel+3,accel+3);
+  fprintf(stdout,"Heliocentric acceleration at ingress (m/s^2): %s\n",
+	  vec2strn(accel+3,3,"%.5e "));
+
+  double asun=vnorm_c(accel+3);
+  fprintf(stdout,"Magnitude of the heliocentric acceleration of the object (m/s^2): %e\n",
+	  asun);
+
+  //COMPUTING GALACTIC ACCELERATION
+  double ul=UL,um=UM,ut=UT,uv=UV,gglobal=GGLOBAL;
+  UL=PARSEC;UM=MSUN;UT=YEAR;UV=UL/UT;GCONST/(UL*UL*UL/(UM*UT*UT));
+
+  //OBJECT
+  mxv_c(M_Eclip_Galactic,Xend,posGalactic);
+  mxv_c(M_Eclip_Galactic,Xend+3,posGalactic+3);
+  LSR2GC(posGalactic,Xend);
+  vscl_c(1e3/UL,Xend,Xend);//SET UNITS
+  vscl_c(1e3/UV,Xend+3,Xend+3);
+  cart2polar(Xend,X0,1.0);
+  EoMGalactic(0,X0,accel,params);
+  vscl_c(UL/(UT*UT),accel+3,accel+3);
   
+  fprintf(stdout,"Galactocentric acceleration of the Object (m/s^2): %s\n",
+	  vec2strn(accel+3,3,"%.5e "));
+
+  //SUN
+  double Xsun[]={0,0,0,0,0,0};
+  mxv_c(M_Eclip_Galactic,Xsun,posGalactic);
+  mxv_c(M_Eclip_Galactic,Xsun+3,posGalactic+3);
+  LSR2GC(posGalactic,Xend);
+  vscl_c(1e3/UL,Xend,Xend);//SET UNITS
+  vscl_c(1e3/UV,Xend+3,Xend+3);
+  cart2polar(Xend,X0,1.0);
+  EoMGalactic(0,X0,accel_sun,params);
+  vscl_c(UL/(UT*UT),accel_sun+3,accel_sun+3);
+
+  fprintf(stdout,"Galactocentric acceleration of the Sun (m/s^2): %s\n",
+	  vec2strn(accel_sun+3,3,"%.5e "));
+
+  //Galactic acceleration of the object respect to the Sun
+  vsub_c(accel+3,accel_sun+3,accel+3);
+  fprintf(stdout,"Galactic acceleration of the object respect to the Sun (galactic coordinates) (m/s^2): %s\n",
+	  vec2strn(accel+3,3,"%.5e "));
+
+  double agal=vnorm_c(accel+3);
+  fprintf(stdout,"Magnitude of the galactic acceleration of the object respect to the Sun (m/s^2): %e\n",
+	  agal);
+  
+  fprintf(stdout,"Ratio Sun/Gal (>1 still in Solar System) = %e\n",asun/agal);
+
+  //RECOVERING ORIGINAL UNITS
+  UL=ul;UM=um;UT=ut;UV=uv;GGLOBAL=gglobal;
+
   ////////////////////////////////////////////////////
   //COMPUTE POSITION AT INGRESS
   ////////////////////////////////////////////////////
@@ -438,6 +627,7 @@ int main(int argc,char* argv[])
     fprintf(fc,"\n");
   }
   fclose(fc);
+  fclose(fi);
 
   printHeader(stdout,"DONE.",'!');
 }

@@ -76,3 +76,4 @@ Version published after revision 1 of the paper:
   be stored.
 
 * Now all output files are redirected to scratch dir.
+

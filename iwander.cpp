@@ -25,6 +25,7 @@
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
+#include <gsl/gsl_statistics.h>
 
 //////////////////////////////////////////
 //MACROS
@@ -1062,7 +1063,7 @@ int parseLine(char line[],char** cols,int *ncols,char sep[]=",")
   for details
  */
 //TRUNCATION RADIUS OF THE SOLAR SYSTEM
-#define RTRUNC 1E4 //AU
+#define RTRUNC 5E4 //AU
 //GIVEN BY https://ui.adsabs.harvard.edu/#abs/2009ApJ…692.1075G/abstract
 //REPLACED BY https://academic.oup.com/mnras/article-abstract/465/1/472/2417491?redirectedFrom=PDF
 #define ROSUN 8.2E3 //PC

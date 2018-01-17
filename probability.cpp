@@ -267,9 +267,18 @@ int main(int argc,char* argv[])
     n=Wanderer::XGAL;
     for(int k=0;k<6;k++) x[k]=atof(fields[n++]);
 
+    VPRINT(stdout,"\t\tHeliocentric (km,km/s): %s\n",vec2strn(x,6,"%e "));
+    
     LSR2GC(x,xg);
+
+    VPRINT(stdout,"\t\tGalactocentric (km,km/s): %s\n",vec2strn(xg,6,"%e "));
+
     vscl_c(1e3/UL,xg,xg);//SET UNITS
     vscl_c(1e3/UV,xg+3,xg+3);
+
+
+    VPRINT(stdout,"\t\tGalactocentric (UL,UV): %s\n",vec2strn(xg,6,"%e "));
+
     //CONVERT TO CYLINDRICAL GALACTIC COORDINATES
     cart2polar(xg,xIntp0+ip,1.0);
     copyVec(xIntc0+ip,xIntp0+ip,6);
@@ -283,7 +292,7 @@ int main(int argc,char* argv[])
   fclose(fc);
   copyVec(xnoms0,xIntp0,6);
   VPRINT(stdout,"Initial condition nominal test particle: %s\n",vec2strn(xIntp0,6,"%e "));
-  
+
   ////////////////////////////////////////////////////
   //READ POSTERIOR EJECTION VELOCITY DISTRIBUTION
   ////////////////////////////////////////////////////

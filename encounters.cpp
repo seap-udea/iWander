@@ -14,7 +14,7 @@
 */
 #include <iwander.cpp>
 using namespace std;
-#define VERBOSE 0
+#define VERBOSE 1
 
 int main(int argc,char* argv[])
 {
@@ -201,6 +201,7 @@ int main(int argc,char* argv[])
     //PRIMARY
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //CHECK IF ASTROMETRIC DATA IS AVAILABLE
+    int qhip=0;
     if(fields[Stars::RA][0]!='N'){
       ra=atof(fields[Stars::RA]);dra=atof(fields[Stars::RA_ERROR]);
       dec=atof(fields[Stars::DEC]);ddec=atof(fields[Stars::DEC_ERROR]);
@@ -219,6 +220,7 @@ int main(int argc,char* argv[])
       mudec=atof(fields[Stars::PMDEC_HIP2]);dmudec=atof(fields[Stars::PMDEC_ERROR_HIP2]);
       VPRINT(stdout,"\tHipparcos data for %d %s %s: %e, %e, %e, %e, %e, %e\n",
 	      n,fields[Stars::HIP],fields[Stars::TYCHO2_ID],ra,dec,par,dpar,mura,mudec);
+      qhip=1;
     }else{
       fprintf(stderr,"\tAstrometric data not available for star %d %s %s\n",
 	      n,fields[Stars::HIP],fields[Stars::TYCHO2_ID]);
@@ -386,7 +388,8 @@ int main(int argc,char* argv[])
       Ncand++;
     }
     k++;
-    if(VERBOSE) break;
+    if(qhip && VERBOSE) break;
+    //if(VERBOSE) break;
   }
   fclose(fc);
   fclose(fe);

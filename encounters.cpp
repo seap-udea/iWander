@@ -14,7 +14,7 @@
 */
 #include <iwander.cpp>
 using namespace std;
-#define VERBOSE 1
+#define VERBOSE 0
 
 int main(int argc,char* argv[])
 {
@@ -168,8 +168,18 @@ int main(int argc,char* argv[])
   int Nfreq=10000;
   n=0;
   k=0;
+
+  int qdist;
+  int ndist=0;
+  int nclos=0;
+
+  sprintf(Filename,"scratch/thresholds-%s.csv",WANDERER);
+  FILE* fth=fopen(Filename,"w");
+
+  int Ndir=0;
   while(fscanf(fc,"%s",line)==1){
     strcpy(aline,line);
+    //fprintf(stdout,"%s\n",aline);
 
     if((n%Nfreq)==0){
       fprintf(stdout,"Analysing encounter of star %d...\n",n);
@@ -195,40 +205,25 @@ int main(int argc,char* argv[])
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     VPRINT(stdout,"Star %d, HIP %s, TYC2 %s, HD %s, NAME %s:\n",n,
 	   fields[Stars::HIP],fields[Stars::TYCHO2_ID],
-	   fields[Stars::HENRYDRAPERID_TYC],fields[Stars::NAME_SIMBAD]);
+	   fields[Stars::HENRYDRAPERID],fields[Stars::NAME_SIMBAD]);
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //PRIMARY
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //CHECK IF ASTROMETRIC DATA IS AVAILABLE
     int qhip=0;
-    if(fields[Stars::RA][0]!='N'){
-      ra=atof(fields[Stars::RA]);dra=atof(fields[Stars::RA_ERROR]);
-      dec=atof(fields[Stars::DEC]);ddec=atof(fields[Stars::DEC_ERROR]);
-      par=atof(fields[Stars::PARALLAX]);
-      dpar=atof(fields[Stars::PARALLAX_ERROR]);	     
-      mura=atof(fields[Stars::PMRA]);dmura=atof(fields[Stars::PMRA_ERROR]);
-      mudec=atof(fields[Stars::PMDEC]);dmudec=atof(fields[Stars::PMDEC_ERROR]);
-      VPRINT(stdout,"\tGaia data for %d %s %s: %e, %e, %e, %e, %e, %e\n",
-	      n,fields[Stars::HIP],fields[Stars::TYCHO2_ID],ra,dec,par,dpar,mura,mudec);
-    }else if(fields[Stars::RA_HIP][0]!='N'){
-      ra=atof(fields[Stars::RA_HIP2]);dra=atof(fields[Stars::RA_ERROR_HIP]);
-      dec=atof(fields[Stars::DEC_HIP2]);ddec=atof(fields[Stars::DEC_ERROR_HIP]);
-      par=atof(fields[Stars::PARALLAX_HIP2]);
-      dpar=atof(fields[Stars::PARALLAX_ERROR_HIP2]);	     
-      mura=atof(fields[Stars::PMRA_HIP2]);dmura=atof(fields[Stars::PMRA_ERROR_HIP2]);
-      mudec=atof(fields[Stars::PMDEC_HIP2]);dmudec=atof(fields[Stars::PMDEC_ERROR_HIP2]);
-      VPRINT(stdout,"\tHipparcos data for %d %s %s: %e, %e, %e, %e, %e, %e\n",
-	      n,fields[Stars::HIP],fields[Stars::TYCHO2_ID],ra,dec,par,dpar,mura,mudec);
-      qhip=1;
-    }else{
-      fprintf(stderr,"\tAstrometric data not available for star %d %s %s\n",
-	      n,fields[Stars::HIP],fields[Stars::TYCHO2_ID]);
-      continue;
-    }      
+    ra=atof(fields[Stars::RA]);dra=atof(fields[Stars::RA_ERROR]);
+    dec=atof(fields[Stars::DEC]);ddec=atof(fields[Stars::DEC_ERROR]);
+    par=atof(fields[Stars::PARALLAX]);
+    dpar=atof(fields[Stars::PARALLAX_ERROR]);	     
+    mura=atof(fields[Stars::PMRA]);dmura=atof(fields[Stars::PMRA_ERROR]);
+    mudec=atof(fields[Stars::PMDEC]);dmudec=atof(fields[Stars::PMDEC_ERROR]);
+    VPRINT(stdout,"\tData for %d %s %s: %e, %e, %e, %e, %e, %e\n",
+	   n,fields[Stars::HIP],fields[Stars::TYCHO2_ID],ra,dec,par,dpar,mura,mudec);
+
     //OTHER
     vr=atof(fields[Stars::RV]);
-    dvr=atof(fields[Stars::ERV]);
+    dvr=atof(fields[Stars::E_RV]);
     gmag=atof(fields[Stars::PHOT_G_MEAN_MAG]);
     l=atof(fields[Stars::L]);
     b=atof(fields[Stars::B]);
@@ -376,29 +371,54 @@ int main(int argc,char* argv[])
     fprintf(fe,"\n");
 
     //CONDITION FOR CANDIDATES
-    dthres=d<10*dmax1?0.1*d:dmax1;
-    VPRINT(stdout,"\tDistance threshold (d = %e):%e\n",d,dthres);
-    if(direction*tmin>0 && dmin<=dthres && vrelmag<50.0){
-      fprintf(fg,"%d,",n);
-      fprintf(fg,"%s%s",vec2str(postar,"%.17e,"),vec2str(UVW,"%.17e,"));
-      fprintf(fg,"%.17e,%.17e,%.17e,",d,dmin,tmin);
-      fprintf(fg,"%s%.17e,",vec2str(vrel,"%.17e,"),vrelmag);
-      fprintf(fg,"%s",aline);
-      fprintf(fg,"\n");
-      Ncand++;
+    /*
+    dthres=300.0;
+    if(d<dthres){
+      qdist=0;
+      dthres=0.1*d;
+    }else{
+      qdist=1;
+    }
+    */
+
+    //SIMPLEST THRESHOLD
+    //dthres=0.15*d;
+    
+    //ORIGINAL THRESHOLD (ADAPATED ACCORDING TO DISTANCE)
+    //dthres=d<10*dmax1?0.1*d:dmax1;
+
+    //ADVANCED THRESHOLD
+    dthres=2*(1+10*fabs(tmin)/tRet);
+    dthres=1e5;
+
+    VPRINT(stdout,"\tDistance threshold (tmin = %e, tRet = %e, d = %e):%e\n",tmin,tRet,d,dthres);
+    if(direction*tmin>0){
+      //Stars fullfiling that minimum encounter is in the direction of integration
+      Ndir++;
+      fprintf(fth,"%e %e %e\n",tmin,d,dthres);
+      if(dmin<=dthres && vrelmag<50.0){
+	fprintf(fg,"%d,",n);
+	fprintf(fg,"%s%s",vec2str(postar,"%.17e,"),vec2str(UVW,"%.17e,"));
+	fprintf(fg,"%.17e,%.17e,%.17e,",d,dmin,tmin);
+	fprintf(fg,"%s%.17e,",vec2str(vrel,"%.17e,"),vrelmag);
+	fprintf(fg,"%s",aline);
+	fprintf(fg,"\n");
+	Ncand++;
+      }
     }
     k++;
-    if(qhip && VERBOSE) break;
     //if(VERBOSE) break;
   }
   fclose(fc);
   fclose(fe);
   fclose(fg);
+  fclose(fth);
   
   Nstars=n+1;
   Naccept=k;
   fprintf(stdout,"Total number of stars: %d\n",Nstars);
   fprintf(stdout,"Accepted stars: %d\n",Naccept);
-  fprintf(stdout,"Candidates: %d\n",Ncand);
+  fprintf(stdout,"Stars with potential encounters: %d\n",Ndir);
+  fprintf(stdout,"Candidate stars (fulfilling thresholds): %d\n",Ncand);
   return 0;
 }

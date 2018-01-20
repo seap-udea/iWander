@@ -370,6 +370,7 @@ int main(int argc,char* argv[])
 	else qinterrupt=1;
     }
     //*/
+    //if(n<239) continue;
     fprintf(stdout,"Computing probabilities for candidate star %d (%s,%s)...\n",
 	    n,fields[Candidates::HIP],fields[Candidates::TYCHO2_ID]);
 
@@ -380,6 +381,9 @@ int main(int argc,char* argv[])
     */
     tmin=atof(fields[Candidates::TMIN]);
     dmin=atof(fields[Candidates::DMIN]);
+
+    fprintf(stdout,"\tEstimated nominal time and distance: dmin=%e, tmin=%e\n",dmin,tmin);
+
     double tmin0=tmin;
     double tmins=tmin0;
     double dmin0=dmin;
@@ -394,38 +398,6 @@ int main(int argc,char* argv[])
       fprintf(stdout,"\tThis star is too close\n");
       continue;
     }
-
-    if(fields[Candidates::RA][0]=='N'){
-      fprintf(stdout,"\tUsing data from Hipparcos...\n");
-      int FChip[]={
-	Candidates::RA_HIP2,
-	Candidates::RA_ERROR_HIP,
-	Candidates::RA_DEC_CORR_HIP,
-	Candidates::RA_PARALLAX_CORR_HIP,
-	Candidates::RA_PMRA_CORR_HIP,
-	Candidates::RA_PMDEC_CORR_HIP,
-	Candidates::DEC_HIP2,
-	Candidates::DEC_ERROR_HIP,
-	Candidates::DEC_PARALLAX_CORR_HIP,
-	Candidates::DEC_PMRA_CORR_HIP,
-	Candidates::DEC_PMDEC_CORR_HIP,
-	Candidates::PMRA_HIP2,
-	Candidates::PMRA_ERROR_HIP,
-	Candidates::PMRA_PMDEC_CORR_HIP,
-	Candidates::PMDEC_HIP2,
-	Candidates::PMDEC_ERROR_HIP,
-	Candidates::PARALLAX_HIP2,
-	Candidates::PARALLAX_ERROR_HIP2,
-	Candidates::PARALLAX_PMRA_CORR_HIP,
-	Candidates::PARALLAX_PMDEC_CORR
-      };
-      copyVecInt(FC,FChip,20);
-    }
-    /*
-    else{
-      continue;
-    }
-    */
 
     //INFORMATION REQUIRED
     mobs[0]=ra=atof(fields[FC[RA]]);
@@ -444,7 +416,8 @@ int main(int argc,char* argv[])
     dmudec=atof(fields[FC[PMDEC_ERROR]]);
 
     mobs[5]=vr=atof(fields[Candidates::RV]);
-    dvr=atof(fields[Candidates::ERV]);
+    dvr=atof(fields[Candidates::E_RV]);
+    //fprintf(stdout,"dvr = %e\n",dvr);
 
     //COVARIANCE MATRIX
     /*RA*/cov[0][0]=dra*dra;
@@ -533,7 +506,13 @@ int main(int argc,char* argv[])
     vadd_c(xg,dx,xg);
     VPRINT(stdout,"\t\tExpected final conditions (ting = %e, hstep = %e): %s\n",ting,hstep,vec2strn(xg,6,"%e "));
     params[0]=6;
-    integrateEoM(0,xInt0,hstep,2,ting,6,EoMGalactic,params,ts,xInt);
+    try{
+      integrateEoM(0,xInt0,hstep,2,ting,6,EoMGalactic,params,ts,xInt);
+    }catch(int e){
+      fprintf(stdout,"\t\t****No suitable integration for star %d***\n",n);
+      //getchar();
+      continue;
+    }
     VPRINT(stdout,"\t\tTimes: %s\n",vec2strn(ts,2,"%e "));
     copyVec(xInt0,xInt[1],6);
     polar2cart(xInt0,xg);
@@ -550,7 +529,7 @@ int main(int argc,char* argv[])
       minDistance2(xInt0,xnom0,tmin0,&dmin,&tmin,params);
     }catch(int e){
       fprintf(stdout,"\tNo minimum!\n");
-      //continue;
+      continue;
     }
     //COMPUTE THE RELATIVE VELOCITY WITH XINT0 AND XNOM0
     nomdmin=dmin;
@@ -562,7 +541,7 @@ int main(int argc,char* argv[])
     VPRINT(stdout,"\t\tMinimum distance from nominal to nominal (nom. t=%.6e, d=%.6e): t = %.6e, d = %.6e, dv = %.6e\n",tmin0,dmin0,nomtmin,nomdmin,nomvrel*UV/1e3);
 
     //FILTER OBJECTS TOO FAR FROM THE PRESENT
-    if(fabs(tmin)>1e7){
+    if(fabs(tmin)>tRet){
       fprintf(stdout,"\tThis star has gone too far. Excluding it\n");
       continue;
     }
@@ -573,7 +552,7 @@ int main(int argc,char* argv[])
     Nsur_acc=0;
     nt=0;
     for(int i=0;i<Nsur;i++){
-
+      //if(i<35) continue;
       VPRINT(stdout,"\tSurrogate %d:\n",i);
       copyVec(xnom0,xnoms0,6);
 
@@ -610,7 +589,13 @@ int main(int argc,char* argv[])
       vadd_c(xg,dx,xg);
       VPRINT(stdout,"\t\tExpected final conditions: %s\n",vec2strn(xg,6,"%e "));
       params[0]=6;
-      integrateEoM(0,xInt0,hstep,2,ting,6,EoMGalactic,params,ts,xInt);
+      try{
+	integrateEoM(0,xInt0,hstep,2,ting,6,EoMGalactic,params,ts,xInt);
+      }catch(int e){
+	fprintf(stdout,"\t\t****No suitable integration for star %d, surrgate %d***\n",n,i);
+	//getchar();
+	continue;
+      }
       copyVec(xInt0,xInt[1],6);
       polar2cart(xInt0,xg);
       VPRINT(stdout,"\t\tInitial conditions: %s\n",vec2strn(xg,6,"%e "));
@@ -636,7 +621,7 @@ int main(int argc,char* argv[])
       VPRINT(stdout,"\t\tFinal position star: %s\n",vec2strn(xInt0,6,"%.5e "));
       VPRINT(stdout,"\t\tFinal position nominal: %s\n",vec2strn(xnom0,6,"%.5e "));
 
-      if(fabs(tmin)>1.5e7){
+      if(fabs(tmin)>tRetMax){
 	VPRINT(stdout,"\t\t\tThis surrogate has gone too far. Excluding\n");
 	continue;
       }
@@ -649,7 +634,12 @@ int main(int argc,char* argv[])
       params[0]=6*Ntest;
       h=fabs(tmin)/100;
       VPRINT(stdout,"\t\tInitial conditions for all particles: %s\n",vec2strn(xIntp0,6*Ntest,"%.5e "));
-      integrateEoM(0,xIntp0,h,2,tmin,6*Ntest,EoMGalactic,params,ts,xIntp);
+      try{
+	integrateEoM(0,xIntp0,h,2,tmin,6*Ntest,EoMGalactic,params,ts,xIntp);
+      }catch(int e){
+	fprintf(stdout,"\t\t****No suitable integration for star %d, surrogate %d***\n",n,i);
+	//getchar();
+      }
       VPRINT(stdout,"\t\tIntegration result for all particles: %s\n",vec2strn(xIntp[1],6*Ntest,"%.5e "));
 
       //COMPUTE THE SIZE OF THE CLOUD

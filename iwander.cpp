@@ -1,6 +1,7 @@
 //////////////////////////////////////////
 //HEADERS
 //////////////////////////////////////////
+#include <stdexcept>
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
@@ -1468,7 +1469,9 @@ int integrateEoM(double tini,double X0[],double h,int npoints,double duration,
     VPRINT(stdout,"\ty0 = %s\n",vec2strn(x0,nsys,"%.7e "));
     VPRINT(stdout,"\ty = %s\n",vec2strn(x,nsys,"%.7e "));
 
-    do {
+    int nmax=(int)(10*fabs(t_step/h));
+    int nint=0;
+    do{
       while(1){
 	status=Gragg_Bulirsch_Stoer(eom,x0,x,t,h_used,&h_next,1.0,
 				    TOLERANCE,EXTMET,params);
@@ -1490,9 +1493,10 @@ int integrateEoM(double tini,double X0[],double h,int npoints,double duration,
 	  if(VERBOSE) getchar();
 	  qpause=1;
 	}
-	else break;
+	else{
+	  break;
+	}
       }
-
       VPRINT(stdout,"\t\tSali del condenado ciclo con h_used = %e, h_next = %e\n",h_used,h_next);
 
       t+=h_used;
@@ -1513,8 +1517,13 @@ int integrateEoM(double tini,double X0[],double h,int npoints,double duration,
 
       VPRINT(stdout,"\t\tEn el siguiente paso usaré h = %e\n",h_used);
       if(VERBOSE && qpause) getchar();
+      
+      nint++;
+    }while(direction*(t-(t_stop-direction*fabs(t_step)*1.e-7))<0 && nint<nmax);
+    if(nint==nmax){
+      throw(1);
+    }
 
-    }while(direction*(t-(t_stop-direction*fabs(t_step)*1.e-7))<0);
     VPRINT(stdout,"\tComplete ese condenado intervalo\n");
 
     if(direction*(t-t_stop)>0){

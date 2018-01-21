@@ -14,6 +14,7 @@ from scipy import stats as st,signal
 gaussian=st.norm
 maxwell=st.maxwell
 exit=sys.exit
+argv=sys.argv
 
 ############################################################
 #CONSTANTS AND MACROS
@@ -252,3 +253,26 @@ def readConf(filename):
         if verbose:print("Value:",conf[val["name"]])
         if verbose:print("*"*50)
     return conf
+
+#Intelligent Shell script execution
+def _run(cmd):
+    import sys,subprocess
+    p=subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
+    while True:
+        line = p.stdout.readline().rstrip()
+        if not line:
+            break
+        yield line
+    (output,error)=p.communicate()
+    yield p.returncode,error
+
+def System(cmd,verbose=True):
+    out=[]
+    for path in _run(cmd):
+        try:
+            if verbose:print(path.decode("utf-8"))
+            out+=[path.decode("utf-8")]
+        except:
+            out+=[(path[0],path[1].decode("utf-8"))]
+            pass
+    return out

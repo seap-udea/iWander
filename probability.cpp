@@ -73,7 +73,17 @@ int main(int argc,char* argv[])
 	  11,12: Minimum and maximum vrel
 	  13...: Same as candidates.csv
   */
-
+  ////////////////////////////////////////////////////
+  //LOAD COMMAND LINE OPTIONS
+  ////////////////////////////////////////////////////
+  int ipart=-1;
+  if(argc>1){
+    ipart=atoi(argv[1]);
+    fprintf(stdout,"Analysing part %d\n",ipart);
+  }else{
+    fprintf(stdout,"Analysing whole candidate set\n");
+  }
+  
   ////////////////////////////////////////////////////
   //CONFIGURATION
   ////////////////////////////////////////////////////
@@ -324,12 +334,21 @@ int main(int argc,char* argv[])
 
   n=0;
 
-  sprintf(Filename,"scratch/candidates-%s.csv",WANDERER);
-  fc=fopen(Filename,"r");
-
+  if(ipart<0){
+    sprintf(Filename,"scratch/candidates-%s.csv",WANDERER);
+  }else{
+    sprintf(Filename,"scratch/candidates-%s.csv.%05d",WANDERER,ipart);
+  }
+  if((fc=fopen(Filename,"r"))==NULL){
+    fprintf(stderr,"No candidates file '%s'\n",Filename);
+  }
   fgets(line,MAXLINE,fc);//HEADER
 
-  sprintf(Filename,"scratch/progenitors-%s.csv",WANDERER);
+  if(ipart<0){
+    sprintf(Filename,"scratch/progenitors-%s.csv",WANDERER);
+  }else{
+    sprintf(Filename,"scratch/progenitors-%s.csv.%05d",WANDERER,ipart);
+  }
   FILE *fp=fopen(Filename,"w");
 
   fprintf(fp,"Pprob,Psurmed,Pvelmed,Pdist,nomtmin,nomdmin,nomvrel,tminl,tminmed,tminu,dminl,dminmed,dminu,vrell,vrelmed,vrelu,%s",line);
@@ -771,5 +790,14 @@ int main(int argc,char* argv[])
   fclose(fp);
   //fclose(fcl);
   VPRINT(stdout,"DONE.\n");
+  
+  //REPORT THAT THE COMPUTATION HAS BEEN DONE
+  if(ipart<0){
+    sprintf(Filename,"touch log/done-%s",WANDERER);
+    system(Filename);
+  }else{
+    sprintf(Filename,"touch log/done-%s.%05d",WANDERER,ipart);
+    system(Filename);
+  }
   return 0;
 }

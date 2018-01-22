@@ -77,7 +77,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   //VARIABLES
   ////////////////////////////////////////////////////
-  double dt;
+  double dt,telaps;
   double tp;
   //ELEMENTS
   double q,e,inc,W,w,Mo;
@@ -630,4 +630,8 @@ int main(int argc,char* argv[])
   fclose(fi);
 
   printHeader(stdout,"DONE.",'!');
+  
+  telaps=elapsedTime(0);
+  fprintf(stdout,"Total elapsed time = %.5f (%.5f min)\n",telaps,telaps/60.0);
+  return 0;
 }

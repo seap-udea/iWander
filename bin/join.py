@@ -22,37 +22,8 @@ from iwander import *
 conf=readConf("iwander.conf");
 
 ############################################################
-#READ NUMBER OF PARTS ON 
+#READ PROGENITOR FILES
 ############################################################
-try:
-    FILE=argv[1]
-    if os.path.isfile(FILE):del(argv[1])
-    else:1/0
-except:FILE="scratch/candidates-%s.csv"%conf["WANDERER"]
-
-try:nparts=int(argv[1])
-except:nparts=1
-
-############################################################
-#READ LIST OF CANDIDATES
-############################################################
-cname=FILE
-data=pd.read_csv(cname)
-ndata=len(data)
-print("Total number of candidates:",ndata)
-print("Total number of pars:",nparts)
-
-############################################################
-#SPLIT CANDIDATES
-############################################################
-dndata=int((1.*ndata)/nparts)
-for i in range(nparts):
-    ipart=i*dndata
-    epart=ipart+dndata
-    if i==(nparts-1):epart=ndata
-    subdata=data.iloc[ipart:epart]
-    spart=len(subdata)
-    
-    print("\tSaving Pack %d (%d,%d = %d)"%(i,ipart,epart,spart))
-    subdata.to_csv(cname+".%05d"%i,index=False)
+for progfile in argv:
+    print(progfile)
 

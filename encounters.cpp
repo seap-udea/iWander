@@ -73,7 +73,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   //GENERAL VARIABLES
   ////////////////////////////////////////////////////
-  double tmp;
+  double tmp,telaps;
   char ctmp[100],line[10000],aline[10000],head[10000];
   double posbody[6],tbody,direction;
   char **fields=charMatrixAllocate(MAXCOLS,MAXTEXT);
@@ -177,6 +177,8 @@ int main(int argc,char* argv[])
   FILE* fth=fopen(Filename,"w");
 
   int Ndir=0;
+  telaps=0.0;
+  elapsedTime();
   while(fscanf(fc,"%s",line)==1){
     strcpy(aline,line);
     //fprintf(stdout,"%s\n",aline);
@@ -207,8 +209,15 @@ int main(int argc,char* argv[])
 	   fields[Stars::HIP],fields[Stars::TYCHO2_ID],
 	   fields[Stars::HENRYDRAPERID],fields[Stars::NAME_SIMBAD]);
 
+    if(nfields!=47){
+      fprintf(stderr,"Star %d, HIP %s, TYC2 %s, HD %s, NAME %s:, nfields = %d\n",n,
+	      fields[Stars::HIP],fields[Stars::TYCHO2_ID],
+	      fields[Stars::HENRYDRAPERID],fields[Stars::NAME_SIMBAD],nfields);
+      exit(0);
+    }
+    
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    //PRIMARY
+    //Primary-
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //CHECK IF ASTROMETRIC DATA IS AVAILABLE
     int qhip=0;
@@ -408,7 +417,10 @@ int main(int argc,char* argv[])
     }
     k++;
     //if(VERBOSE) break;
+    telaps+=elapsedTime();
   }
+  telaps/=k;
+  fprintf(stdout,"Average time per star: %f ms\n",telaps/1e-3);
   fclose(fc);
   fclose(fe);
   fclose(fg);
@@ -420,5 +432,10 @@ int main(int argc,char* argv[])
   fprintf(stdout,"Accepted stars: %d\n",Naccept);
   fprintf(stdout,"Stars with potential encounters: %d\n",Ndir);
   fprintf(stdout,"Candidate stars (fulfilling thresholds): %d\n",Ncand);
+
+  printHeader(stdout,"DONE.",'!');
+
+  telaps=elapsedTime(0);
+  fprintf(stdout,"Total elapsed time = %.5f s (%.5f min)\n",telaps,telaps/60.0);
   return 0;
 }

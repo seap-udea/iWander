@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <math.h>
+#include <sys/time.h>
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
@@ -248,10 +249,23 @@ double FEARTH;
 gsl_rng* RAND;
 double GGLOBAL;
 double UL,UM,UT,UV;
+double INI_TIME,LAST_TIME;
 
 //////////////////////////////////////////
 //ROUTINES
 //////////////////////////////////////////
+double elapsedTime(int iprev=1,int iflag=1)
+{
+  static double times[]={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+  struct timeval  tv;
+  double t,dt;
+  gettimeofday(&tv, NULL);
+  t=(double)(tv.tv_usec/1000000.+tv.tv_sec);
+  dt=t-times[iprev];
+  times[iflag]=t;
+  return dt;
+}
+
 void errorGSL(const char * reason,const char * file,int line,int gsl_errno){throw(1);}
 int initWander(void)
 {
@@ -282,6 +296,9 @@ int initWander(void)
   gsl_rng_set(RAND,time(NULL));
   gsl_rng_set(RAND,3);
 
+  //TIME
+  elapsedTime(0,0);
+  
   return 0;
 }
 
@@ -2227,3 +2244,4 @@ int quantilesVector(double x[],int n,double *min,double *max,
   *min=x[0];
   *max=x[n-1];
 }
+

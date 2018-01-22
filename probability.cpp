@@ -15,7 +15,7 @@
 #include <iwander.cpp>
 using namespace std;
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 struct vinfpar {
   double xmin,xmax;
@@ -74,17 +74,6 @@ int main(int argc,char* argv[])
 	  13...: Same as candidates.csv
   */
   ////////////////////////////////////////////////////
-  //LOAD COMMAND LINE OPTIONS
-  ////////////////////////////////////////////////////
-  int ipart=-1;
-  if(argc>1){
-    ipart=atoi(argv[1]);
-    fprintf(stdout,"Analysing part %d\n",ipart);
-  }else{
-    fprintf(stdout,"Analysing whole candidate set\n");
-  }
-  
-  ////////////////////////////////////////////////////
   //CONFIGURATION
   ////////////////////////////////////////////////////
   #include <iwander.conf>
@@ -94,15 +83,39 @@ int main(int argc,char* argv[])
   //INITIALIZE CSPICE
   ////////////////////////////////////////////////////
   initWander();
+
+  ////////////////////////////////////////////////////
+  //LOAD COMMAND LINE OPTIONS
+  ////////////////////////////////////////////////////
+  int ipart=-1;
+  char basename[100];
+  sprintf(basename,"scratch/candidates-%s.csv",WANDERER);
+  if(argc>1){
+    strcpy(basename,argv[1]);
+    if(argc>2) ipart=atoi(argv[2]);
+    else ipart=1;
+    fprintf(stdout,"Analysing '%s' part %d\n",basename,ipart);
+  }else{
+    fprintf(stdout,"Analysing whole candidate set with basename '%s'\n",basename);
+  }
+
+  //REPORT THAT THE COMPUTATION HAS STARTED
+  if(ipart<0){
+    sprintf(Filename,"touch log/start-%s",WANDERER);
+    system(Filename);
+  }else{
+    sprintf(Filename,"touch log/start-%s.%05d",WANDERER,ipart);
+    system(Filename);
+  }
   
   ////////////////////////////////////////////////////
   //GENERAL VARIABLES
   ////////////////////////////////////////////////////
-  double nomtmin,nomdmin,nomvrel;
+  double nomtmin,nomdmin,nomvrel,telaps;
   double D,Dmax=0,*xt1,*xt2,vrel,Pvmed,Psmed;
   double tmp,ting;
   char ctmp[100],line[MAXLINE],values[MAXLINE];
-  int Ntimes,Ntimesp,Nobs,nsys,nsysp; 
+  int Ntimes,Ntimesp,Nobs,nsys,nsysp,Ntelaps; 
   int ip,n;
   int nfields;
   double params[10],mparams[23];
@@ -335,13 +348,14 @@ int main(int argc,char* argv[])
   n=0;
 
   if(ipart<0){
-    sprintf(Filename,"scratch/candidates-%s.csv",WANDERER);
+    strcpy(Filename,basename);
   }else{
-    sprintf(Filename,"scratch/candidates-%s.csv.%05d",WANDERER,ipart);
+    sprintf(Filename,"%s.%05d",basename,ipart);
   }
   if((fc=fopen(Filename,"r"))==NULL){
     fprintf(stderr,"No candidates file '%s'\n",Filename);
   }
+  fprintf(stdout,"Reading input filename %s...\n",Filename);
   fgets(line,MAXLINE,fc);//HEADER
 
   if(ipart<0){
@@ -349,6 +363,7 @@ int main(int argc,char* argv[])
   }else{
     sprintf(Filename,"scratch/progenitors-%s.csv.%05d",WANDERER,ipart);
   }
+  fprintf(stdout,"Generationg output filename %s...\n",Filename);
   FILE *fp=fopen(Filename,"w");
 
   fprintf(fp,"Pprob,Psurmed,Pvelmed,Pdist,nomtmin,nomdmin,nomvrel,tminl,tminmed,tminu,dminl,dminmed,dminu,vrell,vrelmed,vrelu,%s",line);
@@ -356,6 +371,12 @@ int main(int argc,char* argv[])
   int qinterrupt=0;
 
   printHeader(stdout,"CALCULATING PROBABILITIES");
+  
+  telaps=0.0;
+  Ntelaps=0.0;
+  elapsedTime();
+
+  double dmins[Ntest*Nsur],tmis[Ntest*Nsur],vrels[Ntest*Nsur];
   while(fgets(line,MAXLINE,fc)!=NULL){
     
     //LOCAL MINIMA
@@ -363,7 +384,6 @@ int main(int argc,char* argv[])
     double mindmin=1e100,maxdmin=-1e100;
     double minvrel=1e100,maxvrel=-1e100;
     double mintmin=1e100,maxtmin=-1e100;
-    double dmins[Ntest*Nsur],tmis[Ntest*Nsur],vrels[Ntest*Nsur];
 
     //PARSE FIELDS
     strcpy(values,line);
@@ -470,6 +490,7 @@ int main(int argc,char* argv[])
     cov[4][3]=cov[3][4];
     cov[4][5]=0.0;
     /*RV*/cov[5][5]=dvr*dvr;
+
     cov[5][0]=cov[0][5];
     cov[5][1]=cov[1][5];
     cov[5][2]=cov[2][5];
@@ -525,6 +546,7 @@ int main(int argc,char* argv[])
     vadd_c(xg,dx,xg);
     VPRINT(stdout,"\t\tExpected final conditions (ting = %e, hstep = %e): %s\n",ting,hstep,vec2strn(xg,6,"%e "));
     params[0]=6;
+
     try{
       integrateEoM(0,xInt0,hstep,2,ting,6,EoMGalactic,params,ts,xInt);
     }catch(int e){
@@ -561,7 +583,7 @@ int main(int argc,char* argv[])
 
     //FILTER OBJECTS TOO FAR FROM THE PRESENT
     if(fabs(tmin)>tRet){
-      fprintf(stdout,"\tThis star has gone too far. Excluding it\n");
+      fprintf(stdout,"\tThis star has gone too far (tmin = %e). Excluding it\n",tmin);
       continue;
     }
 
@@ -783,9 +805,13 @@ int main(int argc,char* argv[])
     fprintf(fp,"%s",values);
     fflush(fp);
 
+    Ntelaps++;
+    telaps+=elapsedTime();
     //if(VERBOSE) getchar();
     if(qinterrupt) break;
   }
+  telaps/=Ntelaps;
+  fprintf(stdout,"Average time per candidate: %f s\n",telaps);
   fclose(fc);
   fclose(fp);
   //fclose(fcl);
@@ -793,11 +819,18 @@ int main(int argc,char* argv[])
   
   //REPORT THAT THE COMPUTATION HAS BEEN DONE
   if(ipart<0){
+    sprintf(Filename,"rm log/start-%s",WANDERER);
+    system(Filename);
     sprintf(Filename,"touch log/done-%s",WANDERER);
     system(Filename);
   }else{
+    sprintf(Filename,"rm log/start-%s.%05d",WANDERER,ipart);
+    system(Filename);
     sprintf(Filename,"touch log/done-%s.%05d",WANDERER,ipart);
     system(Filename);
   }
+
+  telaps=elapsedTime(0);
+  fprintf(stdout,"Total elapsed time = %.5f (%.5f min)\n",telaps,telaps/60.0);
   return 0;
 }

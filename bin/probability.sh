@@ -18,31 +18,41 @@
 NSPLIT=100
 MAXPROC=6
 WANDERER=$(grep "char WANDERER" iwander.conf |head -n 1 |awk -F"\"" '{print $2}')
+FILE="scratch/candidates-$WANDERER.csv"
 
 ############################################################
 #SUBSTITUTE VARIABLES WITH COMMAND LINE OPTIONS
 ############################################################
 eval $@
 
-if [ ! -e scratch/candidates-$WANDERER.csv ];then
+if [ ! -e $FILE ];then
     echo "You must run fist 'encounters.exe'"
     exit 1
 fi
-ndata=$(cat scratch/candidates-$WANDERER.csv |wc -l)
+
+############################################################
+#CREATE A CONFIGURATION FILE
+############################################################
+ndata=$(cat $FILE |wc -l)
 nperproc=$((ndata/NSPLIT))
+{
+    echo -e "FILE=$FILE"
+    echo -e "NDATA=$ndata"
+    echo -e "WANDERER=$WANDERER"
+    echo -e "MAXPROC=$MAXPROC"
+    echo -e "NSPLIT=$NSPLIT"
+} > scratch/probability-$WANDERER.conf
+
 echo "Running parallel calculation of probabilities:"
-echo -e "\tWANDERER = $WANDERER"
-echo -e "\tMAXPROC = $MAXPROC"
-echo -e "\tNSPLIT = $NSPLIT"
-echo -e "\tOBJECTS PER PROC. = $nperproc"
-echo
+cat scratch/probability-$WANDERER.conf
+echo -e "OBJECTS PER PROC. = $nperproc"
 echo -n "Press enter to continue or ctrl-c to cancel..."
 read
 
 ############################################################
 #SPLIT CANDIDATES
 ############################################################
-python3.5 bin/split.py $NSPLIT
+python3.5 bin/split.py $FILE $NSPLIT
 
 ############################################################
 #PREPARE
@@ -52,24 +62,31 @@ make probability.exe
 ############################################################
 #RUN
 ############################################################
-n=1
+n=0
+ncand=0
 while [ 1 ]
 do
     i=0
     while [ $i -le $MAXPROC ]
     do
 	in=$(printf "%05d" $n)
-	fname="scratch/candidates-$WANDERER.csv.$in"
+	fname="$FILE.$in"
 	if [ -e $fname ];then
 	    if [ ! -e "log/done-$WANDERER.$in" ];then
-		echo "Calculating probability for candidates '$fname'..."
-		./probability.exe $n >> log/probability.log.$in & 
+		ncand=$((ncand+nperproc))
+		echo "Calculating probability for candidates '$fname' (when completed candidates analysed $ncand)..."
+		cmd="./probability.exe $FILE $n"
+		$cmd &> log/probability.log.$in &
 		((i++))
 	    else
-		echo "Probabilities already computed for candidates '$fname'..."
+		if [ -e "log/start-$WANDERER.$in" ];then
+		    echo "Waiting that the process finishes for '$fname'..."
+		else
+		    echo "Probabilities already computed for candidates '$fname'..."
+		fi
 	    fi
 	else
-	    echo "No more file available..."
+	    echo "No more files available..."
 	    exit 0
 	fi
 	((n++))

@@ -15,7 +15,7 @@
 #include <iwander.cpp>
 using namespace std;
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 struct vinfpar {
   double xmin,xmax;
@@ -508,7 +508,12 @@ int main(int argc,char* argv[])
     for(int i=0;i<6;i++)
       VPRINT(stdout,"\t\t|%s|\n",vec2strn(cov[i],6,"%-+15.3e"));
 
-    generateMultivariate(cov,mobs,obs,6,Nobs);
+    try{
+      generateMultivariate(cov,mobs,obs,6,Nobs);
+    }catch(int e){
+      fprintf(stdout,"\t****This star has a problem in their properties***\n");
+      continue;
+    }
 
     //FIRST ONE IS ALWAYS THE NOMINAL ONE
     obs[0][0]=ra;

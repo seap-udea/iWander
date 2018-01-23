@@ -380,25 +380,7 @@ int main(int argc,char* argv[])
     fprintf(fe,"\n");
 
     //CONDITION FOR CANDIDATES
-    /*
-    dthres=300.0;
-    if(d<dthres){
-      qdist=0;
-      dthres=0.1*d;
-    }else{
-      qdist=1;
-    }
-    */
-
-    //SIMPLEST THRESHOLD
-    //dthres=0.15*d;
-    
-    //ORIGINAL THRESHOLD (ADAPATED ACCORDING TO DISTANCE)
-    //dthres=d<10*dmax1?0.1*d:dmax1;
-
-    //ADVANCED THRESHOLD
-    dthres=2*(1+10*fabs(tmin)/tRet);
-    dthres=1e5;
+    dthres=MAX(dmax1,dfactor*d);
 
     VPRINT(stdout,"\tDistance threshold (tmin = %e, tRet = %e, d = %e):%e\n",tmin,tRet,d,dthres);
     if(direction*tmin>0){
@@ -426,7 +408,7 @@ int main(int argc,char* argv[])
   fclose(fg);
   fclose(fth);
   
-  Nstars=n+1;
+  Nstars=n;
   Naccept=k;
   fprintf(stdout,"Total number of stars: %d\n",Nstars);
   fprintf(stdout,"Accepted stars: %d\n",Naccept);

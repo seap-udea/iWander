@@ -1451,7 +1451,8 @@ int integrateEoM(double tini,double X0[],double h,int npoints,double duration,
   double h_used=h;
   double deltat,h_next,h_adjust;
   int status;
-  double x0[nsys],x[nsys];
+  double *x0=(double*)malloc(nsys*sizeof(double));
+  double *x=(double*)malloc(nsys*sizeof(double));
 
   VPRINT(stdout,"Integration parameters:\n");
   VPRINT(stdout,"\tnsys = %d\n",nsys);
@@ -1539,6 +1540,8 @@ int integrateEoM(double tini,double X0[],double h,int npoints,double duration,
       nint++;
     }while(direction*(t-(t_stop-direction*fabs(t_step)*1.e-7))<0 && nint<nmax);
     if(nint==nmax){
+      free(x0);
+      free(x);
       throw(1);
     }
 
@@ -1554,6 +1557,9 @@ int integrateEoM(double tini,double X0[],double h,int npoints,double duration,
     t_start = t;
     if(direction*(t_start-tend)>0) break;
   }
+  
+  free(x0);
+  free(x);
   return 0;
 }
 

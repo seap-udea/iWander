@@ -66,7 +66,7 @@ n=0
 ncand=0
 while [ 1 ]
 do
-    i=0
+    i=1
     while [ $i -le $MAXPROC ]
     do
 	in=$(printf "%05d" $n)
@@ -74,9 +74,9 @@ do
 	if [ -e $fname ];then
 	    if [ ! -e "log/done-$WANDERER.$in" ];then
 		ncand=$((ncand+nperproc))
-		echo "Calculating probability for candidates '$fname' (when completed candidates analysed $ncand)..."
 		cmd="./probability.exe $FILE $n"
 		$cmd &> log/probability.log.$in &
+		echo "Calculating probability for candidates '$fname' (when completed candidates analysed $ncand) (PID = $!)..."
 		((i++))
 	    else
 		if [ -e "log/start-$WANDERER.$in" ];then

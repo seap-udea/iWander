@@ -24,6 +24,13 @@ conf=readConf("iwander.conf");
 ############################################################
 #READ PROGENITOR FILES
 ############################################################
-for progfile in argv:
-    print(progfile)
+progenitors=pd.DataFrame()
+for progfile in argv[1:]:
+    print("\tMerging '%s'..."%progfile)
+    data=pd.read_csv(progfile)
+    progenitors=progenitors.append(data,ignore_index=True)
 
+progfile="scratch/progenitors-%s.csv"%conf["WANDERER"]
+print("Saving joined progenitors to '%s'..."%progfile)
+progenitors.to_csv(progfile,index=False)
+print("Number of progenitors:",len(progenitors))

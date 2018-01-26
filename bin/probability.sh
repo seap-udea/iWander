@@ -15,7 +15,7 @@
 ############################################################
 #PARAMETERS
 ############################################################
-NSPLIT=100
+NSPLIT=0
 MAXPROC=6
 WANDERER=$(grep "char WANDERER" iwander.conf |head -n 1 |awk -F"\"" '{print $2}')
 FILE="scratch/candidates-$WANDERER.csv"
@@ -28,6 +28,22 @@ eval $@
 if [ ! -e $FILE ];then
     echo "You must run fist 'encounters.exe'"
     exit 1
+fi
+
+
+############################################################
+#CHECK IF NSPLIT=1
+############################################################
+if [ $NSPLIT -eq 0 ];then 
+    rm probability2.exe
+    make probability2.exe
+    if [ $? -gt 1 ];then
+	echo "There was an error compiling probability.  Please check"
+	exit 1
+    fi
+    #./probability2.exe 2> >(tee -a log/probability-detailed.log >&2) > >(tee -a log/probability.log)
+    ./probability2.exe 2> log/probability-detailed.log > >(tee log/probability.log)
+    exit 0
 fi
 
 ############################################################

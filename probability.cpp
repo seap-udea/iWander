@@ -15,38 +15,7 @@
 #include <iwander.cpp>
 using namespace std;
 
-#define VERBOSE 0
-
-struct vinfpar {
-  double xmin,xmax;
-  gsl_interp_accel *a;
-  gsl_spline *s;
-};
-double vinfPosterior(double x,void *params)
-{
-  struct vinfpar *pars=(struct vinfpar*)params;
-  double p;
-  if(x<pars->xmin) x=1.01*pars->xmin;
-  if(x>pars->xmax){
-    p=12*pow10(-3*x);
-    /*
-    VPRINT(stdout,"Extrapolation for %e: %e\n",x,p);
-    p=gsl_spline_eval(pars->s,pars->xmax,pars->a);
-    VPRINT(stdout,"Compare with maximum: %e\n",p);
-    */
-  }else{
-    p=gsl_spline_eval(pars->s,x,pars->a);
-  }
-  return p;
-}
-double vinfProbability(double v1,double v2,void *params)
-{
-  gsl_integration_workspace *w=gsl_integration_workspace_alloc(1000);
-  gsl_function F={.function=vinfPosterior,.params=params};
-  double vint,vint_error;
-  gsl_integration_qags(&F,v1,v2,0,1e-5,1000,w,&vint,&vint_error);
-  return vint;
-}
+#define VERBOSE 1
 
 int main(int argc,char* argv[])
 {
@@ -122,7 +91,7 @@ int main(int argc,char* argv[])
   double hstep;
   //MATRICES WITH INTEGRATIONS
   double *xnom0,*xnoms0,*xIntp0,*xIntc0,**xIntp,**xFullp,**xFullc,**xIntc;
-  double *xInt0,**xInt;
+  double *xInt0,**xInt,*xTraj0,**xTraj1,**xTraj2;
   double *tsp,*ts;
   //INITIAL CONDITIONS
   double *dxIntdt,*x,*xg,*xp1,*xp2,*xpmin,*dx,*x0;
@@ -220,7 +189,13 @@ int main(int argc,char* argv[])
   xInt0=(double*)malloc(nsys*sizeof(double));
   xnom0=(double*)malloc(nsysp*sizeof(double));
   xnoms0=(double*)malloc(nsysp*sizeof(double));
-  
+
+  xTraj0=(double*)malloc(nsys*sizeof(double));
+  xTraj1=(double**)malloc(Ntimesp*sizeof(double*));
+  for(int j=0;j<Ntimesp;j++) xTraj1[j]=(double*)malloc(nsys*sizeof(double));
+  xTraj2=(double**)malloc(Ntimesp*sizeof(double*));
+  for(int j=0;j<Ntimesp;j++) xTraj2[j]=(double*)malloc(nsys*sizeof(double));
+
   xInt=(double**)malloc(Ntimes*sizeof(double*));
   for(int j=0;j<Ntimes;j++) xInt[j]=(double*)malloc(nsys*sizeof(double));
 
@@ -363,8 +338,15 @@ int main(int argc,char* argv[])
   }else{
     sprintf(Filename,"scratch/progenitors-%s.csv.%05d",WANDERER,ipart);
   }
+  if(qsingle){
+    sprintf(Filename,"scratch/progenitors-single.csv",WANDERER);
+  }
   fprintf(stdout,"Generationg output filename %s...\n",Filename);
   FILE *fp=fopen(Filename,"w");
+
+  //SAVE CLOUD AND SURROGATES
+  FILE *fso=fopen("scratch/single.dat","w");
+  FILE *fst;
 
   fprintf(fp,"Pprob,Psurmed,Pvelmed,Pdist,nomtmin,nomdmin,nomvrel,tminl,tminmed,tminu,dminl,dminmed,dminu,vrell,vrelmed,vrelu,%s",line);
 
@@ -409,7 +391,6 @@ int main(int argc,char* argv[])
 	else qinterrupt=1;
     }
     //*/
-    //if(n<239) continue;
     fprintf(stdout,"Computing probabilities for candidate star %d (%s,%s)...\n",
 	    n,fields[Candidates::HIP],fields[Candidates::TYCHO2_ID]);
 
@@ -564,15 +545,14 @@ int main(int argc,char* argv[])
     polar2cart(xInt0,xg);
     VPRINT(stdout,"\t\tInitial conditions: %s\n",vec2strn(xg,6,"%e "));
     VPRINT(stdout,"\t\tInitial conditions (polar): %s\n",vec2strn(xInt0,6,"%e "));
-    //exit(0);
-    //*/
 
     //INITIAL CONDITION FOR TEST PARTICLES
     copyVec(xnom0,xnoms0,6);
 
     //DISCRETE METHOD
+    copyVec(xTraj0,xInt0,6);
     try{
-      minDistance2(xInt0,xnom0,tmin0,&dmin,&tmin,params);
+      minDistance(xInt0,xnom0,tmin0,&dmin,&tmin,params);
     }catch(int e){
       fprintf(stdout,"\tNo minimum!\n");
       continue;
@@ -658,7 +638,7 @@ int main(int argc,char* argv[])
       params[0]=6;
 
       try{
-	minDistance2(xInt0,xnom0,tmin0,&dmin,&tmin,params);
+	minDistance(xInt0,xnom0,tmin0,&dmin,&tmin,params);
       }catch(int e){
 	VPRINT(stdout,"No minimum!\n");
 	continue;
@@ -666,6 +646,7 @@ int main(int argc,char* argv[])
       VPRINT(stdout,"\t\tMinimum distance at (nom. d=%.6e, t=%.6e): t = %.6e, d = %.6e\n",tmin0,dmin0,tmin,dmin);
       VPRINT(stdout,"\t\tFinal position star: %s\n",vec2strn(xInt0,6,"%.5e "));
       VPRINT(stdout,"\t\tFinal position nominal: %s\n",vec2strn(xnom0,6,"%.5e "));
+      exit(0);
 
       if(fabs(tmin)>tRetMax){
 	VPRINT(stdout,"\t\t\tThis surrogate has gone too far. Excluding\n");
@@ -701,6 +682,12 @@ int main(int argc,char* argv[])
       //VPRINT(fcl,"%e %e %e %e %e\n",tmin,hprob,rinter,vradius*UV/1e3,vinter*UV/1e3);
       //getchar();
       
+      //SAVE POSITIONS
+      if(qsingle){
+	fprintf(fso,"%s",vec2strn(xInt0,6,"%e "));
+	fprintf(fso,"%s\n",vec2strn(xIntp[1],6*Npart,"%e "));
+      }
+	
       //COMPUTE SPH-LIKE PROBABILITY
       double pd,pv;
       Psur=0.0;
@@ -761,6 +748,44 @@ int main(int argc,char* argv[])
       Psur/=Ntest;
       Psmed+=Psur;
 
+      if(qsingle){
+	sprintf(Filename,"scratch/surrogatetraj-%02d.dat",i);
+	fst=fopen(Filename,"w");
+
+	//NOMINAL PARTICLE TRAJECTORY
+	params[0]=6;
+	h=fabs(tmin)/100;
+	Ntimesp=1000;
+	integrateEoM(0,xIntp0,h,Ntimesp,2*tmin,6,EoMGalactic,params,ts,xTraj1);
+	integrateEoM(0,xTraj0,h,Ntimesp,2*tmin,6,EoMGalactic,params,ts,xTraj2);
+
+	for(int it=0;it<Ntimesp;it++){
+	  //PRECISE
+	  polar2cart(xTraj1[it],x);
+	  polar2cart(xTraj2[it],xg);
+	  vsub_c(xg,x,dx);
+	  D=vnorm_c(dx);
+	  fprintf(fst,"%e %e ",ts[it],D);
+	  fprintf(fst,"%s",vec2strn(x,6,"%e "));
+	  fprintf(fst,"%s",vec2strn(xg,6,"%e "));
+	  //USING LMAX
+	  polar2cart(xIntp0,x);
+	  polar2cart(xTraj0,xg);
+	  vscl_c(UV*ts[it]*YEAR/PARSEC,x+3,dx);
+	  vadd_c(x,dx,x);
+	  fprintf(fst,"%s",vec2strn(x,3,"%e "));
+	  vscl_c(UV*ts[it]*YEAR/PARSEC,xg+3,dx);
+	  vadd_c(xg,dx,xg);
+	  fprintf(fst,"%s",vec2strn(xg,3,"%e "));
+	  //DISTANCE BY LMA
+	  vsub_c(xg,x,dx);
+	  D=vnorm_c(dx);
+	  fprintf(fst,"%e ",D);
+	  fprintf(fst,"\n");
+	}
+	fclose(fst);
+      }
+
       //COMPUTE CORRECTION FOR STELLAR DISTANCE
       fdist=(RTRUNC*AU/PARSEC)*(RTRUNC*AU/PARSEC)/(d*d);
       VPRINT(stdout,"\t\tProbability for distance d = %e, RT = %e: %e\n",
@@ -819,6 +844,7 @@ int main(int argc,char* argv[])
   fprintf(stdout,"Average time per candidate: %f s\n",telaps);
   fclose(fc);
   fclose(fp);
+  fclose(fso);
   //fclose(fcl);
   VPRINT(stdout,"DONE.\n");
   

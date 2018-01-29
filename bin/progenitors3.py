@@ -73,6 +73,7 @@ for index in progsort.index:
     p=progsort.loc[index]
 
     if p.nomdmin>conf["dminMax"]:continue
+    if p.qastro<1:continue
 
     row=""
     if str(p.hip)=='nan':

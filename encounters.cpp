@@ -74,6 +74,7 @@ int main(int argc,char* argv[])
   //GENERAL VARIABLES
   ////////////////////////////////////////////////////
   double tmp,telaps;
+  int qastro;
   char ctmp[100],line[10000],aline[10000],head[10000];
   double posbody[6],tbody,direction;
   char **fields=charMatrixAllocate(MAXCOLS,MAXTEXT);
@@ -160,8 +161,8 @@ int main(int argc,char* argv[])
   //READING HEADER
   fscanf(fc,"%s",head);
 
-  fprintf(fe,"n,postarx,postary,postarz,velstarx,velstary,velstarz,d,dmin,tmin,vrelx,vrely,vrelz,vrel,%s\n",head);
-  fprintf(fg,"n,postarx,postary,postarz,velstarx,velstary,velstarz,d,dmin,tmin,vrelx,vrely,vrelz,vrel,%s\n",head);
+  fprintf(fe,"n,postarx,postary,postarz,velstarx,velstary,velstarz,d,dmin,tmin,vrelx,vrely,vrelz,vrel,qastro,%s\n",head);
+  fprintf(fg,"n,postarx,postary,postarz,velstarx,velstary,velstarz,d,dmin,tmin,vrelx,vrely,vrelz,vrel,qastro,%s\n",head);
 
   //COMPUTING LMA MINIMUM DISTANCE TO STARS
   printHeader(stdout,"COMPUTING MINIMUM DISTANCE TO CATALOG STARS");
@@ -267,6 +268,9 @@ int main(int argc,char* argv[])
       continue;
     }
 
+    //Astromerty quality factor
+    qastro=(int)(MIN(fabs(par/dpar),MIN(fabs(mura/dmura),MIN(fabs(mudec/dmudec),fabs(vr/dvr)))));
+
     //COORDINATES AT EPOCH
     VPRINT(stdout,"\tRA(epoch) = %.17lf +/- %.3lf mas\n",ra,dra);
     VPRINT(stdout,"\tDEC(epoch) = %.17lf +/- %.3lf mas\n",dec,ddec);
@@ -277,6 +281,7 @@ int main(int argc,char* argv[])
     VPRINT(stdout,"\tv_r = %.17lf +/- %.3lf km/s\n",vr,dvr);
     VPRINT(stdout,"\tmag_g = %.3lf\n",gmag);
     VPRINT(stdout,"\tl = %.17lf, b = %.17lf\n",l,b);
+    VPRINT(stdout,"\tqastro = %.3lf\n",qastro);
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //SECONDARY
@@ -376,6 +381,7 @@ int main(int argc,char* argv[])
     fprintf(fe,"%s%s",vec2str(postar,"%.17e,"),vec2str(UVW,"%.17e,"));
     fprintf(fe,"%.17e,%.17e,%.17e,",d,dmin,tmin);
     fprintf(fe,"%s%.17e,",vec2str(vrel,"%.17e,"),vrelmag);
+    fprintf(fe,"%d,",qastro);
     fprintf(fe,"%s",aline);
     fprintf(fe,"\n");
 
@@ -392,6 +398,7 @@ int main(int argc,char* argv[])
 	fprintf(fg,"%s%s",vec2str(postar,"%.17e,"),vec2str(UVW,"%.17e,"));
 	fprintf(fg,"%.17e,%.17e,%.17e,",d,dmin,tmin);
 	fprintf(fg,"%s%.17e,",vec2str(vrel,"%.17e,"),vrelmag);
+	fprintf(fg,"%d,",qastro);
 	fprintf(fg,"%s",aline);
 	fprintf(fg,"\n");
 	Ncand++;

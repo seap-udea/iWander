@@ -64,7 +64,7 @@ f.write("""# %s of %s
 
 _Latest update_: ``%s``
 
-|#|HIP/TYCHO|Name|tmin|dmin|vrel|dmin|%s
+|#|HIP/TYCHO|Name|tmin|dmin|vrel|dmin|tmin|vrel|%s
 |--|--|--|--|--|--|--|%s
 """%(candtxt,conf["WANDERER_NAME"],time.strftime("%c"),pcols,lcols))
 
@@ -88,9 +88,11 @@ for index in progsort.index:
         simbad="[%s](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=%s)"%(simbad,simbad_ns)
     
     row+=r"| %d | %s %s | %s %s | "%(i,bf,sid,
-                                bf,simbad)
+                                     bf,simbad)
     row+=r"%s%.3f | %s%.1f | %s%.0f | "%(mbf,p.nomtmin/1e6,mbf,p.nomdmin,mbf,p.nomvrel)
-    row+=r"%s[%.2f,%.2f,%.2f] |"%(mbf,p.dminl,p.dminmed,p.dminu)
+    row+=r"%s[%.2f,%.2f,%.2f] |%s[%.2f,%.2f,%.2f] |%s[%.2f,%.2f,%.2f] |"%(mbf,p.dminl,p.dminmed,p.dminu,
+                                                                          mbf,p.tminl/1e6,p.tminmed/1e6,p.tminu/1e6,
+                                                                          mbf,p.vrell,p.vrelmed,p.vrelu)
     Ppos="%s%.1f"%(mbf,p.Ppos)
     if qpast:
         Pvel="%s%.1f"%(mbf,p.Pvel)
@@ -110,11 +112,11 @@ f=open("scratch/CANDIDATES-%s-%s.tex"%(conf["WANDERER"],suffix),"w")
 f.write(r"""\begin{table*}
   \centering
   \scriptsize
-  \begin{tabular}{ll|ccc|c|ccc}
+  \begin{tabular}{l|ll|ccc|ccc|ccc}
   \hline
-  \multicolumn{2}{c|}{ID} &  \multicolumn{3}{c|}{Nominal} & \multicolumn{1}{c|}{Range} & \multicolumn{3}{c}{$\log P$}  \\ \hline
-  HIP/TYCHO & Other & $t\sub{min}$ & $d\sub{min}$ & $v\sub{rel}$ & $d\sub{min}$ & $P\sub{pos,vel}$ & $P\sub{dist}$ & IOP \\
-            &       & Myr & pc & km/s & pc & & & \\
+  \# & \multicolumn{2}{c|}{ID} &  \multicolumn{3}{c|}{Nominal} & \multicolumn{3}{c|}{Range} & \multicolumn{3}{c}{$\log P$}  \\ \hline
+     & HIP/TYCHO & Other & $t\sub{min}$ & $d\sub{min}$ & $v\sub{rel}$ & $d\sub{min}$ & $P\sub{pos,vel}$ & $P\sub{dist}$ & IOP \\
+     &           &       & Myr & pc & km/s & pc & & & \\
   \hline\hline
 """)
 for index in progsort.index:
@@ -133,11 +135,12 @@ for index in progsort.index:
         simbad_ns=simbad.replace(" ","%20")
         simbad=r"\href{http://simbad.u-strasbg.fr/simbad/sim-id?Ident=%s}{%s}"%(simbad_ns,simbad)
     
-    row+=r"%s %s & %s %s & "%(bf,sid,
-                              bf,simbad.replace('nan','--').replace('_',' '),
-                            )
+    row+=r"%s %d & %s %s & %s %s & "%(bf,i,bf,sid,
+                                      bf,simbad.replace('nan','--').replace('_',' '))
     row+=r"$%s{%.3f}$ & $%s{%.1f}$ & $%s{%.0f}$ & "%(mbf,p.nomtmin/1e6,mbf,p.nomdmin,mbf,p.nomvrel)
     row+=r"$%s{[%.2f,%.2f,%.2f]}$ & "%(mbf,p.dminl,p.dminmed,p.dminu)
+    row+=r"$%s{[%.2f,%.2f,%.2f]}$ & "%(mbf,p.tminl/1e6,p.tminmed/1e6,p.tminu/1e6)
+    row+=r"$%s{[%.2f,%.2f,%.2f]}$ & "%(mbf,p.vrell,p.vrelmed,p.vrelu)
     Pposvel="$%s{%.1f}$"%(mbf,p.Pposvel)
     Pdist="$%s{%.1f}$"%(mbf,p.Pdist)
     IOP="$%s{%.1f}$"%(mbf,p.IOP) 

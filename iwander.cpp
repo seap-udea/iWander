@@ -267,6 +267,49 @@ double INI_TIME,LAST_TIME;
 //////////////////////////////////////////
 //ROUTINES
 //////////////////////////////////////////
+double *vectorAllocate(int n)
+{
+  double *v;
+  v=(double*)malloc(n*sizeof(double));
+  return v;
+}
+
+char *charVectorAllocate(int n)
+{
+  char *v;
+  v=(char*)malloc(n*sizeof(char));
+  return v;
+}
+
+double **matrixAllocate(int n,int m)
+{
+  double **M;
+  
+  M=(double**)malloc(n*sizeof(double*));
+  for(int i=0;i<n;i++) M[i]=(double*)malloc(m*sizeof(double));
+  
+  return M;
+}
+
+char **charMatrixAllocate(int n,int m)
+{
+  char **M;
+  
+  M=(char**)malloc(n*sizeof(char*));
+  for(int i=0;i<n;i++) M[i]=(char*)malloc(m*sizeof(char));
+  
+  return M;
+}
+
+int freeMatrix(double **mat,int n,int m)
+{
+  for(int i=n;i-->0;){
+    free(mat[i]);
+  }
+  free(mat);
+  return 0;
+}
+
 double elapsedTime(int iprev=1,int iflag=1)
 {
   static double times[]={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
@@ -354,10 +397,12 @@ char* vec2str(double vec[],char frm[]="%.8e ")
 char* vec2strn(double vec[],int n,char frm[]="%.8e ")
 {
   int i;
-  char format[100];
+  char *format=charVectorAllocate(100);
   char *str=(char*)calloc(sizeof(char),100*n);
   sprintf(format,"%ss%s","%",frm);
   for(i=0;i<n;i++) sprintf(str,format,str,vec[i]);
+
+  free(format);
   return str;
 }
 
@@ -1746,40 +1791,6 @@ int generateMultivariate(double** cov,double *mu,double **x,int n,int Nobs)
   return 0;
 }
 
-double *vectorAllocate(int n)
-{
-  double *v;
-  v=(double*)malloc(n*sizeof(double));
-  return v;
-}
-
-char *charVectorAllocate(int n)
-{
-  char *v;
-  v=(char*)malloc(n*sizeof(char));
-  return v;
-}
-
-double **matrixAllocate(int n,int m)
-{
-  double **M;
-  
-  M=(double**)malloc(n*sizeof(double*));
-  for(int i=0;i<n;i++) M[i]=(double*)malloc(m*sizeof(double));
-  
-  return M;
-}
-
-char **charMatrixAllocate(int n,int m)
-{
-  char **M;
-  
-  M=(char**)malloc(n*sizeof(char*));
-  for(int i=0;i<n;i++) M[i]=(char*)malloc(m*sizeof(char));
-  
-  return M;
-}
-
 double terminalDistance(double t,void *params)
 {
   double* ps=(double*)params;
@@ -1961,11 +1972,13 @@ double terminalDistance2(const gsl_vector *x,void *params)
   double t;
   double* ps=(double*)params;
   double **x1=matrixAllocate(2,6),**x2=matrixAllocate(2,6);
-  double x1c[6],x2c[6];
+  double *x1c=vectorAllocate(6);
+  double *x2c=vectorAllocate(6);
+  double *dx=vectorAllocate(6);
   double* ipars;
   double ts[2];
   double h;
-  double dx[6],d,dv;
+  double d,dv;
   ipars=ps+12;
 
   t=gsl_vector_get(x,0);
@@ -2008,6 +2021,11 @@ double terminalDistance2(const gsl_vector *x,void *params)
     copyVec(ps+6,x2[1],6);
   }
   
+  freeMatrix(x1,2,6);
+  freeMatrix(x2,2,6);
+  free(x1c);
+  free(x2c);
+  free(dx);
   return d;
 }
 
@@ -2015,7 +2033,7 @@ int minDistance(double *xs,double *xp,double tmin0,
 		 double *dmin,double *tmin,double *params)
 {
   int status;
-  double ps[23];
+  double *ps=vectorAllocate(23);
   double size;
   double error=fabs(tmin0)/10;
   double tolerance=error/10;
@@ -2066,6 +2084,7 @@ int minDistance(double *xs,double *xp,double tmin0,
   copyVec(xs,ps,6);
   copyVec(xp,ps+6,6);
   
+  free(ps);
   gsl_multimin_fminimizer_free(s);
   gsl_vector_free(x);
   gsl_vector_free(dx);
@@ -2254,7 +2273,7 @@ int cloudVolume(double *x,int Npart,double *dV)
   free(xcj);
   free(dx);
   free(ds);
-  free(dd);
+  freeMatrix(dd,Npart,Npart);
 
   *dV=(4*M_PI/3*ad*ad*ad);
   return 0;
@@ -2495,6 +2514,7 @@ double vinfProbability(double v1,double v2,void *params)
   gsl_function F={.function=vinfPosterior,.params=params};
   double vint,vint_error;
   gsl_integration_qags(&F,v1,v2,0,1e-5,1000,w,&vint,&vint_error);
+  gsl_integration_workspace_free(w);
   return vint;
 }
 
@@ -2547,9 +2567,10 @@ double solidAngle(double** vecs,int nvec,double *vmed,double *vstd)
   double sa=nvec*M_PI*ad*ad/fill;
   
   free(ds);
+  free(vs);
   free(ls);
   free(fs);
-  free(dd);
+  freeMatrix(dd,nvec,nvec);
 
   return sa;
 }

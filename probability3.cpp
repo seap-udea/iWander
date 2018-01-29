@@ -16,9 +16,10 @@
 using namespace std;
 
 //SET TO 1 IF YOU WANT A VERBOSE RUN
-#define VERBOSE 1
-//#define VSTREAM stderr
-#define VSTREAM stdout
+#define VERBOSE 2
+#define OSTREAM stdout
+#define VSTREAM stderr
+//#define VSTREAM stdout
 
 int main(int argc,char* argv[])
 {
@@ -55,7 +56,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   #include <iwander.conf>
   #include <probability3.conf>
-  printHeader(stdout,"COMPUTING PROBABILITIES",'*');
+  printHeader(OSTREAM,"COMPUTING PROBABILITIES",'*');
 
   ////////////////////////////////////////////////////
   //INITIALIZE CSPICE
@@ -81,13 +82,13 @@ int main(int argc,char* argv[])
   double nomtmin=0.0,nomdmin=0.0,nomvrel=0.0;
 
   double dminmin,dminmax,dminl,dminu,dminmed;
-  double tminmin,tminmax,tminl,tminu,tminmed;
+  double tminmin,tminmax,tminl,tminu,tminmed,tmint;
   double vrelmin,vrelmax,vrell,vrelu,vrelmed;
 
   double ni=0.0,nsum=0.0;
   double P=0.0,Pspeed=0.0,Psum=0.0,Psump=0.0,Psumv=0.0;
 
-  double Pp,Ppos,Pv,Pvel,Pposvel=0.0;
+  double Ppos=0.0,Pvel=0.0,Pposvel=0.0;
   double Pposi,Pveli,Pposveli;
   double Pdist=0.0;
   double IOP=0.0;
@@ -140,6 +141,7 @@ int main(int argc,char* argv[])
   double D=0.0;
   double Dmin;
   double deltaOmegav,deltaOmegaing;
+  double telaps;
 
   //VECTORS AND MATRICES WITH INTEGRATIONS
   double *xdum;
@@ -275,9 +277,9 @@ int main(int argc,char* argv[])
     //Suffix
     sprintf(suffix,"%s.%05d",WANDERER,ipart);
   }
-  print0(stdout,"\tAnalysing candidates in '%s'\n",basename);
+  print0(OSTREAM,"\tAnalysing candidates in '%s'\n",basename);
   if(ipart>0)
-    print0(stdout,"\this is the %d part of a parallel analysis\n",ipart);
+    print0(OSTREAM,"\this is the %d part of a parallel analysis\n",ipart);
 
   ////////////////////////////////////////////////////
   //SIGNAL THE START OF THE COMPUTATION
@@ -302,7 +304,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   //READ PARTICLES POSITION
   ////////////////////////////////////////////////////
-  printHeader(stdout,"READING SURROGATE OBJECTS",'-');
+  printHeader(OSTREAM,"READING SURROGATE OBJECTS",'-');
 
   //Read file
   sprintf(Filename,"scratch/wanderer-%s.csv",WANDERER);
@@ -310,7 +312,7 @@ int main(int argc,char* argv[])
 
   //Get header
   fgets(Line,MAXLINE,fc);//HEADER
-  print0(stdout,"\tReading initial conditions of test particles\n");
+  print0(OSTREAM,"\tReading initial conditions of test particles\n");
   print1(VSTREAM,"Reading initial conditions of test particles\n");
 
   i=0;
@@ -360,7 +362,7 @@ int main(int argc,char* argv[])
     //Break at a given number of test particles (see configuration file)
     if(i==Ntest) break;
   }
-  print0(stdout,"\tNtest = %d\n",Ntest);
+  print0(OSTREAM,"\tNtest = %d\n",Ntest);
   fclose(fc);
 
   //Compute
@@ -381,7 +383,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   //READ POSTERIOR EJECTION VELOCITY DISTRIBUTION
   ////////////////////////////////////////////////////
-  printHeader(stdout,"READING VELOCITY DISTRIBUTION",'-');
+  printHeader(OSTREAM,"READING VELOCITY DISTRIBUTION",'-');
   fv=fopen("db/ejection-posterior.data","r");
   nv=0;
   while(fgets(Line,MAXLINE,fv)!=NULL){
@@ -407,12 +409,12 @@ int main(int argc,char* argv[])
   vpar.s=spline;
 
   print2(VSTREAM,"\tP(vinf=%e) = %e\n",0.2,vinfPosterior(0.2,&vpar));
-  print0(stdout,"\tIntegral = %e +/- %e\n",vinfProbability(0,10,&vpar));
+  print0(OSTREAM,"\tIntegral = %e +/- %e\n",vinfProbability(0,10,&vpar));
 
   ////////////////////////////////////////////////////
   //READING POTENTIAL OBJECTS
   ////////////////////////////////////////////////////
-  printHeader(stdout,"READING CANDIDATES FILE AND OPENNING OUTPUT FILE",'-');
+  printHeader(OSTREAM,"READING CANDIDATES FILE AND OPENNING OUTPUT FILE",'-');
 
   //Input candidates
   if(ipart<0){
@@ -423,7 +425,7 @@ int main(int argc,char* argv[])
   if((fc=fopen(Filename,"r"))==NULL){
     fprintf(stderr,"No candidates file '%s'\n",Filename);
   }
-  print0(stdout,"\tReading input filename %s\n",Filename);
+  print0(OSTREAM,"\tReading input filename %s\n",Filename);
   fgets(Line,MAXLINE,fc);
 
   //Output progenitors
@@ -439,8 +441,10 @@ int main(int argc,char* argv[])
   fp=fopen(Filename,"w");
 
   //Header of progenitors
-  fprintf(fp,"nomtmin,nomdmin,nomvrel,dminl,dminmed,dminu,");
-  //fprintf(fp,"tminl,tminmed,tminu,vrell,vrelmed,vrelu,");
+  fprintf(fp,"nomtmin,nomdmin,nomvrel,");
+  fprintf(fp,"dminl,dminmed,dminu,");
+  fprintf(fp,"tminl,tminmed,tminu,");
+  fprintf(fp,"vrell,vrelmed,vrelu,");
   fprintf(fp,"Ppos,Pvel,Pposvel,Pdist,IOP,");
   fprintf(fp,"%s",Line);
 
@@ -455,7 +459,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   //START PROBABILITY CALCULATION
   ////////////////////////////////////////////////////
-  printHeader(stdout,"CALCULATING PROBABILITIES",'-');
+  printHeader(OSTREAM,"CALCULATING PROBABILITIES",'-');
 
   //TIME
   Telaps=0.0;
@@ -487,8 +491,9 @@ int main(int argc,char* argv[])
 	else qinterrupt=1;
     }
 
-    print0(stdout,"Computing probabilities for candidate star %d (%s,%s)...\n",
+    sprintf(Filename,"Computing probabilities for candidate star %d (%s,%s):",
 	    n,Fields[Candidates::HIP],Fields[Candidates::TYCHO2_ID]);
+    printHeader(OSTREAM,Filename,'=');
     print1(VSTREAM,"Computing probabilities for candidate star %d (%s,%s)...\n",
 	   n,Fields[Candidates::HIP],Fields[Candidates::TYCHO2_ID]);
 
@@ -504,7 +509,7 @@ int main(int argc,char* argv[])
 
     //If tmin is zero the star is too close
     if(!(fabs(tmin0)>1/*year*/)){
-      print0(stdout,"\t***This star is too close***\n");
+      print0(OSTREAM,"\t***This star is too close***\n");
       print1(VSTREAM,"\t***This star is too close***\n");
       Nstar_close++;
       continue;
@@ -595,7 +600,7 @@ int main(int argc,char* argv[])
     try{
       generateMultivariate(cov,mobs,obs,6,Nsur);
     }catch(int e){
-      print0(stdout,"\t***Star %d has a problem in its properties**\n",n);
+      print0(OSTREAM,"\t***Star %d has a problem in its properties**\n",n);
       print1(VSTREAM,"\t***Star %d has a problem in its properties**\n",n);
       Nstar_prop++;
       continue;
@@ -662,7 +667,7 @@ int main(int argc,char* argv[])
 	integrateEoM(0,xFullp0+nsysp+ip,hstep,2,ting,6,EoMGalactic,params,ts,xInt);
 	copyVec(xFullp0+nsysp+ip,xInt[1],6);
       }catch(int e){
-	print0(stdout,"\t\t***No suitable integration for surrogate %d of star %d***\n",i,n);
+	print0(OSTREAM,"\t\t***No suitable integration for surrogate %d of star %d***\n",i,n);
 	print1(VSTREAM,"\t\t***No suitable integration for surrogate %d of star %d***\n",i,n);
 	copyVec(xFullpe+nsysp+ip,XFOO,6);
 	Nstar_nosur++;
@@ -685,7 +690,7 @@ int main(int argc,char* argv[])
       nomdmin=dmin;
       nomtmin=tmin;
     }catch(int e){
-      print0(stdout,"\t***No minimum for star %d***\n",n);
+      print0(OSTREAM,"\t***No minimum for star %d***\n",n);
       print1(VSTREAM,"\t***No minimum for star %d***\n",n);
       Nstar_nomin++;
       continue;
@@ -701,7 +706,7 @@ int main(int argc,char* argv[])
 
     //Star has gone too far
     if(fabs(tmin)>tRet){
-      print0(stdout,"\t***This star has gone too far (tmin = %e). Excluding it**\n",tmin);
+      print0(OSTREAM,"\t***This star has gone too far (tmin = %e). Excluding it**\n",tmin);
       print1(VSTREAM,"\t***This star has gone too far (tmin = %e). Excluding it**\n",tmin);
       Nstar_far++;
       continue;
@@ -715,6 +720,9 @@ int main(int argc,char* argv[])
     print1(VSTREAM,"\tAttempting at analysing probabilities of %d surrogates\n",Nsur);
 
     //For each surrogate star: compute tmin,dmin,vrel of the object cloud
+    Ppos=0.0;
+    Pvel=0.0;
+    Pposvel=0.0;
     nt=0;
     Nsur_acc=0;
     for(i=0;i<Nsur;i++){
@@ -729,11 +737,11 @@ int main(int argc,char* argv[])
       try{
 	minDistance(xInt0,xnom0,tmin0,&dmin,&tmin,params);
       }catch(int e){
-	print0(stdout,"\t***No minimum for star %d, surrogate %d***\n",n,i);
+	print0(OSTREAM,"\t***No minimum for star %d, surrogate %d***\n",n,i);
 	Nstar_nomin++;
 	continue;
       }
-      print2(stdout,"\t\tSurrogate %d: tmin = %e, dmin = %e (nomtmin = %e, nomdmin = %e)\n",i,tmin,dmin,nomtmin,nomdmin);
+      print2(VSTREAM,"\t\tSurrogate %d: tmin = %e, dmin = %e (nomtmin = %e, nomdmin = %e)\n",i,tmin,dmin,nomtmin,nomdmin);
       
       //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
       //INTEGRATE THE REST OF OBJECTS AND PART.
@@ -755,7 +763,7 @@ int main(int argc,char* argv[])
 	  copyVec(xFullpe+nsysp+inp,xIntp[1],6);
 	  Nsur_suc++;
 	}catch(int e){
-	  print0(stdout,"\t\t\t\t***No integration for surrogate %d of star %d***\n",i,n);
+	  print0(OSTREAM,"\t\t\t\t***No integration for surrogate %d of star %d***\n",i,n);
 	  print2(VSTREAM,"\t\t\t\t***No integration for surrogate %d of star %d***\n",i,n);
 	  copyVec(xFullpe+nsysp+inp,XFOO,6);
 	  Nstar_noint++;
@@ -774,7 +782,7 @@ int main(int argc,char* argv[])
 	integrateEoM(0,xFullp0,hstep,2,tmin,nsysp,EoMGalactic,params,ts,xIntp);
 	copyVec(xFullpe,xIntp[1],nsysp);
       }catch(int e){
-	print0(stdout,"\t\t\t\t***No integration for all particles and star %d***\n",n);
+	print0(OSTREAM,"\t\t\t\t***No integration for all particles and star %d***\n",n);
 	print2(VSTREAM,"\t\t\t\t***No integration for all particles and star %d***\n",n);
 	Nstar_nointall++;
 	continue;
@@ -853,9 +861,8 @@ int main(int argc,char* argv[])
       }
       print2(VSTREAM,"\t\t\t\tSum ni (surrogate %d) = %.17e\n",nsum,i);
       if(nsum==0){
-	print0(stdout,"\t\t\t\t***This star has zero probability***\n");
-	print2(VSTREAM,"\t\t\t\t***This star has zero probability***\n");
-	Nstar_zero++;
+	print0(OSTREAM,"\t\t\t\t***Surrogate %d of star %d has zero probability***\n",i,n);
+	print2(VSTREAM,"\t\t\t\t***Surrogate %d of star %d has zero probability***\n",i,n);
 	continue;
       }
       term6=nsum;
@@ -931,6 +938,8 @@ int main(int argc,char* argv[])
       print2(VSTREAM,"\t\t\t\t\tPvel_i: %e\n",Pveli);
       print2(VSTREAM,"\t\t\t\t\tPpos,vel_i: %e\n",Pposveli);
 
+      Ppos+=Pposi;
+      Pvel+=Pveli;
       Pposvel+=Pposveli;
 
       Ds[nt]=dmin;
@@ -941,28 +950,44 @@ int main(int argc,char* argv[])
       Nsur_acc++;
       //if(i>1) break;
     }
-    print1(VSTREAM,"\t\tNumber of accepted surrogates: %d\n",Nsur_acc);
-    print1(VSTREAM,"\tTotal probabilities:\n");
+    if(Nsur_acc<int(Nsur/2)){
+      print0(OSTREAM,"\t\t\t\t***Few surrogates (%d/%d) of star %d passed. Skipping this star***\n",Nsur_acc,Nsur,n);
+      Nstar_zero++;
+      continue;
+    }
 
+    print0(OSTREAM,"\t\tNumber of accepted surrogates: %d\n",Nsur_acc);
+    print0(OSTREAM,"\tTotal probabilities:\n");
+
+    //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+    //PARTIAL PROBABILITIES
+    //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+    Ppos*=sigma/(Nsur_acc*Nsur_acc);
+    Ppos=log10(Ppos);
+    print0(OSTREAM,"\t\tProbability position (partial): %f\n",Ppos);
+    Pvel*=1.0/Nsur_acc;
+    Pvel=log10(Pvel);
+    print0(OSTREAM,"\t\tProbability velocity (partial): %f\n",Pvel);
+    
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     //POSITION-VELOCITY PROBABILITY
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-    Pposvel/=Nsur_suc;
+    Pposvel*=sigma/(Nsur_acc*Nsur_acc);
     Pposvel=log10(Pposvel);
-    print1(VSTREAM,"\t\tProbability position-velocity: %f\n",Pposvel);
+    print0(OSTREAM,"\t\tProbability position-velocity: %f\n",Pposvel);
     
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     //DISTANCE PROBABILITY
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     Pdist=log10(deltaOmegaing*(RTRUNC*AU/PARSEC/d)*(RTRUNC*AU/PARSEC/d)/(4*M_PI));
-    print1(VSTREAM,"\t\tProbability by distance: %f\n",Pdist);
+    print0(OSTREAM,"\t\tProbability by distance: %f\n",Pdist);
     
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     //TOTAL
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     IOP=Pposvel+Pdist;
     sprintf(Filename,"IOP: %f",IOP);
-    printHeader(stdout,Filename,'&',2,30);
+    printHeader(OSTREAM,Filename,'&',2,30);
   
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     //ENCOUNTER STATISTICS
@@ -980,8 +1005,10 @@ int main(int argc,char* argv[])
     getPercentile(Ts,nt,0.90,
 		  &tminmin,&tminmax,
 		  &tminl,&tminmed,&tminu);
+    tmint=tminl;
     tminl=-tminu;
     tminmed=-tminmed;
+    tminu=-tmint;
     print1(VSTREAM,"\tTime:\n");
     print1(VSTREAM,"\t\tNominal: %e\n",nomtmin);
     print1(VSTREAM,"\t\tMinimum: %e\n",tminmin);
@@ -998,23 +1025,31 @@ int main(int argc,char* argv[])
     print1(VSTREAM,"\t\tMaximum: %e\n",vrelmax);
     print1(VSTREAM,"\t\tMedian: %e\n",vrelmed);
     print1(VSTREAM,"\t\t90%% CL: %e,%e\n",vrell,vrelu);
-    exit(0);
 
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     //SAVE RESULTS
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-    fprintf(fp,"%e,%e,%e,%e,%e,%e,",nomtmin,nomdmin,nomvrel,dminl,dminmed,dminu);
+    fprintf(fp,"%e,%e,%e,",nomtmin,nomdmin,nomvrel);
+    fprintf(fp,"%e,%e,%e,",dminl,dminmed,dminu);
+    fprintf(fp,"%e,%e,%e,",tminl,tminmed,tminu);
+    fprintf(fp,"%e,%e,%e,",vrell,vrelmed,vrelu);
     fprintf(fp,"%e,%e,%e,%e,%e,",Ppos,Pvel,Pposvel,Pdist,IOP);
     fprintf(fp,"%s",Values);
     fflush(fp);
+    
+    //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+    //ELAPSED TIME
+    //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+    telaps=elapsedTime();
+    print0(OSTREAM,"\t\tElapsed time: %f s\n",telaps);
 
-    Telaps+=elapsedTime();
+    Telaps+=telaps;
     Nelaps++;
-    //if(Nelaps>10) break;
     if(qinterrupt) break;
+    //if(Nelaps>3) break;
   }
   Telaps/=Nelaps;
-  print0(stdout,"Average time per candidate: %f s\n",Telaps);
+  print0(OSTREAM,"Average time per valid candidate: %f s\n",Telaps);
 
   //REPORT THAT THE COMPUTATION HAS BEEN DONE
   if(ipart<0){
@@ -1029,20 +1064,20 @@ int main(int argc,char* argv[])
     system(Filename);
   }
   
-  print0(stdout,"Counts:\n");
-  print0(stdout,"\tNumber of candidates: %d\n",Ncand);
-  print0(stdout,"\tNumber of potential progenitors: %d\n",Nelaps);
-  print0(stdout,"\tNumber of stars rejected by zero probability: %d\n",Nstar_zero);
-  print0(stdout,"\tNumber of stars rejected by being close: %d\n",Nstar_close);
-  print0(stdout,"\tNumber of stars rejected by being far: %d\n",Nstar_far);
-  print0(stdout,"\tNumber of stars with problems in properties: %d\n",Nstar_prop);
-  print0(stdout,"\tNumber of surrogates not integrables: %d\n",Nstar_nosur);
-  print0(stdout,"\tNumber of stars with no minimum: %d\n",Nstar_nomin);
-  print0(stdout,"\tNumber of stars with no objects integration: %d\n",Nstar_nointall);
+  print0(OSTREAM,"Counts:\n");
+  print0(OSTREAM,"\tNumber of candidates: %d\n",Ncand);
+  print0(OSTREAM,"\tNumber of potential progenitors: %d\n",Nelaps);
+  print0(OSTREAM,"\tNumber of stars rejected by zero probability: %d\n",Nstar_zero);
+  print0(OSTREAM,"\tNumber of stars rejected by being close: %d\n",Nstar_close);
+  print0(OSTREAM,"\tNumber of stars rejected by being far: %d\n",Nstar_far);
+  print0(OSTREAM,"\tNumber of stars with problems in properties: %d\n",Nstar_prop);
+  print0(OSTREAM,"\tNumber of surrogates not integrables: %d\n",Nstar_nosur);
+  print0(OSTREAM,"\tNumber of stars with no minimum: %d\n",Nstar_nomin);
+  print0(OSTREAM,"\tNumber of stars with no objects integration: %d\n",Nstar_nointall);
 
   Telaps=elapsedTime(0);
-  print0(stdout,"Total elapsed time = %.5f (%.5f min)\n",Telaps,Telaps/60.0);
-  print0(stdout,"DONE.\n");
+  print0(OSTREAM,"Total elapsed time = %.5f s (%.5f min)\n",Telaps,Telaps/60.0);
+  print0(OSTREAM,"DONE.\n");
 
   fclose(fc);
   fclose(fp);

@@ -15,11 +15,9 @@
 #include <iwander.cpp>
 using namespace std;
 
-//SET TO 1 IF YOU WANT A VERBOSE RUN
-#define VERBOSE 2
-#define OSTREAM stdout
-#define VSTREAM stderr
-//#define VSTREAM stdout
+#define VERBOSE 0 //Verbosity level
+#define OSTREAM stdout //Stream where the output is redirected
+#define VSTREAM stderr //Stream where the error output is redirected
 
 int main(int argc,char* argv[])
 {
@@ -30,7 +28,8 @@ int main(int argc,char* argv[])
       candidadtes-Oumuamua.csv: base name of the candidate file.
       1: number of candidate file (candidadtes-Oumuamua.csv.00001)
 
-    Function: calculate the IOP probability for a list of candidates.
+    Function: calculate the IOP probability for a list of candidate
+    stars and generate the table of progenitors.
 
     Input:
     * wanderer.csv

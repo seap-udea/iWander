@@ -15,7 +15,9 @@
 #include <iwander.cpp>
 using namespace std;
 
-#define VERBOSE 0
+#define VERBOSE 0 //Verbosity level
+#define OSTREAM stdout //Stream where the output is redirected
+#define VSTREAM stderr //Stream where the error output is redirected
 
 int main(int argc,char* argv[])
 {
@@ -26,40 +28,25 @@ int main(int argc,char* argv[])
 
     This program perform three different tasks:
 
-    1) Calculate the time t_asymp when the single conic approximation is
+    1) Calculate the time t_asy when the single conic approximation is
        good enough to predict the future position of the interstellar
        object.
 
-    2) Calculate the time t_ingress at which the object was at a half
-       of the truncation tidal radius of the Solar System, ie. 100,000
-       AU.
+    2) Calculate the time t_ing at which the object was at a distance
+       equivalent to the truncation tidal radius of the Solar System.
 
     3) Predict the position and velocity of the surrogate objects at
-       t_ingress.
+       t_ing.
 
     Input: None
 
     Output: 
 
-    * wanderer.csv
-      Rows: 1 is for nominal solution, the rest is for random particle
-      Cols: 
-	  0:NUmber of the object (0 for nominal trajectory) 
-	  1-6:Initial random elements, q,e,i,W,w,Mo,to,mu
-	  7-12:Asymptotic elements, q,e,i,W,w,Mo,to,mu
-	  13:Time of ingress to Solar System
-	  14-19:Cartesian position at ingress wrt. Ecliptic J2000
-	  20-25:Cartesian position at ingress wrt. J2000
-	  26-31:Cartesian position at ingress wrt. Galactic
-	  32:Radiant at ingress RA(h) 
-	  33:Radiant at ingress DEC (deg)
-	  34:Radiant at ingress l(deg)
-	  35:Radiant at ingress b(deg)
+    * wanderer.csv: properties of all the surrogate objects.
 
-     * ingress.dat: a summary of the ingress orbit properties
-       including the epoch of asymptotic elements and their covariance
-       matrix, the time of ingress, the radiant and velocity at
-       ingress.
+    * ingress.dat: a summary of the ingress orbit properties including
+      the epoch of asymptotic elements and their covariance matrix,
+      the time of ingress, the radiant and velocity at ingress.
 
   */
 
@@ -110,7 +97,7 @@ int main(int argc,char* argv[])
   double a=ini_a*(-AU/1E3);
   double mu=n*n*a*a*a;
   double munom=mu;
-  VPRINT(stdout,"MU Nominal=%.17e\n",munom);
+  print1(VSTREAM,"MU Nominal=%.17e\n",munom);
 
   //EPHEMERIS TIME
   double to=unitim_c(ini_to_jed,"JDTDB","TDB");
@@ -213,7 +200,7 @@ int main(int argc,char* argv[])
   }
   ds/=Ndisp;
   ds*=1e3/AU;//AVERAGE DISTANCE IN AU
-  fprintf(stdout,"Typical size of the cloud at (t = %e, d = %e): %e AU\n",duration*UT/YEAR,vnorm_c(Xu)*1e3/AU,2*ds);
+  print0(OSTREAM,"Typical size of the cloud at (t = %e, d = %e): %e AU\n",duration*UT/YEAR,vnorm_c(Xu)*1e3/AU,2*ds);
   fprintf(fi,"t_test=%.17e\n",duration*UT/YEAR);
   fprintf(fi,"d_test=%.17e\n",vnorm_c(Xu)*1e3/AU);
   fprintf(fi,"dr_test=%.17e\n",2*ds);
@@ -223,7 +210,7 @@ int main(int argc,char* argv[])
   deltet_c(tend,"ET",&deltat);
   tend+=deltat;
   et2utc_c(tend,"C",2,100,dend);
-  VPRINT(stdout,"Position of nominal object at t = %e yr (%.17e, %s): %s\n",duration*UT/YEAR,tend,dend,vec2strn(Xref,6,"%.17e "));
+  print1(VSTREAM,"Position of nominal object at t = %e yr (%.17e, %s): %s\n",duration*UT/YEAR,tend,dend,vec2strn(Xref,6,"%.17e "));
   
   ////////////////////////////////////////////////////
   //CALCULATE TIME OF ASYMPTOTIC ELEMENTS
@@ -252,24 +239,24 @@ int main(int argc,char* argv[])
 
   tdur=direction*0.01*YEAR;
   do{
-    VPRINT(stdout,"Dur.=%e\n",tdur/YEAR);
+    print1(VSTREAM,"Dur.=%e\n",tdur/YEAR);
 
     //CALCULATE POSITION ASSUMING DURATION = TDUR
     integrateEoM(tini/UT,X0,h,npoints,tdur/UT,6,EoM,params,ts,Xout);
     vscl_c(UL/1E3,Xout[1],Xu);vscl_c(UV/1E3,Xout[1]+3,Xu+3);
-    VPRINT(stdout,"Integration=%s\n",vec2strn(Xref,6,"%e "));
+    print1(VSTREAM,"Integration=%s\n",vec2strn(Xref,6,"%e "));
     oscelt_c(Xu,ts[1]*UT,munom,elts);
 
     //DETERMINE PREDICTED POSITION USING THE CONIC APPROXIMATION AND ITS ERROR
     conics_c(elts,tfut,Xend);
-    VPRINT(stdout,"Conic approximation=%s\n",vec2strn(Xend,6,"%e "));
+    print1(VSTREAM,"Conic approximation=%s\n",vec2strn(Xend,6,"%e "));
     vsub_c(Xend,Xref,Xdif);
     dp=vnorm_c(Xdif)*1e3/UL;
-    VPRINT(stdout,"Difference in position at asymptotic time=%e\n",dp);
+    print1(VSTREAM,"Difference in position at asymptotic time=%e\n",dp);
       
     //COMPARE DIFFERENCE BETWEEN CONIC AND RIGOROUS SOLUTION
     if(dp<(ds/10)){
-      VPRINT(stdout,"Dur.Con. Found!\n");
+      print1(VSTREAM,"Dur.Con. Found!\n");
       durasymp=tdur;
       dasymp=vnorm_c(Xu)*1e3/AU;
       dpasymp=dp;
@@ -278,7 +265,7 @@ int main(int argc,char* argv[])
     tdur+=direction*dtdur;
     dtdur*=2;
   }while(direction*(tdur-1*duration*UT)<0);
-  fprintf(stdout,"Conic approximation can be calculated from t = %e years, when dist. = %e (dp = %e)\n",durasymp/YEAR,dasymp,dpasymp);
+  print0(OSTREAM,"Conic approximation can be calculated from t = %e years, when dist. = %e (dp = %e)\n",durasymp/YEAR,dasymp,dpasymp);
 
   //ASYMPTOTIC ELEMENTS
   copyVec(elemasymp,elts,8);
@@ -286,7 +273,7 @@ int main(int argc,char* argv[])
   deltet_c(tend,"ET",&deltat);
   tend+=deltat;
   et2utc_c(tend,"C",2,100,dend);
-  fprintf(stdout,"Asymptotic elements at t = %s: (q = %.10lf AU, e = %.10lf, i = %.10lf deg, Omega = %.10lf deg, omega = %.10lf deg, M = %.10lf deg, to = %.3lf, mu = %.10e)\n",
+  print0(OSTREAM,"Asymptotic elements at t = %s: (q = %.10lf AU, e = %.10lf, i = %.10lf deg, Omega = %.10lf deg, omega = %.10lf deg, M = %.10lf deg, to = %.3lf, mu = %.10e)\n",
 	  dend,elemasymp[0]*1e3/AU,elemasymp[1],elemasymp[2]*RAD,
 	  elemasymp[3]*RAD,elemasymp[4]*RAD,elemasymp[5]*RAD,
 	  unitim_c(elemasymp[6],"TDB","JDTDB"),elemasymp[7]);
@@ -305,7 +292,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   //COMPUTE ERROR OF ASYMPTOTIC ELEMENTS
   ////////////////////////////////////////////////////
-  fprintf(stdout,"Calculating elements at t = %f\n",durasymp/YEAR);
+  print0(OSTREAM,"Calculating elements at t = %f\n",durasymp/YEAR);
   double qs[Ncov],es[Ncov],tps[Ncov],Ws[Ncov],ws[Ncov],is[Ncov];
   for(int j=0;j<=Ncov+1;j++){
 
@@ -370,7 +357,7 @@ int main(int argc,char* argv[])
   }
   ds/=Ncov;
   ds*=1e3/AU;//AVERAGE DISTANCE IN AU
-  fprintf(stdout,"Typical size of the cloud at asymptotic time: %e\n",2*ds);
+  print0(OSTREAM,"Typical size of the cloud at asymptotic time: %e\n",2*ds);
 
   //Compute covariances
   fprintf(fi,"#actual covariance and original covariance\n");
@@ -402,12 +389,12 @@ int main(int argc,char* argv[])
   printHeader(stdout,"COMPUTING INGRESS TIME");
   conics_c(elemasymp,elemasymp[6],Xend);
   vasymp=vnorm_c(Xend+3);
-  fprintf(stdout,"Asymptotic velocity: %e\n",vasymp);
+  print0(OSTREAM,"Asymptotic velocity: %e\n",vasymp);
   during=truncation/(vasymp*1e3);
-  fprintf(stdout,"Estimated time of ingress: %e\n",during/YEAR);
+  print0(OSTREAM,"Estimated time of ingress: %e\n",during/YEAR);
   conics_c(elemasymp,elemasymp[6]+direction*during,Xend);
   ding=vnorm_c(Xend);
-  fprintf(stdout,"Estimated distance at ingress: %e\n",ding*1e3/AU);
+  print0(OSTREAM,"Estimated distance at ingress: %e\n",ding*1e3/AU);
   while((ding*1e3/AU)<(truncation/AU)){
     durold=during;
     dold=ding;
@@ -416,7 +403,7 @@ int main(int argc,char* argv[])
     ding=vnorm_c(Xend);
   }
   during=durold+(during-durold)/(ding-dold)*(truncation/1e3-dold);
-  fprintf(stdout,"Time of ingress: %e\n",during/YEAR);
+  print0(OSTREAM,"Time of ingress: %e\n",during/YEAR);
   fprintf(fi,"t_ing=%.17e\n",during/YEAR);
 
   //COMPUTING THE HELIOCENTRIC ACCELERATION
@@ -428,11 +415,11 @@ int main(int argc,char* argv[])
   vpack_c(position[3]*1E3/UV,position[4]*1E3/UV,position[5]*1E3/UV,X0+3);
   EoM(0,X0,accel,params);
   vscl_c(UL/(UT*UT),accel+3,accel+3);
-  fprintf(stdout,"Heliocentric acceleration at ingress (m/s^2): %s\n",
+  print0(OSTREAM,"Heliocentric acceleration at ingress (m/s^2): %s\n",
 	  vec2strn(accel+3,3,"%.5e "));
 
   double asun=vnorm_c(accel+3);
-  fprintf(stdout,"Magnitude of the heliocentric acceleration of the object (m/s^2): %e\n",
+  print0(OSTREAM,"Magnitude of the heliocentric acceleration of the object (m/s^2): %e\n",
 	  asun);
 
   //COMPUTING GALACTIC ACCELERATION
@@ -449,7 +436,7 @@ int main(int argc,char* argv[])
   EoMGalactic(0,X0,accel,params);
   vscl_c(UL/(UT*UT),accel+3,accel+3);
   
-  fprintf(stdout,"Galactocentric acceleration of the Object (m/s^2): %s\n",
+  print0(OSTREAM,"Galactocentric acceleration of the Object (m/s^2): %s\n",
 	  vec2strn(accel+3,3,"%.5e "));
 
   //SUN
@@ -463,19 +450,19 @@ int main(int argc,char* argv[])
   EoMGalactic(0,X0,accel_sun,params);
   vscl_c(UL/(UT*UT),accel_sun+3,accel_sun+3);
 
-  fprintf(stdout,"Galactocentric acceleration of the Sun (m/s^2): %s\n",
+  print0(OSTREAM,"Galactocentric acceleration of the Sun (m/s^2): %s\n",
 	  vec2strn(accel_sun+3,3,"%.5e "));
 
   //Galactic acceleration of the object respect to the Sun
   vsub_c(accel+3,accel_sun+3,accel+3);
-  fprintf(stdout,"Galactic acceleration of the object respect to the Sun (galactic coordinates) (m/s^2): %s\n",
+  print0(OSTREAM,"Galactic acceleration of the object respect to the Sun (galactic coordinates) (m/s^2): %s\n",
 	  vec2strn(accel+3,3,"%.5e "));
 
   double agal=vnorm_c(accel+3);
-  fprintf(stdout,"Magnitude of the galactic acceleration of the object respect to the Sun (m/s^2): %e\n",
+  print0(OSTREAM,"Magnitude of the galactic acceleration of the object respect to the Sun (m/s^2): %e\n",
 	  agal);
   
-  fprintf(stdout,"Ratio Sun/Gal (>1 still in Solar System) = %e\n",asun/agal);
+  print0(OSTREAM,"Ratio Sun/Gal (>1 still in Solar System) = %e\n",asun/agal);
 
   //RECOVERING ORIGINAL UNITS
   UL=ul;UM=um;UT=ut;UV=uv;GGLOBAL=gglobal;
@@ -496,7 +483,7 @@ int main(int argc,char* argv[])
   for(int j=0;j<Npart;j++){
     
     if ((j%Nfreq)==0)
-      fprintf(stdout,"Particle %d...\n",j+1);
+      print0(OSTREAM,"Particle %d...\n",j+1);
 
     if(j>0){
       //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
@@ -538,16 +525,16 @@ int main(int argc,char* argv[])
     //INITIAL POSITION @ SSB
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     conics_c(elements,to,position);
-    VPRINT(stdout,"\tInitial position @ Sun (EJ2000) : %s\n",
+    print1(VSTREAM,"\tInitial position @ Sun (EJ2000) : %s\n",
 			vec2strn(position,3,"%.17e "));
-    VPRINT(stdout,"\tInitial velocity @ Sun (EJ2000) : %s\n",
+    print1(VSTREAM,"\tInitial velocity @ Sun (EJ2000) : %s\n",
 			vec2strn(position+3,3,"%.17e "));
     
     spkezr_c("SUN",to,"ECLIPJ2000","NONE",SSB,sun,&ltmp);
     vaddg_c(position,sun,6,position);
-    VPRINT(stdout,"\tInitial position @ SSB (EJ2000) : %s\n",
+    print1(VSTREAM,"\tInitial position @ SSB (EJ2000) : %s\n",
 	    vec2strn(position,3,"%.17e "));
-    VPRINT(stdout,"\tInitial velocity @ SSB (EJ2000) : %s\n",
+    print1(VSTREAM,"\tInitial velocity @ SSB (EJ2000) : %s\n",
 	    vec2strn(position+3,3,"%.17e "));
 
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
@@ -568,23 +555,23 @@ int main(int argc,char* argv[])
     //FINAL POSITION
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     vscl_c(UL/1E3,Xout[1],Xu);vscl_c(UV/1E3,Xout[1]+3,Xu+3);
-    VPRINT(stdout,"\tFinal position : %s\n",
+    print1(VSTREAM,"\tFinal position : %s\n",
 	    vec2strn(Xu,3,"%.17e "));
     double d=vnorm_c(Xu)*1e3/AU;
-    VPRINT(stdout,"\tDistance : %e\n",d);
+    print1(VSTREAM,"\tDistance : %e\n",d);
 
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     //ASYMPTOTIC ELEMENTS
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     oscelt_c(Xu,ts[1],munom,elts);
-    VPRINT(stdout,"\tAsymptotic elements : %s\n",vec2strn(elts,8,"%e "));
+    print1(VSTREAM,"\tAsymptotic elements : %s\n",vec2strn(elts,8,"%e "));
 
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     //INGRESS POSITION
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     conics_c(elts,elts[6]+direction*during,Xu);
     ding=vnorm_c(Xu);
-    VPRINT(stdout,"\tIngress distance : %e\n",ding*1e3/AU);
+    print1(VSTREAM,"\tIngress distance : %e\n",ding*1e3/AU);
 
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     //POSITION AT INGRESS
@@ -593,14 +580,14 @@ int main(int argc,char* argv[])
     mxv_c(M_Eclip_J2000,Xu,posJ2000);
     mxv_c(M_Eclip_J2000,Xu+3,posJ2000+3);
     recrad_c(posJ2000,&d,&RA,&DEC);
-    VPRINT(stdout,"\tRA(+HH:MM:SS) = %s, DEC(DD:MM:SS) = %s, d = %.3lf AU\n",
+    print1(VSTREAM,"\tRA(+HH:MM:SS) = %s, DEC(DD:MM:SS) = %s, d = %.3lf AU\n",
 	    dec2sex(RA*RAD/15.0),dec2sex(DEC*RAD),d*1e3/AU);
     
     //GALACTIC
     mxv_c(M_Eclip_Galactic,Xu,posGalactic);
     mxv_c(M_Eclip_Galactic,Xu+3,posGalactic+3);
     recrad_c(posGalactic,&d,&l,&b);
-    VPRINT(stdout,"\tl(+DD:MM:SS) = %s, b(DD:MM:SS) = %s\n",
+    print1(VSTREAM,"\tl(+DD:MM:SS) = %s, b(DD:MM:SS) = %s\n",
 	    dec2sex(l*RAD),dec2sex(b*RAD));
     
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
@@ -632,6 +619,6 @@ int main(int argc,char* argv[])
   printHeader(stdout,"DONE.",'!');
   
   telaps=elapsedTime(0);
-  fprintf(stdout,"Total elapsed time = %.5f (%.5f min)\n",telaps,telaps/60.0);
+  print0(OSTREAM,"Total elapsed time = %.5f (%.5f min)\n",telaps,telaps/60.0);
   return 0;
 }

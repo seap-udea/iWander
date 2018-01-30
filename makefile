@@ -14,6 +14,9 @@ include compiler.in
 BRANCH=$(shell bash .getbranch)
 PROGRAMS=wanderer encounters probability
 
+#########################################################
+# MAIN RULES
+#########################################################
 test:
 	@make .test.exe 
 	@echo "It works!"
@@ -28,9 +31,29 @@ analysis:all
 	./probability.exe
 	$(PYTHON) bin/progenitors.py
 
-branch:
-	@echo $(BRANCH)
+#########################################################
+# COMPILATION
+#########################################################
+%.exe:%.opp
+	$(CPP) $^ $(LFLAGS) -o $@
 
+%.opp:%.cpp %.conf iwander.conf
+	$(CPP) -c $(CFLAGS) $< -o $@
+
+#########################################################
+# INSTALL
+#########################################################
+pack:
+	@echo "Packing data..."
+	@bash .store/pack.sh pack
+
+unpack:
+	@echo "Unpacking data..."
+	@bash .store/pack.sh unpack
+
+#########################################################
+# CLEAN
+#########################################################
 cleancrap:
 	@echo "Cleaning crap..."
 	@find . -name "*~" -exec rm -rf {} \;
@@ -51,18 +74,9 @@ clean:cleancrap cleanexe
 
 cleanall:clean cleandata
 
-%.exe:%.opp
-	$(CPP) $^ $(LFLAGS) -o $@
-
-%.opp:%.cpp %.conf iwander.conf
-	$(CPP) -c $(CFLAGS) $< -o $@
-
-dev:
-	@-git checkout dev
-
-master:
-	@-git checkout master
-
+#########################################################
+# GIT RELATED
+#########################################################
 merge:	
 	@echo "Merging branches..."
 	@-make master
@@ -78,10 +92,12 @@ pull:
 	@-git reset --hard HEAD
 	@-git pull origin $(BRANCH)
 
-pack:
-	@echo "Packing data..."
-	@bash .store/pack.sh pack
+master:
+	@-git checkout master
 
-unpack:
-	@echo "Unpacking data..."
-	@bash .store/pack.sh unpack
+dev:
+	@-git checkout dev
+
+branch:
+	@-echo $(BRANCH)
+

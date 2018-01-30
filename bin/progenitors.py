@@ -32,8 +32,8 @@ else:
     candtxt="Future close encounters"
 
 if qpast:
-    pcols="Ppos|Pvmed|Pdist|Pprob|"
-    lcols="--|--|--|--|"
+    pcols="Ppos|Pvel|Pposvel|Pdist|IOP|"
+    lcols="--|--|--|--|--|"
     suffix="Past"
 else:
     pcols="Ppos|"
@@ -64,13 +64,17 @@ f.write("""# %s of %s
 
 _Latest update_: ``%s``
 
-|HIP/TYCHO|Name|tmin|dmin|vrel|tmin|dmin|vrel|%s
-|--|--|--|--|--|--|--|--|%s
+|#|Name|d(pc)|q|dmin(pc)|tmin(Myr)|vrel(km/s)|%s
+|--|--|--|--|--|--|--|%s
 """%(candtxt,conf["WANDERER_NAME"],time.strftime("%c"),pcols,lcols))
 
 i=1
 for index in progsort.index:
-    p=progenitors.loc[index]
+    p=progsort.loc[index]
+    
+    if p.nomdmin>conf["dminMax"]:continue
+    if p.qastro<1:continue
+
     row=""
     if str(p.hip)=='nan':
         if str(p.tycho2_id)=='nan':sid='--'
@@ -79,30 +83,96 @@ for index in progsort.index:
     
     bf="";mbf=""
 
-    if p.Psurmed!=0:
-        if np.log10(p.Psurmed)<-20:continue
-    else:
-        continue
-    
     simbad=str(p.name_simbad).replace('nan','--').replace('_',' ')
     if simbad!="--":
         simbad_ns=simbad.replace(" ","%20")
-        simbad="[%s](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=%s)"%(simbad,simbad_ns)
-    
-    row+=r"| %s %s | %s %s | "%(bf,sid,
-                              bf,simbad,
-                            )
-    row+=r"%s%.1f | %s%.1f | %s%.0f | "%(mbf,p.nomtmin/1e6,mbf,p.nomdmin,mbf,p.nomvrel)
-    row+=r"%s[%.1f,%.1f,%.1f] | %s[%.1f,%.1f,%.1f] | %s[%.0f,%.0f,%.0f] | "%(mbf,p.tminl/1e6,p.tminmed/1e6,p.tminu/1e6,
-                                                                             mbf,p.dminl,p.dminmed,p.dminu,
-                                                                             mbf,p.vrell,p.vrelmed,p.vrelu)
-    logPsurmed="%s%.1f"%(mbf,np.log10(p.Psurmed)) if p.Psurmed>0 else '--'
+        simbad="([%s](http://simbad.u-strasbg.fr/simbad/sim-id?Ident=%s))"%(simbad,simbad_ns)
+    else:simbad=""
+
+    d=AU/np.tan(p.parallax/(60*60*1000.0)*DEG)/PARSEC;
+    row+=r"| %d | %s %s %s | %.1f | %d | "%(i,bf,sid,simbad,d,p.qastro)
+    row+=r"%s%.2f [%.2f,%.2f,%.2f] |%s %.2f [%.2f,%.2f,%.2f] |%s %.1f [%.1f,%.1f,%.1f] | "%(mbf,p.nomdmin,p.dminl,p.dminmed,p.dminu,
+                                                                                           mbf,p.nomtmin/1e6,p.tminl/1e6,p.tminmed/1e6,p.tminu/1e6,
+                                                                                           mbf,p.nomvrel,p.vrell,p.vrelmed,p.vrelu)
+    Ppos="%s%.1f"%(mbf,p.Ppos)
     if qpast:
-        logPvelmed="%s%.1f"%(mbf,np.log10(p.Pvelmed)) if p.Pvelmed>0 else '--'
-        logPdist="%s%.1f"%(mbf,np.log10(p.Pdist)) if p.Pdist>0 else '--'
-        logPprob="%s%.1f"%(mbf,np.log10(p.Pprob)) if p.Pprob>0 else '--'
-        row+=r"%s | %s | %s | %s |"%(logPsurmed,logPvelmed,logPdist,logPprob)
+        Pvel="%s%.1f"%(mbf,p.Pvel)
+        Pposvel="%s%.1f"%(mbf,p.Pposvel)
+        Pdist="%s%.1f"%(mbf,p.Pdist)
+        IOP="%s%.1f"%(mbf,p.IOP)
+        row+=r"%s | %s | %s | %s | %s |"%(Ppos,Pvel,Pposvel,Pdist,IOP)
     else:
-        row+=r"%s |"%(logPsurmed)
+        row+=r"%s |"%(Ppos)
+
     f.write(row+"\n")
     i+=1
+
+# Generate latex table
+i=1
+f=open("scratch/CANDIDATES-%s-%s.tex"%(conf["WANDERER"],suffix),"w")
+f.write(r"""\begin{table*}
+\centering
+\scriptsize
+\begin{tabular}{llll|ccc|ccccc}
+\hline
+\multicolumn{4}{c|}{Basic properties} & 
+\multicolumn{3}{c|}{Encounter conditions} & \multicolumn{5}{c}{$\log P$}  \\ \hline
+\# & Name & $d_*$ (pc) & $q$ & 
+$t\sub{min}$ (Myr)  & 
+$d\sub{min}$ (pc)   & 
+$v\sub{rel}$ (km/s) & 
+$P\sub{pos}$ & $P\sub{vel}$ & $P\sub{pos,vel}$ & $P\sub{dist}$ & IOP \\
+  \hline\hline
+""")
+for index in progsort.index:
+    p=progenitors.loc[index]
+
+    if p.nomdmin>conf["dminMax"]:continue
+    if p.qastro<1:continue
+
+    row=""
+    if str(p.hip)=='nan':
+        if str(p.tycho2_id)=='nan':sid='--'
+        else:sid="TYC "+str(p.tycho2_id)
+    else:sid="HIP "+str(int(p.hip))
+    bf="";mbf=""
+
+    simbad=str(p.name_simbad).replace('nan','--').replace('_',' ')
+    if simbad!="--":
+        simbad_ns=simbad.replace(" ","%20")
+        simbad=r"\href{http://simbad.u-strasbg.fr/simbad/sim-id?Ident=%s}{%s}"%(simbad_ns,simbad)
+
+    if simbad=="nan":simbad=""
+    else:simbad="(%s)"%simbad.replace('_',' ')
+    if simbad=="(--)":simbad=""
+
+    d=AU/np.tan(p.parallax/(60*60*1000.0)*DEG)/PARSEC;
+    Ppos="$%s{%.1f}$"%(mbf,p.Ppos)
+    Pvel="$%s{%.1f}$"%(mbf,p.Pvel)
+    Pposvel="$%s{%.1f}$"%(mbf,p.Pposvel)
+    Pdist="$%s{%.1f}$"%(mbf,p.Pdist)
+    IOP="$%s{%.1f}$"%(mbf,p.IOP) 
+
+    row+=r"%s %d & %s%s & %.1f & %d & "%(bf,i,bf,sid,p.d,p.qastro)
+    row+=r"$%s{%.2f}$ &"%(mbf,p.nomtmin/1e6)
+    row+=r"$%s{%.2f}$ &"%(mbf,p.nomdmin)
+    row+=r"$%s{%.1f}$ &"%(mbf,p.nomvrel)
+    row+=r"%s & %s & %s & %s & %s \\"%(Ppos,Pvel,Pposvel,Pdist,IOP)
+    f.write(row+"\n")
+    
+    row=""
+    row+=r" & %s%s & & & "%(bf,simbad)
+    row+=r"\tiny $%s[%.2f,%.2f,%.2f]$ &"%(mbf,p.tminl/1e6,p.tminmed/1e6,p.tminu/1e6)
+    row+=r"\tiny $%s[%.2f,%.2f,%.2f]$ &"%(mbf,p.dminl,p.dminmed,p.dminu)
+    row+=r"\tiny $%s[%.1f,%.1f,%.1f]$ &"%(mbf,p.vrell,p.vrelmed,p.vrelu)
+    row+=r" & & & & \\"
+
+    f.write(row+"\n\n")
+
+    i+=1
+f.write(r"""\hline
+  \end{tabular}
+\caption{Interstellar origin probability (IOP) for a selected group of nearby stars.
+\label{tab:Progenitors}}
+\end{table*}
+""")

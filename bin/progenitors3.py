@@ -71,7 +71,7 @@ _Latest update_: ``%s``
 i=1
 for index in progsort.index:
     p=progsort.loc[index]
-
+    
     if p.nomdmin>conf["dminMax"]:continue
     if p.qastro<1:continue
 
@@ -91,7 +91,7 @@ for index in progsort.index:
 
     d=AU/np.tan(p.parallax/(60*60*1000.0)*DEG)/PARSEC;
     row+=r"| %d | %s %s %s | %.1f | %d | "%(i,bf,sid,simbad,d,p.qastro)
-    row+=r"%s%.2f [%.2f,%.2f,%.2f] |%s %.2f [%.2f,%.2f,%.2f] |%s %.2f [%.2f,%.2f,%.2f] | "%(mbf,p.nomdmin,p.dminl,p.dminmed,p.dminu,
+    row+=r"%s%.2f [%.2f,%.2f,%.2f] |%s %.2f [%.2f,%.2f,%.2f] |%s %.1f [%.1f,%.1f,%.1f] | "%(mbf,p.nomdmin,p.dminl,p.dminmed,p.dminu,
                                                                                            mbf,p.nomtmin/1e6,p.tminl/1e6,p.tminmed/1e6,p.tminu/1e6,
                                                                                            mbf,p.nomvrel,p.vrell,p.vrelmed,p.vrelu)
     Ppos="%s%.1f"%(mbf,p.Ppos)
@@ -103,7 +103,7 @@ for index in progsort.index:
         row+=r"%s | %s | %s | %s | %s |"%(Ppos,Pvel,Pposvel,Pdist,IOP)
     else:
         row+=r"%s |"%(Ppos)
-    print(row)
+
     f.write(row+"\n")
     i+=1
 
@@ -113,20 +113,22 @@ f=open("scratch/CANDIDATES-%s-%s.tex"%(conf["WANDERER"],suffix),"w")
 f.write(r"""\begin{table*}
 \centering
 \scriptsize
-\begin{tabular}{llll|ccc|ccc}
+\begin{tabular}{llll|ccc|ccccc}
 \hline
 \multicolumn{4}{c|}{Basic properties} & 
-\multicolumn{3}{c|}{Encounter conditions} & \multicolumn{3}{c}{$\log P$}  \\ \hline
-\# & Name & $d$ (pc) & $q$ & 
+\multicolumn{3}{c|}{Encounter conditions} & \multicolumn{5}{c}{$\log P$}  \\ \hline
+\# & Name & $d_*$ (pc) & $q$ & 
 $t\sub{min}$ (Myr)  & 
 $d\sub{min}$ (pc)   & 
 $v\sub{rel}$ (km/s) & 
-$P\sub{pos,vel}$ & $P\sub{dist}$ & IOP \\
+$P\sub{pos}$ & $P\sub{vel}$ & $P\sub{pos,vel}$ & $P\sub{dist}$ & IOP \\
   \hline\hline
 """)
 for index in progsort.index:
     p=progenitors.loc[index]
+
     if p.nomdmin>conf["dminMax"]:continue
+    if p.qastro<1:continue
 
     row=""
     if str(p.hip)=='nan':
@@ -139,22 +141,34 @@ for index in progsort.index:
     if simbad!="--":
         simbad_ns=simbad.replace(" ","%20")
         simbad=r"\href{http://simbad.u-strasbg.fr/simbad/sim-id?Ident=%s}{%s}"%(simbad_ns,simbad)
+
     if simbad=="nan":simbad=""
     else:simbad="(%s)"%simbad.replace('_',' ')
-    d=AU/np.tan(p.parallax/(60*60*1000.0)*DEG)/PARSEC;
+    if simbad=="(--)":simbad=""
 
-    row+=r"%s %d & %s%s %s & %.1f & %d & "%(bf,i,bf,sid,simbad,p.d,p.qastro)
-    row+=r"$%s{%.2f}\;[%.2f,%.2f,%.2f]$ &"%(bf,p.nomtmin/1e6,p.tminl/1e6,p.tminmed/1e6,p.tminu/1e6)
-    row+=r"$%s{%.2f}\;[%.2f,%.2f,%.2f]$ &"%(bf,p.nomdmin,p.dminl,p.dminmed,p.dminu)
-    row+=r"$%s{%.2f}\;[%.2f,%.2f,%.2f]$ &"%(bf,p.nomvrel,p.vrell,p.vrelmed,p.vrelu)
+    d=AU/np.tan(p.parallax/(60*60*1000.0)*DEG)/PARSEC;
     Ppos="$%s{%.1f}$"%(mbf,p.Ppos)
     Pvel="$%s{%.1f}$"%(mbf,p.Pvel)
     Pposvel="$%s{%.1f}$"%(mbf,p.Pposvel)
     Pdist="$%s{%.1f}$"%(mbf,p.Pdist)
     IOP="$%s{%.1f}$"%(mbf,p.IOP) 
+
+    row+=r"%s %d & %s%s & %.1f & %d & "%(bf,i,bf,sid,p.d,p.qastro)
+    row+=r"$%s{%.2f}$ &"%(mbf,p.nomtmin/1e6)
+    row+=r"$%s{%.2f}$ &"%(mbf,p.nomdmin)
+    row+=r"$%s{%.1f}$ &"%(mbf,p.nomvrel)
     row+=r"%s & %s & %s & %s & %s \\"%(Ppos,Pvel,Pposvel,Pdist,IOP)
     f.write(row+"\n")
-    print(row)
+    
+    row=""
+    row+=r" & %s%s & & & "%(bf,simbad)
+    row+=r"\tiny $%s[%.2f,%.2f,%.2f]$ &"%(mbf,p.tminl/1e6,p.tminmed/1e6,p.tminu/1e6)
+    row+=r"\tiny $%s[%.2f,%.2f,%.2f]$ &"%(mbf,p.dminl,p.dminmed,p.dminu)
+    row+=r"\tiny $%s[%.1f,%.1f,%.1f]$ &"%(mbf,p.vrell,p.vrelmed,p.vrelu)
+    row+=r" & & & & \\"
+
+    f.write(row+"\n\n")
+
     i+=1
 f.write(r"""\hline
   \end{tabular}

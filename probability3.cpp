@@ -917,8 +917,8 @@ int main(int argc,char* argv[])
       /* **************************************** */
       /*Term 3: dv_i*/
       /* **************************************** */
-      print2(VSTREAM,"\t\t\t\tRelative speed dispesion (km/s): %e\n",dv);
-      term3=dv;
+      print2(VSTREAM,"\t\t\t\tRelative speed dispesion (km/s): %e\n",dv*UV/1e3);
+      term3=dv*UV/1e3;
       
       //Probability terms
       print2(VSTREAM,"\t\t\t\tProbability terms:\n");

@@ -17,7 +17,7 @@
 copy="""
    From the JPL Small-Body Database Browser copy and paste starting in
    "Orbital Elements..." and finishing in the last line of the
-   covariance matrix
+   covariance matrix.
 """
 
 ############################################################

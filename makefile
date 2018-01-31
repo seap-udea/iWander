@@ -31,6 +31,9 @@ analysis:all
 	./probability.exe
 	$(PYTHON) bin/progenitors.py
 
+edit:
+	emacs -nw *.cpp *.conf bin/*.py bin/*.sh *.sh
+
 #########################################################
 # COMPILATION
 #########################################################

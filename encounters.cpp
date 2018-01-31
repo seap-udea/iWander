@@ -230,25 +230,25 @@ int main(int argc,char* argv[])
       Nstars_null++;
       continue;
     }
-    if(fabs(par/dpar)<pardpar_min){
+    if(fabs(par/dpar)<Pardpar_Min){
       print2(VSTREAM,"\tParallax is very uncertain for star %d %s %s. Skipping\n",
 	     n,FIELDS[Stars::HIP],FIELDS[Stars::TYCHO2_ID]);
       Nstars_noastro++;
       continue;
     }
-    if(fabs(mura/dmura)<muradmura_min){
+    if(fabs(mura/dmura)<Muradmura_Min){
       print2(VSTREAM,"\tProper motion in RA is very uncertain for star %d %s %s. Skipping\n",
 	     n,FIELDS[Stars::HIP],FIELDS[Stars::TYCHO2_ID]);
       Nstars_noastro++;
       continue;
     }
-    if(fabs(mudec/dmudec)<mudecdmudec_min){
+    if(fabs(mudec/dmudec)<Mudecdmudec_Min){
       print2(VSTREAM,"\tProper motion in DEC is very uncertain for star %d %s %s. Skipping\n",
 	     n,FIELDS[Stars::HIP],FIELDS[Stars::TYCHO2_ID]);
       Nstars_noastro++;
       continue;
     }
-    if(fabs(vr/dvr)<vrdvr_min){
+    if(fabs(vr/dvr)<Vrdvr_Min){
       print2(VSTREAM,"\tRadial velocity is very uncertain for star %d %s %s. Skipping\n",
 	     n,FIELDS[Stars::HIP],FIELDS[Stars::TYCHO2_ID]);
       Nstars_noastro++;
@@ -315,7 +315,7 @@ int main(int argc,char* argv[])
 
     double vmag=vnorm_c(UVW);
     
-    if(vmag>=vgc_max){
+    if(vmag>=Vgc_Max){
       print2(VSTREAM,"\t\t***The star %d %s %s is going too fast. Skipping***\n",
 	     n,FIELDS[Stars::HIP],FIELDS[Stars::TYCHO2_ID]);
       Nstars_fast++;
@@ -375,7 +375,7 @@ int main(int argc,char* argv[])
     fprintf(fe,"\n");
 
     //CONDITION FOR CANDIDATES
-    dthres=MAX(dmax1,dfactor*d);
+    dthres=MAX(Dmax,Dfactor*d);
 
     print1(VSTREAM,"\t\tDistance threshold (tmin = %e, TRet = %e, d = %e):%e\n",tmin,TRet,d,dthres);
 

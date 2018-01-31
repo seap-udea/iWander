@@ -302,7 +302,7 @@ Naming conventions:
 
 * Routines: Umbrella style. Example: vectorAllocate, integrateEOM.
 
-* Local variables: Free.
+* Local variables: Free naming rules.
 
 Acknowledgements
 ----------------

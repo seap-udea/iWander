@@ -161,7 +161,7 @@ int main(int argc,char* argv[])
   double **xIntc=matrixAllocate(Ntimesp,nsysp);
   double **obs=matrixAllocate(Nsur,6);
   double **cov=matrixAllocate(6,6);
-  char **Fields=charMatrixAllocate(MAXCOLS,MAXTEXT);
+  char **FIELDS=charMatrixAllocate(MAXCOLS,MAXTEXT);
 
   double **vrelvec=matrixAllocate(Ntest,3);
   double **v1=matrixAllocate(Ntest,3);
@@ -273,8 +273,8 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   //SIGNAL THE START OF THE COMPUTATION
   ////////////////////////////////////////////////////
-  sprintf(Filename,"date +%%s > %s/start-%s",Log_Dir,suffix);
-  system(Filename);
+  sprintf(FILENAME,"date +%%s > %s/start-%s",Log_Dir,suffix);
+  system(FILENAME);
 
   ////////////////////////////////////////////////////
   //GLOBAL PROPERTIES FOR INTEGRATION IN GALACTIC POT.
@@ -296,20 +296,20 @@ int main(int argc,char* argv[])
   printHeader(OSTREAM,"READING SURROGATE OBJECTS",'-');
 
   //Read file
-  sprintf(Filename,"scratch/wanderer-%s.csv",Wanderer);
-  fc=fopen(Filename,"r");
+  sprintf(FILENAME,"scratch/wanderer-%s.csv",Wanderer);
+  fc=fopen(FILENAME,"r");
 
   //Get header
-  fgets(Line,MAXLINE,fc);//HEADER
+  fgets(LINE,MAXLINE,fc);//HEADER
   print0(OSTREAM,"\tReading initial conditions of test particles\n");
   print1(VSTREAM,"Reading initial conditions of test particles\n");
 
   i=0;
-  while(fgets(Line,MAXLINE,fc)!=NULL){
+  while(fgets(LINE,MAXLINE,fc)!=NULL){
 
     print2(VSTREAM,"\tParticle %d:\n",i);
     //Parse line
-    parseLine(Line,Fields,&Nfields);
+    parseLine(LINE,FIELDS,&NFIELDS);
 
     //Initial time
     tsp[i]=0.0;
@@ -318,18 +318,18 @@ int main(int argc,char* argv[])
     ip=6*i;
 
     //Ingress time
-    ting=atof(Fields[Wanderer::TING])/UT;
+    ting=atof(FIELDS[Wanderer::TING])/UT;
     print2(VSTREAM,"\t\tIngress time: %e\n",ting*UT/YEAR);
 
     //Reading heliocentric ingress position
     j=Wanderer::XECL;
-    for(int k=0;k<6;k++) x[k]=atof(Fields[j++]);
+    for(int k=0;k<6;k++) x[k]=atof(FIELDS[j++]);
     copyVec(vrelvec[i],x,3);
     print2(VSTREAM,"\t\tHeliocentric ingress (km,km/s): %s\n",vec2strn(x,6,"%e "));
 
     //Reading heliocentric galactic position
     j=Wanderer::XGAL;
-    for(int k=0;k<6;k++) x[k]=atof(Fields[j++]);
+    for(int k=0;k<6;k++) x[k]=atof(FIELDS[j++]);
     print2(VSTREAM,"\t\tHeliocentric galactic (km,km/s): %s\n",vec2strn(x,6,"%e "));
     
     //Converting from heliocentric to galactocentric
@@ -375,14 +375,14 @@ int main(int argc,char* argv[])
   printHeader(OSTREAM,"READING VELOCITY DISTRIBUTION",'-');
   fv=fopen("db/ejection-posterior.data","r");
   nv=0;
-  while(fgets(Line,MAXLINE,fv)!=NULL){
-    parseLine(Line,Fields,&Nfields," ");
+  while(fgets(LINE,MAXLINE,fv)!=NULL){
+    parseLine(LINE,FIELDS,&NFIELDS," ");
 
     //Velocity
-    vinfs[nv]=atof(Fields[0]);
+    vinfs[nv]=atof(FIELDS[0]);
 
     //Probability
-    pvs[nv]=atof(Fields[1]);
+    pvs[nv]=atof(FIELDS[1]);
 
     nv++;
   }
@@ -407,27 +407,27 @@ int main(int argc,char* argv[])
 
   //Input candidates
   if(ipart<0){
-    strcpy(Filename,basename);
+    strcpy(FILENAME,basename);
   }else{
-    sprintf(Filename,"%s.%05d",basename,ipart);
+    sprintf(FILENAME,"%s.%05d",basename,ipart);
   }
-  if((fc=fopen(Filename,"r"))==NULL){
-    fprintf(stderr,"No candidates file '%s'\n",Filename);
+  if((fc=fopen(FILENAME,"r"))==NULL){
+    fprintf(stderr,"No candidates file '%s'\n",FILENAME);
   }
-  print0(OSTREAM,"\tReading input filename %s\n",Filename);
-  fgets(Line,MAXLINE,fc);
+  print0(OSTREAM,"\tReading input filename %s\n",FILENAME);
+  fgets(LINE,MAXLINE,fc);
 
   //Output progenitors
   if(ipart<0){
-    sprintf(Filename,"scratch/progenitors-%s.csv",Wanderer);
+    sprintf(FILENAME,"scratch/progenitors-%s.csv",Wanderer);
   }else{
-    sprintf(Filename,"scratch/progenitors-%s.csv.%05d",Wanderer,ipart);
+    sprintf(FILENAME,"scratch/progenitors-%s.csv.%05d",Wanderer,ipart);
   }
   if(qsingle){
-    sprintf(Filename,"scratch/progenitors-single.csv",Wanderer);
+    sprintf(FILENAME,"scratch/progenitors-single.csv",Wanderer);
   }
-  print2(VSTREAM,"\tGenerationg output filename %s...\n",Filename);
-  fp=fopen(Filename,"w");
+  print2(VSTREAM,"\tGenerationg output filename %s...\n",FILENAME);
+  fp=fopen(FILENAME,"w");
 
   //Header of progenitors
   fprintf(fp,"nomtmin,nomdmin,nomvrel,");
@@ -435,14 +435,14 @@ int main(int argc,char* argv[])
   fprintf(fp,"tminl,tminmed,tminu,");
   fprintf(fp,"vrell,vrelmed,vrelu,");
   fprintf(fp,"Ppos,Pvel,Pposvel,Pdist,IOP,");
-  fprintf(fp,"%s",Line);
+  fprintf(fp,"%s",LINE);
 
   //If qsingle save all particles position
   if(qsingle){
     if(strlen(hip_single)==0) sprintf(basename,"TYC%s",tyc_single);
     else sprintf(basename,"HIP%s",hip_single);
-    sprintf(Filename,"scratch/particles-%s-%s.dat",Wanderer,basename);
-    fso=fopen(Filename,"w");
+    sprintf(FILENAME,"scratch/particles-%s-%s.dat",Wanderer,basename);
+    fso=fopen(FILENAME,"w");
   }
 
   ////////////////////////////////////////////////////
@@ -451,8 +451,8 @@ int main(int argc,char* argv[])
   printHeader(OSTREAM,"CALCULATING PROBABILITIES",'-');
 
   //TIME
-  Telaps=0.0;
-  Nelaps=0.0;
+  TELAPS=0.0;
+  NELAPS=0.0;
   elapsedTime();
 
   params[0]=nsys;
@@ -463,32 +463,32 @@ int main(int argc,char* argv[])
   //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
   //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
   n=0;
-  while(fgets(Line,MAXLINE,fc)!=NULL){
+  while(fgets(LINE,MAXLINE,fc)!=NULL){
     
     //PARSE FIELDS
-    strcpy(Values,Line);
-    parseLine(Line,Fields,&Nfields);
+    strcpy(VALUES,LINE);
+    parseLine(LINE,FIELDS,&NFIELDS);
     n++;
 
     //IF QSINGLE
     if(qsingle){
       if(strlen(hip_single)==0)
-	if(strcmp(Fields[Candidates::TYCHO2_ID],tyc_single)!=0) continue;
+	if(strcmp(FIELDS[Candidates::TYCHO2_ID],tyc_single)!=0) continue;
 	else qinterrupt=1;
       else
-	if(strcmp(Fields[Candidates::HIP],hip_single)!=0) continue;
+	if(strcmp(FIELDS[Candidates::HIP],hip_single)!=0) continue;
 	else qinterrupt=1;
     }
 
-    sprintf(Filename,"Computing probabilities for candidate star %d (%s,%s):",
-	    n,Fields[Candidates::HIP],Fields[Candidates::TYCHO2_ID]);
-    printHeader(OSTREAM,Filename,'=');
+    sprintf(FILENAME,"Computing probabilities for candidate star %d (%s,%s):",
+	    n,FIELDS[Candidates::HIP],FIELDS[Candidates::TYCHO2_ID]);
+    printHeader(OSTREAM,FILENAME,'=');
     print1(VSTREAM,"Computing probabilities for candidate star %d (%s,%s)...\n",
-	   n,Fields[Candidates::HIP],Fields[Candidates::TYCHO2_ID]);
+	   n,FIELDS[Candidates::HIP],FIELDS[Candidates::TYCHO2_ID]);
 
     //LMA tmin and dmin
-    tmin=atof(Fields[Candidates::TMIN]);
-    dmin=atof(Fields[Candidates::DMIN]);
+    tmin=atof(FIELDS[Candidates::TMIN]);
+    dmin=atof(FIELDS[Candidates::DMIN]);
     //Preserve variables
     tmin0=tmin;
     dmin0=dmin;
@@ -512,42 +512,42 @@ int main(int argc,char* argv[])
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     //STELLAR PROPERTIES
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-    mobs[0]=ra=atof(Fields[FC[RA]]);
-    dra=atof(Fields[FC[RA_ERROR]])*MAS;
+    mobs[0]=ra=atof(FIELDS[FC[RA]]);
+    dra=atof(FIELDS[FC[RA_ERROR]])*MAS;
 
-    mobs[1]=dec=atof(Fields[FC[DEC]]);
-    ddec=atof(Fields[FC[DEC_ERROR]])*MAS;
+    mobs[1]=dec=atof(FIELDS[FC[DEC]]);
+    ddec=atof(FIELDS[FC[DEC_ERROR]])*MAS;
 
-    mobs[2]=par=atof(Fields[FC[PARALLAX]]);
-    dpar=atof(Fields[FC[PARALLAX_ERROR]]);
+    mobs[2]=par=atof(FIELDS[FC[PARALLAX]]);
+    dpar=atof(FIELDS[FC[PARALLAX_ERROR]]);
 
-    mobs[3]=mura=atof(Fields[FC[PMRA]]);
-    dmura=atof(Fields[FC[PMRA_ERROR]]);
+    mobs[3]=mura=atof(FIELDS[FC[PMRA]]);
+    dmura=atof(FIELDS[FC[PMRA_ERROR]]);
 
-    mobs[4]=mudec=atof(Fields[FC[PMDEC]]);
-    dmudec=atof(Fields[FC[PMDEC_ERROR]]);
+    mobs[4]=mudec=atof(FIELDS[FC[PMDEC]]);
+    dmudec=atof(FIELDS[FC[PMDEC_ERROR]]);
 
-    mobs[5]=vr=atof(Fields[Candidates::RV]);
-    dvr=atof(Fields[Candidates::E_RV]);
+    mobs[5]=vr=atof(FIELDS[Candidates::RV]);
+    dvr=atof(FIELDS[Candidates::E_RV]);
 
     //COVARIANCE MATRIX
     /*RA*/cov[0][0]=dra*dra;
-    cov[0][1]=atof(Fields[FC[RA_DEC_CORR]])*dra*ddec;
-    cov[0][2]=atof(Fields[FC[RA_PARALLAX_CORR]])*dra*dpar;
-    cov[0][3]=atof(Fields[FC[RA_PMRA_CORR]])*dra*dmura;
-    cov[0][4]=atof(Fields[FC[RA_PMDEC_CORR]])*dra*dmudec;
+    cov[0][1]=atof(FIELDS[FC[RA_DEC_CORR]])*dra*ddec;
+    cov[0][2]=atof(FIELDS[FC[RA_PARALLAX_CORR]])*dra*dpar;
+    cov[0][3]=atof(FIELDS[FC[RA_PMRA_CORR]])*dra*dmura;
+    cov[0][4]=atof(FIELDS[FC[RA_PMDEC_CORR]])*dra*dmudec;
     cov[0][5]=0.0;
     /*DEC*/cov[1][1]=ddec*ddec;
     cov[1][0]=cov[0][1];
-    cov[1][2]=atof(Fields[FC[DEC_PARALLAX_CORR]])*ddec*dpar;
-    cov[1][3]=atof(Fields[FC[DEC_PMRA_CORR]])*ddec*dmura;
-    cov[1][4]=atof(Fields[FC[DEC_PMDEC_CORR]])*ddec*dmudec;
+    cov[1][2]=atof(FIELDS[FC[DEC_PARALLAX_CORR]])*ddec*dpar;
+    cov[1][3]=atof(FIELDS[FC[DEC_PMRA_CORR]])*ddec*dmura;
+    cov[1][4]=atof(FIELDS[FC[DEC_PMDEC_CORR]])*ddec*dmudec;
     cov[1][5]=0.0;
     /*PAR*/cov[2][2]=dpar*dpar;
     cov[2][0]=cov[0][2];
     cov[2][1]=cov[1][2];
-    cov[2][3]=atof(Fields[FC[PARALLAX_PMRA_CORR]])*dpar*dmura;
-    cov[2][4]=atof(Fields[FC[PARALLAX_PMDEC_CORR]])*dpar*dmudec;
+    cov[2][3]=atof(FIELDS[FC[PARALLAX_PMRA_CORR]])*dpar*dmura;
+    cov[2][4]=atof(FIELDS[FC[PARALLAX_PMDEC_CORR]])*dpar*dmudec;
     cov[2][5]=0.0;
     //Distance
     d=starDistance(par);//In parsecs
@@ -555,7 +555,7 @@ int main(int argc,char* argv[])
     cov[3][0]=cov[0][3];
     cov[3][1]=cov[1][3];
     cov[3][2]=cov[2][3];
-    cov[3][4]=atof(Fields[FC[PMRA_PMDEC_CORR]])*dmura*dmudec;
+    cov[3][4]=atof(FIELDS[FC[PMRA_PMDEC_CORR]])*dmura*dmudec;
     cov[3][5]=0.0;
     /*MUDEC*/cov[4][4]=dmudec*dmudec;
     cov[4][0]=cov[0][4];
@@ -975,8 +975,8 @@ int main(int argc,char* argv[])
     //TOTAL
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     IOP=Pposvel+Pdist;
-    sprintf(Filename,"IOP: %f",IOP);
-    printHeader(OSTREAM,Filename,'&',2,30);
+    sprintf(FILENAME,"IOP: %f",IOP);
+    printHeader(OSTREAM,FILENAME,'&',2,30);
   
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     //ENCOUNTER STATISTICS
@@ -1023,7 +1023,7 @@ int main(int argc,char* argv[])
     fprintf(fp,"%e,%e,%e,",tminl,tminmed,tminu);
     fprintf(fp,"%e,%e,%e,",vrell,vrelmed,vrelu);
     fprintf(fp,"%e,%e,%e,%e,%e,",Ppos,Pvel,Pposvel,Pdist,IOP);
-    fprintf(fp,"%s",Values);
+    fprintf(fp,"%s",VALUES);
     fflush(fp);
     
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
@@ -1032,30 +1032,30 @@ int main(int argc,char* argv[])
     telaps=elapsedTime();
     print0(OSTREAM,"\t\tElapsed time: %f s\n",telaps);
 
-    Telaps+=telaps;
-    Nelaps++;
+    TELAPS+=telaps;
+    NELAPS++;
     if(qinterrupt) break;
-    //if(Nelaps>3) break;
+    //if(NELAPS>3) break;
   }
-  Telaps/=Nelaps;
-  print0(OSTREAM,"Average time per valid candidate: %f s\n",Telaps);
+  TELAPS/=NELAPS;
+  print0(OSTREAM,"Average time per valid candidate: %f s\n",TELAPS);
 
   //REPORT THAT THE COMPUTATION HAS BEEN DONE
   if(ipart<0){
-    sprintf(Filename,"rm log/start-%s",Wanderer);
-    system(Filename);
-    sprintf(Filename,"touch log/done-%s",Wanderer);
-    system(Filename);
+    sprintf(FILENAME,"rm log/start-%s",Wanderer);
+    system(FILENAME);
+    sprintf(FILENAME,"touch log/done-%s",Wanderer);
+    system(FILENAME);
   }else{
-    sprintf(Filename,"rm log/start-%s.%05d",Wanderer,ipart);
-    system(Filename);
-    sprintf(Filename,"touch log/done-%s.%05d",Wanderer,ipart);
-    system(Filename);
+    sprintf(FILENAME,"rm log/start-%s.%05d",Wanderer,ipart);
+    system(FILENAME);
+    sprintf(FILENAME,"touch log/done-%s.%05d",Wanderer,ipart);
+    system(FILENAME);
   }
   
   print0(OSTREAM,"Counts:\n");
   print0(OSTREAM,"\tNumber of candidates: %d\n",Ncand);
-  print0(OSTREAM,"\tNumber of potential progenitors: %d\n",Nelaps);
+  print0(OSTREAM,"\tNumber of potential progenitors: %d\n",NELAPS);
   print0(OSTREAM,"\tNumber of stars rejected by zero probability: %d\n",Nstar_zero);
   print0(OSTREAM,"\tNumber of stars rejected by being close: %d\n",Nstar_close);
   print0(OSTREAM,"\tNumber of stars rejected by being far: %d\n",Nstar_far);
@@ -1064,8 +1064,8 @@ int main(int argc,char* argv[])
   print0(OSTREAM,"\tNumber of stars with no minimum: %d\n",Nstar_nomin);
   print0(OSTREAM,"\tNumber of stars with no objects integration: %d\n",Nstar_nointall);
 
-  Telaps=elapsedTime(0);
-  print0(OSTREAM,"Total elapsed time = %.5f s (%.5f min)\n",Telaps,Telaps/60.0);
+  TELAPS=elapsedTime(0);
+  print0(OSTREAM,"Total elapsed time = %.5f s (%.5f min)\n",TELAPS,TELAPS/60.0);
   print0(OSTREAM,"DONE.\n");
 
   fclose(fc);

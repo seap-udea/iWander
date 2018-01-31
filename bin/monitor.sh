@@ -15,18 +15,18 @@
 ############################################################
 #PARAMETERS
 ############################################################
-WANDERER=$(grep "char WANDERER" iwander.conf |head -n 1 |awk -F"\"" '{print $2}')
-FILECONF="scratch/probability-$WANDERER.conf"
-if [ ! -e scratch/probability-$WANDERER.conf ];then
+Wanderer=$(grep "char Wanderer" iwander.conf |head -n 1 |awk -F"\"" '{print $2}')
+FILECONF="scratch/probability-$Wanderer.conf"
+if [ ! -e scratch/probability-$Wanderer.conf ];then
     echo "No parallel job has been launched for this object"
     exit 1
 fi
-. scratch/probability-$WANDERER.conf
+. scratch/probability-$Wanderer.conf
 
 ############################################################
 #CHECK FOR FILES
 ############################################################
-ncomp=$(ls log/done-$WANDERER.* 2>/dev/null |wc -l )
+ncomp=$(ls log/done-$Wanderer.* 2>/dev/null |wc -l )
 echo "Total number of candidates: $NDATA"
 echo "Total number of tasks: $NSPLIT"
 echo "Completed tasks: $ncomp"

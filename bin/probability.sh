@@ -17,8 +17,8 @@
 ############################################################
 NSPLIT=0
 MAXPROC=6
-WANDERER=$(grep "char WANDERER" iwander.conf |head -n 1 |awk -F"\"" '{print $2}')
-FILE="scratch/candidates-$WANDERER.csv"
+Wanderer=$(grep "char Wanderer" iwander.conf |head -n 1 |awk -F"\"" '{print $2}')
+FILE="scratch/candidates-$Wanderer.csv"
 
 ############################################################
 #SUBSTITUTE VARIABLES WITH COMMAND LINE OPTIONS
@@ -30,19 +30,11 @@ if [ ! -e $FILE ];then
     exit 1
 fi
 
-
 ############################################################
 #CHECK IF NSPLIT=1
 ############################################################
 if [ $NSPLIT -eq 0 ];then 
-    rm probability3.exe
-    make probability3.exe
-    if [ $? -gt 1 ];then
-	echo "There was an error compiling probability.  Please check"
-	exit 1
-    fi
-    #./probability2.exe 2> >(tee -a log/probability-detailed.log >&2) > >(tee -a log/probability.log)
-    ./probability3.exe 2> log/probability-detailed.log > >(tee log/probability.log)
+    bash bin/run.sh probability.exe
     exit 0
 fi
 
@@ -54,13 +46,13 @@ nperproc=$((ndata/NSPLIT))
 {
     echo -e "FILE=$FILE"
     echo -e "NDATA=$ndata"
-    echo -e "WANDERER=$WANDERER"
+    echo -e "Wanderer=$Wanderer"
     echo -e "MAXPROC=$MAXPROC"
     echo -e "NSPLIT=$NSPLIT"
-} > scratch/probability-$WANDERER.conf
+} > scratch/probability-$Wanderer.conf
 
 echo "Running parallel calculation of probabilities:"
-cat scratch/probability-$WANDERER.conf
+cat scratch/probability-$Wanderer.conf
 echo -e "OBJECTS PER PROC. = $nperproc"
 echo -n "Press enter to continue or ctrl-c to cancel..."
 read
@@ -88,14 +80,14 @@ do
 	in=$(printf "%05d" $n)
 	fname="$FILE.$in"
 	if [ -e $fname ];then
-	    if [ ! -e "log/done-$WANDERER.$in" ];then
+	    if [ ! -e "log/done-$Wanderer.$in" ];then
 		ncand=$((ncand+nperproc))
 		cmd="./probability.exe $FILE $n"
 		$cmd &> log/probability.log.$in &
 		echo "Calculating probability for candidates '$fname' (when completed candidates analysed $ncand) (PID = $!)..."
 		((i++))
 	    else
-		if [ -e "log/start-$WANDERER.$in" ];then
+		if [ -e "log/start-$Wanderer.$in" ];then
 		    echo "Waiting that the process finishes for '$fname'..."
 		else
 		    echo "Probabilities already computed for candidates '$fname'..."

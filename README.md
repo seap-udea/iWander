@@ -157,7 +157,7 @@ procedure:
 
 1. Go to the JPL Small Body Database and get the information about the
    latest orbit of the object. Activate the link of the covariance
-   matrix. Open a file ``<object>.jpl`` and copy
+   matrix. Open a file ``objects/<object>.jpl`` and copy
    the content of the object information starting in "Orbital
    Elements..." and finishing in the last line of the covariance
    matrix.  The file may looks like:
@@ -208,6 +208,70 @@ procedure:
               e				q			tp			W			w		      i
    ```
    
+2. Convert the input file from the jpl format to the iwander format:
+
+   ```
+   python3 bin/JPL2iWander.py Oumuamua "1I/2017 U1 ('Oumuamua)"
+   ```
+   
+   This will generate a file ``objects/Oumuamua.conf`` in the proper
+   format for the package.
+
+4. Calculate the properties of the ingress conditions for the object:
+
+   ```
+   bash bin/run.sh wanderer.exe
+   ```
+   
+   The script ``run.sh`` launch the program.  The standard output will
+   be redirected to ``log/wanderer-<object>.log`` and the standard
+   error to ``log/wanderer-<object>-detailed.log``.
+
+5. Generate the table with the ingress conditions:
+
+   ```
+   python3 bin/ingress.py
+   ```
+   
+   This will create a table in LaTeX with a summary of the ingress
+   conditions.
+
+6. Generate the list of candidate stars including the encounter
+   conditions with the LMA approximation.
+
+   ```
+   bash bin/run.sh encounters.exe
+   ```
+
+8. Run the probability analysis in parallel:
+
+   ```
+   bash bin/probability.sh NSPLIT=10 MAXPROC=2
+   ```
+   
+9. Monitor the advance of the parallel job:
+
+   ```
+   bash bin/monitor.sh
+   ```
+
+10. Join the results:
+
+    ```
+    python bin/join.py 
+    ```
+
+Alternatively you can simply run a single process
+
+    ```
+    bash bin/run.sh probability.exe 
+    ```
+
+11. Once you have the results you may generate a final report:
+
+    ```
+    python3 bin/progenitor.py 
+    ```
 
 Structure of the package
 ------------------------

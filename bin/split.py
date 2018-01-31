@@ -28,7 +28,7 @@ try:
     FILE=argv[1]
     if os.path.isfile(FILE):del(argv[1])
     else:1/0
-except:FILE="scratch/candidates-%s.csv"%conf["WANDERER"]
+except:FILE="scratch/candidates-%s.csv"%conf["Wanderer"]
 
 try:nparts=int(argv[1])
 except:nparts=1

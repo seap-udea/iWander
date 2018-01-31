@@ -270,9 +270,10 @@ double INI_TIME,LAST_TIME;
 char FILENAME[10000];
 double TELAPS=0.0;
 int NELAPS=0;
-char LINE[MAXLINE];
+char LINE[MAXLINE],SLINE[MAXLINE];
 char VALUES[MAXLINE];
 int NFIELDS=0;
+char **FIELDS;
 
 //////////////////////////////////////////
 //ROUTINES
@@ -365,6 +366,9 @@ int initWander(void)
   //TIME
   elapsedTime(0,0);
   
+  //ALLOCATE GLOBAL MATRICES
+  FIELDS=charMatrixAllocate(MAXCOLS,MAXTEXT);
+
   return 0;
 }
 

@@ -157,7 +157,7 @@ procedure:
 
 1. Go to the JPL Small Body Database and get the information about the
    latest orbit of the object. Activate the link of the covariance
-   matrix. Open a file ```<object>.jpl`` and copy
+   matrix. Open a file ``<object>.jpl`` and copy
    the content of the object information starting in "Orbital
    Elements..." and finishing in the last line of the covariance
    matrix.  The file may looks like:

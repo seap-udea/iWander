@@ -15,7 +15,7 @@
 #include <iwander.cpp>
 using namespace std;
 
-#define VERBOSE 0 //Verbosity level
+#define VERBOSE 2 //Verbosity level
 #define OSTREAM stdout //Stream where the output is redirected
 #define VSTREAM stderr //Stream where the error output is redirected
 

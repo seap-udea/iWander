@@ -70,9 +70,7 @@ Installation
 
 For installing the package run:
 
-    ```  
     bash install.sh
-    ```  
 
 The installation script performs several operations required to start
 using the package:

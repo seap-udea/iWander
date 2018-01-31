@@ -220,16 +220,19 @@ Components
 - **probability**: This program integrate the orbit of a moving object
   inside the Solar System.
 
-  * Function: calculate the IOP for a list of stellar candidates.
+  * Function: 
+
+    Calculate the IOP for a list of stellar candidates.
 
   * Input:
+
     - wanderer-<object>.csv
+
     - candidates-<object>.csv
 
   * Output: 
-    - progenitors-<object>.csv
 
-  Done.
+    - progenitors-<object>.csv
 
 For the developer
 -----------------

@@ -69,9 +69,9 @@ cleanexe:
 
 cleandata:
 	@echo "Cleaning data..."
-	@touch scratch/foo
+	@-touch scratch/foo
 	@-rm -r scratch/* 
-	@touch log/foo
+	@-touch log/foo
 	@-rm -r log/* 
 
 clean:cleancrap cleanexe

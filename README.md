@@ -226,13 +226,13 @@ Components
 
   * Input:
 
-    - wanderer-<object>.csv
+    - ``wanderer-<object>.csv``
 
-    - candidates-<object>.csv
+    - ``candidates-<object>.csv``
 
   * Output: 
 
-    - progenitors-<object>.csv
+    - ``progenitors-<object>.csv``
 
 For the developer
 -----------------

@@ -100,6 +100,9 @@
 #define VERBOSE 0
 #define HTOL 1E-6
 #define MAXSTALL 100
+#define MAXCOLS 10000
+#define MAXTEXT 200
+#define MAXLINE 100000
 
 //////////////////////////////////////////
 //OBJECTS
@@ -263,6 +266,13 @@ gsl_rng* RAND;
 double GGLOBAL;
 double UL,UM,UT,UV;
 double INI_TIME,LAST_TIME;
+
+char FILENAME[10000];
+double TELAPS=0.0;
+int NELAPS=0;
+char LINE[MAXLINE];
+char VALUES[MAXLINE];
+int NFIELDS=0;
 
 //////////////////////////////////////////
 //ROUTINES
@@ -1113,9 +1123,6 @@ char *str_replace(char *orig, char *rep, char *with)
 }
 
 //PARSE LINES READ FROM A COMMA SEPARATED VALUES FILE
-#define MAXCOLS 10000
-#define MAXTEXT 200
-#define MAXLINE 100000
 int parseLine(char line[],char** cols,int *ncols,char sep[]=",")
 {
   int i=0;

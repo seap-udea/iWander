@@ -39,22 +39,12 @@ int main(int argc,char* argv[])
 
     * progenitors-<wanderer>.csv (alternatively progenitors-<wanderer>.csv.00001)
 
-      Cols:
-          0: IOP for this candidate, Pprob
-	  1: Average position probability, Psmed
-	  2: Average velocity probability, Pvmed
-	  3: Probability distance factor, fdist
-	  4-6: Nominal minimum time, minimum distance, relative velocity
-	  7,8: Minimum and maximum tmin
-	  9,10: Minimum and maximum dmin
-	  11,12: Minimum and maximum vrel
-	  13...: Same as candidates.csv
   */
   ////////////////////////////////////////////////////
   //CONFIGURATION
   ////////////////////////////////////////////////////
   #include <iwander.conf>
-  #include <probability3.conf>
+  #include <probability.conf>
   printHeader(OSTREAM,"COMPUTING PROBABILITIES",'*');
 
   ////////////////////////////////////////////////////
@@ -264,8 +254,8 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   ipart=-1;
   //By default basename is candidates-<wanderer>.csv
-  sprintf(basename,"%s/candidates-%s.csv",SCR_DIR,WANDERER);
-  sprintf(suffix,"%s",WANDERER);
+  sprintf(basename,"%s/candidates-%s.csv",Scr_Dir,Wanderer);
+  sprintf(suffix,"%s",Wanderer);
   if(argc>1){
     //The base name is provided
     strcpy(basename,argv[1]);
@@ -274,7 +264,7 @@ int main(int argc,char* argv[])
     //If not assume 00001
     else ipart=1;
     //Suffix
-    sprintf(suffix,"%s.%05d",WANDERER,ipart);
+    sprintf(suffix,"%s.%05d",Wanderer,ipart);
   }
   print0(OSTREAM,"\tAnalysing candidates in '%s'\n",basename);
   if(ipart>0)
@@ -283,7 +273,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   //SIGNAL THE START OF THE COMPUTATION
   ////////////////////////////////////////////////////
-  sprintf(Filename,"date +%%s > %s/start-%s",LOG_DIR,suffix);
+  sprintf(Filename,"date +%%s > %s/start-%s",Log_Dir,suffix);
   system(Filename);
 
   ////////////////////////////////////////////////////
@@ -306,7 +296,7 @@ int main(int argc,char* argv[])
   printHeader(OSTREAM,"READING SURROGATE OBJECTS",'-');
 
   //Read file
-  sprintf(Filename,"scratch/wanderer-%s.csv",WANDERER);
+  sprintf(Filename,"scratch/wanderer-%s.csv",Wanderer);
   fc=fopen(Filename,"r");
 
   //Get header
@@ -429,12 +419,12 @@ int main(int argc,char* argv[])
 
   //Output progenitors
   if(ipart<0){
-    sprintf(Filename,"scratch/progenitors-%s.csv",WANDERER);
+    sprintf(Filename,"scratch/progenitors-%s.csv",Wanderer);
   }else{
-    sprintf(Filename,"scratch/progenitors-%s.csv.%05d",WANDERER,ipart);
+    sprintf(Filename,"scratch/progenitors-%s.csv.%05d",Wanderer,ipart);
   }
   if(qsingle){
-    sprintf(Filename,"scratch/progenitors-single.csv",WANDERER);
+    sprintf(Filename,"scratch/progenitors-single.csv",Wanderer);
   }
   print2(VSTREAM,"\tGenerationg output filename %s...\n",Filename);
   fp=fopen(Filename,"w");
@@ -451,7 +441,7 @@ int main(int argc,char* argv[])
   if(qsingle){
     if(strlen(hip_single)==0) sprintf(basename,"TYC%s",tyc_single);
     else sprintf(basename,"HIP%s",hip_single);
-    sprintf(Filename,"scratch/particles-%s-%s.dat",WANDERER,basename);
+    sprintf(Filename,"scratch/particles-%s-%s.dat",Wanderer,basename);
     fso=fopen(Filename,"w");
   }
 
@@ -704,7 +694,7 @@ int main(int argc,char* argv[])
     print1(VSTREAM,"\tMinimum distance from nominal to nominal (LMA t=%.6e, d=%.6e): t = %.6e, d = %.6e, dv = %.6e\n",tmin0,dmin0,nomtmin,nomdmin,nomvrel);
 
     //Star has gone too far
-    if(fabs(tmin)>tRet){
+    if(fabs(tmin)>TRet){
       print0(OSTREAM,"\t***This star has gone too far (tmin = %e). Excluding it**\n",tmin);
       print1(VSTREAM,"\t***This star has gone too far (tmin = %e). Excluding it**\n",tmin);
       Nstar_far++;
@@ -1052,14 +1042,14 @@ int main(int argc,char* argv[])
 
   //REPORT THAT THE COMPUTATION HAS BEEN DONE
   if(ipart<0){
-    sprintf(Filename,"rm log/start-%s",WANDERER);
+    sprintf(Filename,"rm log/start-%s",Wanderer);
     system(Filename);
-    sprintf(Filename,"touch log/done-%s",WANDERER);
+    sprintf(Filename,"touch log/done-%s",Wanderer);
     system(Filename);
   }else{
-    sprintf(Filename,"rm log/start-%s.%05d",WANDERER,ipart);
+    sprintf(Filename,"rm log/start-%s.%05d",Wanderer,ipart);
     system(Filename);
-    sprintf(Filename,"touch log/done-%s.%05d",WANDERER,ipart);
+    sprintf(Filename,"touch log/done-%s.%05d",Wanderer,ipart);
     system(Filename);
   }
   

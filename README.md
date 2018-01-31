@@ -287,6 +287,23 @@ iWander uses GSL and Spice as backbone utility libraries.  The latest
 precompiled version of both libraries, along witth the header files
 are provided with the package in the `util` directory.
 
+Input parameters are passed to the programs using a configuration file
+`<programa.conf>`.  The configuration file has the structure of a C
+program.  The declarations and actions in the program are included
+directly into the `main` of the corresponding program.
+
+Naming conventions:
+
+* Configuration variables: Capitalized. Example: Wanderer,
+  Npart.
+
+* Macros and global variables: Fully capital. Example: FILENAME,
+  REARTH.
+
+* Routines: Umbrella style. Example: vectorAllocate, integrateEOM.
+
+* Local variables: Free.
+
 Acknowledgements
 ----------------
 

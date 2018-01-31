@@ -57,11 +57,11 @@ int main(int argc,char* argv[])
   double *ts=(double*)malloc(Ntimes*sizeof(double));
   double **xInt=matrixAllocate(Ntimes,6*Nobjs);
   k=0;
-  sprintf(Filename,"simulation-%s.csv",WANDERER);
+  sprintf(Filename,"simulation-%s.csv",Wanderer);
   fs=fopen(Filename,"w");
   fprintf(fs,"t,");
 
-  sprintf(Filename,"simstars-%s.csv",WANDERER);
+  sprintf(Filename,"simstars-%s.csv",Wanderer);
   fe=fopen(Filename,"w");
 
   ////////////////////////////////////////////////////
@@ -97,8 +97,8 @@ int main(int argc,char* argv[])
   //READ SURROGATE OBJECTS
   ////////////////////////////////////////////////////
   printHeader(stdout,"READING SURROGATE OBJECTS");
-  fprintf(stdout,"Object: %s\n",WANDERER_NAME);
-  sprintf(Filename,"wanderer-%s.csv",WANDERER);
+  fprintf(stdout,"Object: %s\n",Wanderer_Name);
+  sprintf(Filename,"wanderer-%s.csv",Wanderer);
   fc=fopen(Filename,"r");
   fgets(line,MAXLINE,fc);//HEADER
   i=0;
@@ -140,7 +140,7 @@ int main(int argc,char* argv[])
   //READ PROGENITOR CANDIDATES
   ////////////////////////////////////////////////////
   printHeader(stdout,"READING PROGENITOR CANDIDATES");
-  sprintf(Filename,"progenitors-%s.csv",WANDERER);
+  sprintf(Filename,"progenitors-%s.csv",Wanderer);
   fc=fopen(Filename,"r");
   fgets(line,MAXLINE,fc);//HEADER
   fprintf(fe,"%s",line);
@@ -228,7 +228,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   //ANALYSE AND SAVE POSITIONS
   ////////////////////////////////////////////////////
-  sprintf(Filename,"simulation-%s.dat",WANDERER);
+  sprintf(Filename,"simulation-%s.dat",Wanderer);
   fc=fopen(Filename,"w");
   printHeader(stdout,"ANALYSING AND SAVING POSITIONS");
   for(int i=0;i<Ntimes;i++){

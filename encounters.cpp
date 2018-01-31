@@ -13,8 +13,12 @@
 #########################################################
 */
 #include <iwander.cpp>
+
 using namespace std;
-#define VERBOSE 0
+
+#define VERBOSE 2 //Verbosity level
+#define OSTREAM stdout //Stream where the output is redirected
+#define VSTREAM stderr //Stream where the error output is redirected
 
 int main(int argc,char* argv[])
 {
@@ -26,7 +30,7 @@ int main(int argc,char* argv[])
     This program perform two different tasks:
 
     1) Compute the LMA minimum distance and time to all stars in the
-       AstroRV catalogue..
+       AstroRV catalogue...
 
     2) Select the progenitor candidates.
 
@@ -35,28 +39,12 @@ int main(int argc,char* argv[])
 
     Output: 
 
-    * encounters.csv: all the columns of the input catalog (AstroRV)
-      plus:
+    * encounters-<Wanderer>.csv: all the columns of the input catalog (AstroRV)
+      plus additional information computed from the LMA approximation.
 
-      Cols:
-          0: n
-	  1-6: Position and velocity of the star for LMA purposes
-	  7: Initial distance of the star, d
-	  8: Minimum LMA distance, dmin
-	  9: Minimum LMA time, tmin
-	  10-13: Relative velocity computed with LMA vrelx,vrely,vrelz,vrel,
-	  14-...: All fields in AstroRV catalog
+    * candidates-<Wanderer>.csv: list of objects fulfilling certain
+      selection criteria that classify them as close encounters candidates.
 
-    * candidates.csv
-
-      Cols:
-          0: n
-	  1-6: Position and velocity of the star for LMA purposes
-	  7: Initial distance of the star, d
-	  8: Minimum LMA distance, dmin
-	  9: Minimum LMA time, tmin
-	  10-13: Relative velocity computed with LMA vrelx,vrely,vrelz,vrel,
-	  14-...: All fields in AstroRV catalog
   */
 
   ////////////////////////////////////////////////////
@@ -64,6 +52,7 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   #include <iwander.conf>
   #include <encounters.conf>
+  printHeader(OSTREAM,"WANDERER SOLAR SYSTEM DYNAMICS",'*');
 
   ////////////////////////////////////////////////////
   //INITIALIZE iWANDER
@@ -116,9 +105,9 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
 
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  //READING WANDERERS
+  //READING WandererS
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  sprintf(Filename,"scratch/wanderer-%s.csv",WANDERER);
+  sprintf(Filename,"scratch/wanderer-%s.csv",Wanderer);
   FILE *fc=fopen(Filename,"r");
 
   if(fc==NULL){
@@ -152,10 +141,10 @@ int main(int argc,char* argv[])
   ////////////////////////////////////////////////////
   fc=fopen("db/src/AstroRV.csv","r");
 
-  sprintf(Filename,"scratch/encounters-%s.csv",WANDERER);
+  sprintf(Filename,"scratch/encounters-%s.csv",Wanderer);
   FILE* fe=fopen(Filename,"w");
 
-  sprintf(Filename,"scratch/candidates-%s.csv",WANDERER);
+  sprintf(Filename,"scratch/candidates-%s.csv",Wanderer);
   FILE* fg=fopen(Filename,"w");
 
   //READING HEADER
@@ -174,7 +163,7 @@ int main(int argc,char* argv[])
   int ndist=0;
   int nclos=0;
 
-  sprintf(Filename,"scratch/thresholds-%s.csv",WANDERER);
+  sprintf(Filename,"scratch/thresholds-%s.csv",Wanderer);
   FILE* fth=fopen(Filename,"w");
 
   int Ndir=0;
@@ -388,7 +377,7 @@ int main(int argc,char* argv[])
     //CONDITION FOR CANDIDATES
     dthres=MAX(dmax1,dfactor*d);
 
-    VPRINT(stdout,"\tDistance threshold (tmin = %e, tRet = %e, d = %e):%e\n",tmin,tRet,d,dthres);
+    VPRINT(stdout,"\tDistance threshold (tmin = %e, TRet = %e, d = %e):%e\n",tmin,TRet,d,dthres);
     if(direction*tmin>0){
       //Stars fullfiling that minimum encounter is in the direction of integration
       Ndir++;

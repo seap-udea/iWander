@@ -12,7 +12,7 @@
 #########################################################
 include compiler.in
 BRANCH=$(shell bash .getbranch)
-PROGRAMS=wanderer encounters probability
+PROGRAMS=wanderer encounters probability reconstruct
 
 #########################################################
 # MAIN RULES

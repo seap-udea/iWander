@@ -25,7 +25,7 @@ conf=readConf("iwander.conf");
 #PAST OR FUTURE
 ############################################################
 qpast=1
-if conf["duration"][0]=="-":
+if conf["Duration"][0]=="-":
     candtxt="Progenitor candidates"
 else:
     qpast=0
@@ -44,9 +44,9 @@ else:
 #LOAD PROGENITORS
 ############################################################
 try:
-    progenitors=pd.read_csv("scratch/progenitors-%s.csv"%conf["WANDERER"])
+    progenitors=pd.read_csv("scratch/progenitors-%s.csv"%conf["Wanderer"])
 except FileNotFoundError:
-    print("No analysis has been found for wanderer %s"%conf["WANDERER"])
+    print("No analysis has been found for wanderer %s"%conf["Wanderer"])
     exit(1)
 
 print("Number of progenitors:",len(progenitors))
@@ -57,7 +57,7 @@ sorting=conf["Sorting"].split(",")
 progsort=progenitors.sort_values(by=sorting[0],ascending=eval(sorting[1]))
 
 # MD Table
-f=open("scratch/CANDIDATES-%s-%s.md"%(conf["WANDERER"],suffix),"w")
+f=open("scratch/CANDIDATES-%s-%s.md"%(conf["Wanderer"],suffix),"w")
 f.write("""# %s of %s
 
 [![arXiv](http://img.shields.io/badge/arXiv-1711.09397-orange.svg?style=flat)](http://arxiv.org/abs/1711.09397)
@@ -66,13 +66,13 @@ _Latest update_: ``%s``
 
 |#|Name|d(pc)|q|dmin(pc)|tmin(Myr)|vrel(km/s)|%s
 |--|--|--|--|--|--|--|%s
-"""%(candtxt,conf["WANDERER_NAME"],time.strftime("%c"),pcols,lcols))
+"""%(candtxt,conf["Wanderer_Name"],time.strftime("%c"),pcols,lcols))
 
 i=1
 for index in progsort.index:
     p=progsort.loc[index]
     
-    if p.nomdmin>conf["dminMax"]:continue
+    if p.nomdmin>conf["DminMax"]:continue
     if p.qastro<1:continue
 
     row=""
@@ -109,7 +109,7 @@ for index in progsort.index:
 
 # Generate latex table
 i=1
-f=open("scratch/CANDIDATES-%s-%s.tex"%(conf["WANDERER"],suffix),"w")
+f=open("scratch/CANDIDATES-%s-%s.tex"%(conf["Wanderer"],suffix),"w")
 f.write(r"""\begin{table*}
 \centering
 \scriptsize
@@ -127,7 +127,7 @@ $P\sub{pos}$ & $P\sub{vel}$ & $P\sub{pos,vel}$ & $P\sub{dist}$ & IOP \\
 for index in progsort.index:
     p=progenitors.loc[index]
 
-    if p.nomdmin>conf["dminMax"]:continue
+    if p.nomdmin>conf["DminMax"]:continue
     if p.qastro<1:continue
 
     row=""

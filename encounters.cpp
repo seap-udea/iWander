@@ -116,7 +116,7 @@ int main(int argc,char* argv[])
   //OUTPUT FILE
   ////////////////////////////////////////////////////
   //Openning the AstroRV database
-  fc=fopen("db/src/AstroRV.csv","r");
+  fc=fopen("db/AstroRV/AstroRV.csv","r");
   fscanf(fc,"%s",SLINE);
 
   //Openning the output files

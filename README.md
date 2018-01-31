@@ -10,14 +10,14 @@ This package is an implementation of the general method devised by
 Zuluaga et al. (2017) for assesing the origin of interstellar small
 bodies (asteroids and comets).
 
-The package include a series of databases and tools that can be used
-in general for studying the dynamics of an interstellar vagabond
-object (small-body, interstellar spaceship and even stars).
+The package include data and tools that can be used in general for
+studying the dynamics of an interstellar vagabond object (small-body,
+interstellar spaceship and even stars).
 
 If you use or adapt the package for any scientific purpose please
 refer to this paper:
 
-> Zuluaga,Sánchez-Hernández, Sucerquia & Ignacio Ferrin, A general
+> Zuluaga,Sanchez-Hernandez, Sucerquia & Ignacio Ferrin, A general
 > method for assesing the procedence of an interstellar small body:
 > the case of 1I/´Oumuamuaa (1I/2017 U1),
 > [arXiv:1711.09397](https://arxiv.org/abs/1711.09397).
@@ -32,7 +32,7 @@ Progenitor Candidates
 ----------------------
 
 A list of the progenitor candidates of the interstellar object
-**1I/2017 U1 (Oumuamua)**, identified using this method along with
+**1I/2017 U1 ('Oumuamua)**, identified using this method along with
 their corresponding origin probabilities are available (and will be
 updated) [in this file](CANDIDATES-Oumuamua-Past.md).
 

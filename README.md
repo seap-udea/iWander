@@ -10,25 +10,31 @@ This package is an implementation of the general method devised by
 Zuluaga et al. (2017) for assesing the origin of interstellar small
 bodies (asteroids and comets).
 
-The package include a series of databases and tools that can be used
-in general for studying the dynamics of an interstellar vagabond
-object (small-body, interstellar spaceship and even stars).
+The package include data and tools that can be used in general for
+studying the dynamics of an interstellar vagabond object (small-body,
+interstellar spaceship and even stars).
 
 If you use or adapt the package for any scientific purpose please
 refer to this paper:
 
-> Zuluaga,Sánchez-Hernández, Sucerquia & Ignacio Ferrin, A general
+> Zuluaga,Sanchez-Hernandez, Sucerquia & Ignacio Ferrin, A general
 > method for assesing the procedence of an interstellar small body:
 > the case of 1I/´Oumuamuaa (1I/2017 U1),
 > [arXiv:1711.09397](https://arxiv.org/abs/1711.09397).
+
+The paper is under review for publication in the Astronomical Journal.
+
+> **NOTE** As the revision process is undergoing, un updated version
+  of the paper will be available in [this
+  link](doc/Zuluaga_et_al_2017-AssesingOriginProbability.pdf).
 
 Progenitor Candidates
 ----------------------
 
 A list of the progenitor candidates of the interstellar object
-**1I/2017 U1 (Oumuamua)**, identified using this method along with
+**1I/2017 U1 ('Oumuamua)**, identified using this method along with
 their corresponding origin probabilities are available (and will be
-updated) [in this file](CANDIDATES.md).
+updated) [in this file](CANDIDATES-Oumuamua-Past.md).
 
 > **NOTE**: This list could change when better astrometric information
   or improvements on the methodology be available. Stay tuned!
@@ -38,97 +44,107 @@ Getting the package
 
 You may obtain the package in different ways:
 
-- Get a "compact" version of the package and the associated data (650
-  MB) ready to be used from [this link](http://bit.ly/iWander)
-
 - Cloning anonymously the github repository:
 
-```  
-git clone http://github.com/seap-udea/iWander.git
-```  
+  ```  
+  git clone http://github.com/seap-udea/iWander.git
+  ```  
 
-- Download the tarball:
+- Downloading the tarball of the latest release:
 
-```  
-wget http://github.com/seap-udea/iWander/archive/master.zip
-```  
+  ```  
+  wget http://github.com/seap-udea/iWander/archive/master.zip
+  ```  
 
-- Cloning the package as developer (permissions required):
+- Cloning the package as a developer (credentials required):
 
-```  
-git clone git@github.com:seap-udea/iWander.git
-```  
+  ```  
+  git clone git@github.com:seap-udea/iWander.git
+  ```  
 
 The size of the package is large (several hundreds of MBs).  This is
-mainly due to the data required to run some of the modules (GAIA and
-Radial velocities databases, SPICE Kernels, etc.).  
+mainly due to the data required to run some of the modules.  
 
-Before you start
+Installation
 ----------------
 
-Before you start using the package set up the `makefile`.  Create a
-local copy of `compiler.in.temp`:
+For installing the package run:
 
 ```  
-cp compiler.in.temp compiler.in
+bash install.sh
 ```  
 
-Edit the file to properly choose your system architecture.  You just
-need to comment/uncomment the proper line in the file:
+Installation perform several operations required to start using the
+package:
 
-```  
-###################################################
-#CHOOSE YOUR ARCHITECTURE
-###################################################
-#ARCH=32
-ARCH=64
-```  
+1. Copy the template files in the ``templates`` directory to the
+   package directory.
 
-Test it:
+2. Install the required linux and python packages.
 
-```  
-make
-```  
+3. Unpack large files.  Large files are splitted in 20MB chunks of
+   data inside the `.store` directory.  Before you use some critical
+   modules you must unpack those large files:
 
-Unpacking large files
----------------------
+   ```  
+   make unpack
+   ```  
 
-Large files are splitted in 20MB chunks of data inside the `.store`
-directory.  Before you use some critical modules you must unpack those
-large files:
+4. Try to compile a small test program.  If compilation fails
+   comment/uncomment the proper line in the file ``compiler.in``:
 
-```  
-make unpack
-```  
+   ```  
+   ###################################################
+   #CHOOSE YOUR ARCHITECTURE
+   ###################################################
+   #ARCH=32
+   ARCH=64
+   ```  
 
 Quickstart
 ----------
 
-1. Generate the surrogate objects and propagate them until the time of ingress.
+1. Edit the general configuration files ``iwander.conf`` and
+   ``wanderer.conf`` for setting up the name of the wanderer and its
+   properties.
+
+2. Compile the key programs:
 
    ```  
-   make wanderer.exe
+   make all
+   ```  
+
+3. Generate the surrogate objects and propagate them until the time of ingress.
+
+   ```  
    ./wanderer.exe
    ```  
 
-2. Compute the minimum distance to all the stars in the input catalog
+4. Compute the minimum distance to all the stars in the input catalog
    and select the candidates.
 
    ```  
-   make encounters.exe
    ./encounters.exe
    ```  
 
-3. Find progenitor candidates and compute their origin probability:
+5. Find progenitor candidates and compute their origin probability:
 
    ```  
-   make probability.exe
    ./probability.exe
    ```  
 
-The output of this process is the file ``progenitors.csv`` having
-a list of the progenitor candidates with their respective origin
-probability.
+The output of this process is the file ``progenitors-<wanderer>.csv``
+having a list of the progenitor candidates with their respective
+origin probability.
+
+Optionally you can:
+
+6. Sort out the candidates according to position probability or
+   minimum distance:
+
+   ```  
+   python3 bin/progenitors.py
+   ```  
 
 Structure of the package
 ------------------------
@@ -269,6 +285,23 @@ For the developer
 iWander uses GSL and Spice as backbone utility libraries.  The latest
 precompiled version of both libraries, along witth the header files
 are provided with the package in the `util` directory.
+
+Input parameters are passed to the programs using a configuration file
+`<programa.conf>`.  The configuration file has the structure of a C
+program.  The declarations and actions in the program are included
+directly into the `main` of the corresponding program.
+
+Naming conventions:
+
+* Configuration variables: Capitalized. Example: Wanderer,
+  Npart.
+
+* Macros and global variables: Fully capital. Example: FILENAME,
+  REARTH.
+
+* Routines: Umbrella style. Example: vectorAllocate, integrateEOM.
+
+* Local variables: Free naming rules.
 
 Acknowledgements
 ----------------

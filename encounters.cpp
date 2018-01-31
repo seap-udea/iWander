@@ -1,6 +1,24 @@
+/*
+#########################################################
+#    _ _       __                __         		#
+#   (_) |     / /___ _____  ____/ /__  _____		#
+#  / /| | /| / / __ `/ __ \/ __  / _ \/ ___/		#
+# / / | |/ |/ / /_/ / / / / /_/ /  __/ /    		#
+#/_/  |__/|__/\__,_/_/ /_/\__,_/\___/_/     		#
+# Dynamics of Interestellar Wanderers			#
+# Jorge I. Zuluaga et al. [)] 2017			#
+# http://github.com/seap-udea/iWander.git		#
+#########################################################
+# Compute encounters
+#########################################################
+*/
 #include <iwander.cpp>
+
 using namespace std;
-#define VERBOSE 0
+
+#define VERBOSE 2 //Verbosity level
+#define OSTREAM stdout //Stream where the output is redirected
+#define VSTREAM stderr //Stream where the error output is redirected
 
 int main(int argc,char* argv[])
 {
@@ -12,7 +30,7 @@ int main(int argc,char* argv[])
     This program perform two different tasks:
 
     1) Compute the LMA minimum distance and time to all stars in the
-       AstroRV catalogue..
+       AstroRV catalogue...
 
     2) Select the progenitor candidates.
 
@@ -21,34 +39,20 @@ int main(int argc,char* argv[])
 
     Output: 
 
-    * encounters.csv: all the columns of the input catalog (AstroRV)
-      plus:
+    * encounters-<Wanderer>.csv: all the columns of the input catalog (AstroRV)
+      plus additional information computed from the LMA approximation.
 
-      Cols:
-          0: n
-	  1-6: Position and velocity of the star for LMA purposes
-	  7: Initial distance of the star, d
-	  8: Minimum LMA distance, dmin
-	  9: Minimum LMA time, tmin
-	  10-13: Relative velocity computed with LMA vrelx,vrely,vrelz,vrel,
-	  14-...: All fields in AstroRV catalog
+    * candidates-<Wanderer>.csv: list of objects fulfilling certain
+      selection criteria that classify them as close encounters candidates.
 
-    * candidates.csv
-
-      Cols:
-          0: n
-	  1-6: Position and velocity of the star for LMA purposes
-	  7: Initial distance of the star, d
-	  8: Minimum LMA distance, dmin
-	  9: Minimum LMA time, tmin
-	  10-13: Relative velocity computed with LMA vrelx,vrely,vrelz,vrel,
-	  14-...: All fields in AstroRV catalog
   */
 
   ////////////////////////////////////////////////////
   //CONFIGURATION
   ////////////////////////////////////////////////////
+  #include <iwander.conf>
   #include <encounters.conf>
+  printHeader(OSTREAM,"ENCOUNTER CANDIDATES",'*');
 
   ////////////////////////////////////////////////////
   //INITIALIZE iWANDER
@@ -56,33 +60,45 @@ int main(int argc,char* argv[])
   initWander();
   
   ////////////////////////////////////////////////////
-  //GENERAL VARIABLES
+  //VARIABLES DECLARATION
   ////////////////////////////////////////////////////
-  double tmp;
-  char ctmp[100],line[10000],aline[10000],head[10000];
-  double posbody[6],tbody;
-  char **fields=charMatrixAllocate(MAXCOLS,MAXTEXT);
+  //COUNTERS
   int i,j,k,n,nfields;
-  double p1[3],*d1;
+  int Nfreq=10000;
 
-  int Nstars,Naccept=0,Ncand=0;
+  int Nstars_total=0,Nstars_cand=0;
+  int Nstars_noastro=0,Nstars_null=0,Nstars_fast=0,Nstars_nothresh=0,Nstars_nodir=0;
 
-  //VARIABLES
-  double tstar,dt;
-  double raep,decep;
+  //COORDINATES
+  double vsky[3],dvsky[3],UVW[3],dUVW[3];
+  double p2[3],p1mp2[3],r1mr2[3],d1md2[3],nv[3],nv1[3],nv2[3];
+  double dc1[3],dc2[3],c1[3],c2[3],drp[3];
+  double *d2;
+
+  //ASTROMETRIC POSITIONS
   double mura,dmura,mudec,dmudec;
   double vr,dvr;
   double ra,dra,dec,ddec;
-  double postar[6];
-  double gmag,gMag;
+  double raep,decep;
   double lep,bep,l,b;
   double par,dpar,d,dd;
+
+  //ALLOCATION
   double M_Epoch_J2000[3][3];
   double TM[3][3],BM[3][3];
-  double vsky[3],dvsky[3],UVW[3],dUVW[3];
+  pxform_c("J2000","GALACTIC",0,TM);
+  char **fields=charMatrixAllocate(MAXCOLS,MAXTEXT);
 
-  double p2[3],*d2,p1mp2[3],r1mr2[3],d1md2[3],nv[3],nv1[3],nv2[3];
-  double dc1[3],dc2[3],c1[3],c2[3],drp[3];
+  //MISC
+  double tmp,telaps;
+  int qastro;
+  double posbody[6],tbody,direction;
+  double p1[3],*d1;
+
+  double tstar,dt;
+  double postar[6];
+  double gmag,gMag;
+
   double dvnorm;
   double d1n2,d2n1;
   double dmin,tmin,tmin1,tmin2;
@@ -90,212 +106,219 @@ int main(int argc,char* argv[])
   double dthres;
   double ting;
 
+  //FILES
+  FILE *fc;
+  FILE *fe;
+  FILE *fg;
+  FILE *fw;
+
   ////////////////////////////////////////////////////
-  //GLOBAL DEFINITIONS
+  //OUTPUT FILE
   ////////////////////////////////////////////////////
-  pxform_c("J2000","GALACTIC",0,TM);
+  //Openning the AstroRV database
+  fc=fopen("db/AstroRV/AstroRV.csv","r");
+  fscanf(fc,"%s",SLINE);
+
+  //Openning the output files
+  sprintf(FILENAME,"scratch/encounters-%s.csv",Wanderer);
+  fe=fopen(FILENAME,"w");
+  sprintf(FILENAME,"scratch/candidates-%s.csv",Wanderer);
+  fg=fopen(FILENAME,"w");
 
   ////////////////////////////////////////////////////
   //READING DATA
   ////////////////////////////////////////////////////
-
+  printHeader(OSTREAM,"READING WANDERERS INFORMATION",'-');
+  
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   //READING WANDERERS
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  FILE *fc=fopen("wanderer.csv","r");
+  sprintf(FILENAME,"scratch/wanderer-%s.csv",Wanderer);
+  fw=fopen(FILENAME,"r");
   if(fc==NULL){
     fprintf(stderr,"You must first propagate the wanderers\n");
     exit(1);
   }
   //HEADER
-  fscanf(fc,"%s",line);
+  fscanf(fw,"%s",LINE);
 
   //NOMINAL SOLUTION
-  fscanf(fc,"%s",line);
-  parseLine(line,fields,&nfields);
+  print0(OSTREAM,"\tReading nominal solution\n");
+  fscanf(fw,"%s",LINE);
+  parseLine(LINE,fields,&NFIELDS);
 
   for(i=Wanderer::XGAL,j=0;i<=Wanderer::VZGAL;i++) posbody[j++]=atof(fields[i]);
   tbody=atof(fields[Wanderer::TING]);
+  direction=tbody/fabs(tbody);
 
-  VPRINT(stdout,"TIME (year): %e\n",tbody/YEAR);
-  VPRINT(stdout,"POS.GAL. (km): %s\n",vec2strn(posbody,3,"%.17e "));
-  VPRINT(stdout,"VEL.UVW. (km/s): %s\n",vec2strn(posbody+3,3,"%.17e "));
+  print1(VSTREAM,"\tIngress time (year): %e\n",tbody/YEAR);
+  print1(VSTREAM,"\tPosition in the Galaxy (km): %s\n",
+	 vec2strn(posbody,3,"%.17e "));
+  print1(VSTREAM,"\tVelocity in the Galaxy (km/s): %s\n",
+	 vec2strn(posbody+3,3,"%.17e "));
 
   //SKEW LINE VECTORS
   d1=posbody+3;
   vscl_c(1E3/PARSEC,posbody,p1);
-  VPRINT(stdout,"Object skew line: p=(%s), d=(%s)\n",
-	 vec2strn(p1,3,"%.17e,"),
-	 vec2strn(d1,3,"%.17e,"));
+  print1(VSTREAM,"\tObject skew line:\n\t\tp (pc)=(%s)\n\t\td(km/s)=(%s)\n",
+	 vec2strn(p1,3,"%.17e "),
+	 vec2strn(d1,3,"%f "));
+  fclose(fw);
 
   ////////////////////////////////////////////////////
-  //READING GAIA DATABASE
+  //PROCEDING TO COMPUTE LMA CONDITIONS
   ////////////////////////////////////////////////////
-  fc=fopen("db/src/AstroRV.csv","r");
-  FILE* fe=fopen("encounters.csv","w");
-  FILE* fg=fopen("candidates.csv","w");
+  printHeader(OSTREAM,"COMPUTING MINIMUM DISTANCE TO CATALOG STARS",'-');
 
-  //READING HEADER
-  fscanf(fc,"%s",head);
+  //Header of files
+  fprintf(fe,"n,postarx,postary,postarz,velstarx,velstary,velstarz,d,dmin,tmin,vrelx,vrely,vrelz,vrel,qastro,%s\n",SLINE);
+  fprintf(fg,"n,postarx,postary,postarz,velstarx,velstary,velstarz,d,dmin,tmin,vrelx,vrely,vrelz,vrel,qastro,%s\n",SLINE);
 
-  fprintf(fe,"n,postarx,postary,postarz,velstarx,velstary,velstarz,d,dmin,tmin,vrelx,vrely,vrelz,vrel,%s\n",head);
-  fprintf(fg,"n,postarx,postary,postarz,velstarx,velstary,velstarz,d,dmin,tmin,vrelx,vrely,vrelz,vrel,%s\n",head);
-
-  //COMPUTING LMA MINIMUM DISTANCE TO STARS
-  printHeader(stdout,"COMPUTING MINIMUM DISTANCE TO CATALOG STARS");
-  int Nfreq=10000;
+  elapsedTime();
   n=0;
   k=0;
-  while(fscanf(fc,"%s",line)==1){
-    strcpy(aline,line);
+  while(fscanf(fc,"%s",LINE)==1){
+    elapsedTime();
 
+    //Save line
+    strcpy(SLINE,LINE);
+
+    //Show encounter stars
     if((n%Nfreq)==0){
-      fprintf(stdout,"Analysing encounter of star %d...\n",n);
+      print0(OSTREAM,"\tAnalysing encounter of star %d...\n",n);
     }
-
     n++;
 
-    //PARSE FIELDS
-    parseLine(line,fields,&nfields);
+    //Parse fields
+    parseLine(LINE,FIELDS,&NFIELDS);
 
-    //DEBUGGING
-    //if(!(strcmp(fields[Stars::TYCHO2_ID],"6995-570-1")==0)) continue;
-    //if(!(strcmp(fields[Stars::HIP],"27913")==0) and VERBOSE) continue;
-    //if(!(strcmp(fields[Stars::HIP],"62512")==0)) continue;
-    //if(!(strcmp(fields[Stars::HIP],"64532")==0)) continue;
-    //if(n<243520) continue;
-    //if(n<14053 && VERBOSE) continue;
-    //if(!(strcmp(fields[Stars::HIP],"43667")==0)) continue;
+    //Reading id
+    print1(VSTREAM,"\tStar %d, HIP %s, TYC2 %s, HD %s, NAME %s:\n",n,
+	   FIELDS[Stars::HIP],FIELDS[Stars::TYCHO2_ID],
+	   FIELDS[Stars::HENRYDRAPERID],FIELDS[Stars::NAME_SIMBAD]);
 
+    if(NFIELDS!=47){
+      fprintf(stderr,"\t\tStar %d, HIP %s, TYC2 %s, HD %s, NAME %s:, nfields = %d\n",n,
+	      FIELDS[Stars::HIP],FIELDS[Stars::TYCHO2_ID],
+	      FIELDS[Stars::HENRYDRAPERID],FIELDS[Stars::NAME_SIMBAD],NFIELDS);
+      exit(1);
+    }
+    
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    //ID
-    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    VPRINT(stdout,"Star %d, HIP %s, TYC2 %s, HD %s, NAME %s:\n",n,
-	   fields[Stars::HIP],fields[Stars::TYCHO2_ID],
-	   fields[Stars::HENRYDRAPERID_TYC],fields[Stars::NAME_SIMBAD]);
-
-    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    //PRIMARY
+    //Primary
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //CHECK IF ASTROMETRIC DATA IS AVAILABLE
-    if(fields[Stars::RA][0]!='N'){
-      ra=atof(fields[Stars::RA]);dra=atof(fields[Stars::RA_ERROR]);
-      dec=atof(fields[Stars::DEC]);ddec=atof(fields[Stars::DEC_ERROR]);
-      par=atof(fields[Stars::PARALLAX]);
-      dpar=atof(fields[Stars::PARALLAX_ERROR]);	     
-      mura=atof(fields[Stars::PMRA]);dmura=atof(fields[Stars::PMRA_ERROR]);
-      mudec=atof(fields[Stars::PMDEC]);dmudec=atof(fields[Stars::PMDEC_ERROR]);
-      VPRINT(stdout,"\tGaia data for %d %s %s: %e, %e, %e, %e, %e, %e\n",
-	      n,fields[Stars::HIP],fields[Stars::TYCHO2_ID],ra,dec,par,dpar,mura,mudec);
-    }else if(fields[Stars::RA_HIP][0]!='N'){
-      ra=atof(fields[Stars::RA_HIP2]);dra=atof(fields[Stars::RA_ERROR_HIP]);
-      dec=atof(fields[Stars::DEC_HIP2]);ddec=atof(fields[Stars::DEC_ERROR_HIP]);
-      par=atof(fields[Stars::PARALLAX_HIP2]);
-      dpar=atof(fields[Stars::PARALLAX_ERROR_HIP2]);	     
-      mura=atof(fields[Stars::PMRA_HIP2]);dmura=atof(fields[Stars::PMRA_ERROR_HIP2]);
-      mudec=atof(fields[Stars::PMDEC_HIP2]);dmudec=atof(fields[Stars::PMDEC_ERROR_HIP2]);
-      VPRINT(stdout,"\tHipparcos data for %d %s %s: %e, %e, %e, %e, %e, %e\n",
-	      n,fields[Stars::HIP],fields[Stars::TYCHO2_ID],ra,dec,par,dpar,mura,mudec);
-    }else{
-      fprintf(stderr,"\tAstrometric data not available for star %d %s %s\n",
-	      n,fields[Stars::HIP],fields[Stars::TYCHO2_ID]);
-      continue;
-    }      
+    ra=atof(FIELDS[Stars::RA]);dra=atof(FIELDS[Stars::RA_ERROR]);
+    dec=atof(FIELDS[Stars::DEC]);ddec=atof(FIELDS[Stars::DEC_ERROR]);
+    par=atof(FIELDS[Stars::PARALLAX]);
+    dpar=atof(FIELDS[Stars::PARALLAX_ERROR]);	     
+    mura=atof(FIELDS[Stars::PMRA]);dmura=atof(FIELDS[Stars::PMRA_ERROR]);
+    mudec=atof(FIELDS[Stars::PMDEC]);dmudec=atof(FIELDS[Stars::PMDEC_ERROR]);
     //OTHER
-    vr=atof(fields[Stars::RV]);
-    dvr=atof(fields[Stars::ERV]);
-    gmag=atof(fields[Stars::PHOT_G_MEAN_MAG]);
-    l=atof(fields[Stars::L]);
-    b=atof(fields[Stars::B]);
+    vr=atof(FIELDS[Stars::RV]);
+    dvr=atof(FIELDS[Stars::E_RV]);
+    gmag=atof(FIELDS[Stars::PHOT_G_MEAN_MAG]);
+    l=atof(FIELDS[Stars::L]);
+    b=atof(FIELDS[Stars::B]);
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //FILTER STARS
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    //NULL PARALLAX
-    if(par==0){
-      VPRINT(stderr,"\tNull parallax for star %d %s %s. Skipping\n",
-	     n,fields[Stars::HIP],fields[Stars::TYCHO2_ID]);
+    if(par<=0){
+      print2(VSTREAM,"\tNull parallax for star %d %s %s. Skipping\n",
+	     n,FIELDS[Stars::HIP],FIELDS[Stars::TYCHO2_ID]);
+      Nstars_null++;
       continue;
     }
-    if(fabs(par/dpar)<pardpar_min){
-      VPRINT(stderr,"\tParallax is very uncertain for star %d %s %s. Skipping\n",
-	     n,fields[Stars::HIP],fields[Stars::TYCHO2_ID]);
+    if(fabs(par/dpar)<Pardpar_Min){
+      print2(VSTREAM,"\tParallax is very uncertain for star %d %s %s. Skipping\n",
+	     n,FIELDS[Stars::HIP],FIELDS[Stars::TYCHO2_ID]);
+      Nstars_noastro++;
       continue;
     }
-    if(fabs(mura/dmura)<muradmura_min){
-      VPRINT(stderr,"\tProper motion in RA is very uncertain for star %d %s %s. Skipping\n",
-	     n,fields[Stars::HIP],fields[Stars::TYCHO2_ID]);
+    if(fabs(mura/dmura)<Muradmura_Min){
+      print2(VSTREAM,"\tProper motion in RA is very uncertain for star %d %s %s. Skipping\n",
+	     n,FIELDS[Stars::HIP],FIELDS[Stars::TYCHO2_ID]);
+      Nstars_noastro++;
       continue;
     }
-    if(fabs(mudec/dmudec)<mudecdmudec_min){
-      VPRINT(stderr,"\tProper motion in DEC is very uncertain for star %d %s %s. Skipping\n",
-	     n,fields[Stars::HIP],fields[Stars::TYCHO2_ID]);
+    if(fabs(mudec/dmudec)<Mudecdmudec_Min){
+      print2(VSTREAM,"\tProper motion in DEC is very uncertain for star %d %s %s. Skipping\n",
+	     n,FIELDS[Stars::HIP],FIELDS[Stars::TYCHO2_ID]);
+      Nstars_noastro++;
       continue;
     }
-    if(fabs(vr/dvr)<vrdvr_min){
-      VPRINT(stderr,"\tRadial velocity is very uncertain for star %d %s %s. Skipping\n",
-	     n,fields[Stars::HIP],fields[Stars::TYCHO2_ID]);
+    if(fabs(vr/dvr)<Vrdvr_Min){
+      print2(VSTREAM,"\tRadial velocity is very uncertain for star %d %s %s. Skipping\n",
+	     n,FIELDS[Stars::HIP],FIELDS[Stars::TYCHO2_ID]);
+      Nstars_noastro++;
       continue;
     }
+    
+    //Astromerty quality factor
+    qastro=(int)(MIN(fabs(par/dpar),MIN(fabs(mura/dmura),MIN(fabs(mudec/dmudec),fabs(vr/dvr)))));
 
     //COORDINATES AT EPOCH
-    VPRINT(stdout,"\tRA(epoch) = %.17lf +/- %.3lf mas\n",ra,dra);
-    VPRINT(stdout,"\tDEC(epoch) = %.17lf +/- %.3lf mas\n",dec,ddec);
-    VPRINT(stdout,"\tRA(epoch) = %s, DEC(epoch) = %s\n",dec2sex(ra/15.0),dec2sex(dec));
-    VPRINT(stdout,"\tParallax = %.17lf +/- %.3lf mas\n",par,dpar);
-    VPRINT(stdout,"\tmu_RA(epoch) = %.17lf +/- %.3lf mas\n",mura,dmura);
-    VPRINT(stdout,"\tmu_DEC(epoch) = %.17lf +/- %.3lf mas\n",mudec,dmudec);
-    VPRINT(stdout,"\tv_r = %.17lf +/- %.3lf km/s\n",vr,dvr);
-    VPRINT(stdout,"\tmag_g = %.3lf\n",gmag);
-    VPRINT(stdout,"\tl = %.17lf, b = %.17lf\n",l,b);
+    print1(VSTREAM,"\t\tPrimary properties:\n",gMag);
+    print1(VSTREAM,"\t\t\tRA(epoch) = %.17lf +/- %.3lf mas\n",ra,dra);
+    print1(VSTREAM,"\t\t\tDEC(epoch) = %.17lf +/- %.3lf mas\n",dec,ddec);
+    print1(VSTREAM,"\t\t\tRA(epoch) = %s, DEC(epoch) = %s\n",dec2sex(ra/15.0),dec2sex(dec));
+    print1(VSTREAM,"\t\t\tParallax = %.17lf +/- %.3lf mas\n",par,dpar);
+    print1(VSTREAM,"\t\t\tmu_RA(epoch) = %.17lf +/- %.3lf mas\n",mura,dmura);
+    print1(VSTREAM,"\t\t\tmu_DEC(epoch) = %.17lf +/- %.3lf mas\n",mudec,dmudec);
+    print1(VSTREAM,"\t\t\tv_r = %.17lf +/- %.3lf km/s\n",vr,dvr);
+    print1(VSTREAM,"\t\t\tmag_g = %.3lf\n",gmag);
+    print1(VSTREAM,"\t\t\tl = %.17lf, b = %.17lf\n",l,b);
+    print1(VSTREAM,"\t\t\tqastro = %.3lf\n",qastro);
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //SECONDARY
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    VPRINT(stdout,"\tSecondary properties:\n",gMag);
+    print1(VSTREAM,"\t\tSecondary properties:\n",gMag);
     
     //DISTANCE
     d=AU/tan(par/(60*60*1000.0)*DEG)/PARSEC;
     dd=d*dpar/par;
-    VPRINT(stdout,"\td(pc) = %.17lf +/- %.3lf \n",d,dd);
+    print1(VSTREAM,"\t\t\td(pc) = %.17lf +/- %.3lf \n",d,dd);
 
     //VELOCITY WITH RESPECT TO SKY
     vsky[0]=vr;//RADIAL, km/s
     vsky[1]=KC2*mura/par;//RA, km/s
     vsky[2]=KC2*mudec/par;//DEC, km/s
-    VPRINT(stdout,"\tVelocity in the sky: %s\n",vec2str(vsky,"%.5f "));
+    print1(VSTREAM,"\t\t\tVelocity in the sky: %s\n",vec2str(vsky,"%.5f "));
 
     //ABSOLUTE MAGNITUDE
     gMag=gmag-5*log10(d/10);
-    VPRINT(stdout,"\tAbsolute magnitude = %.3lf\n",gMag);
+    print1(VSTREAM,"\t\t\tAbsolute magnitude = %.3lf\n",gMag);
 
     //POSITION TO STAR RESPECT TO J2000
     radrec_c(d,ra*DEG,dec*DEG,postar);
-    VPRINT(stdout,"\tPosition in true epoch = %s\n",vec2str(postar,"%.17e "));
+    print1(VSTREAM,"\t\t\tPosition in true epoch = %s\n",vec2str(postar,"%.17e "));
 
     //TRANSFORM TO GALACTIC TO CHECK
     mxv_c(TM,postar,postar);
-    VPRINT(stdout,"\tPosition in Galactic = %s\n",vec2str(postar,"%.17e,"));
+    print1(VSTREAM,"\t\t\tPosition in Galactic = %s\n",vec2str(postar,"%.17e,"));
 
     //GALACTIC COORDINATES
     recrad_c(postar,&tmp,&l,&b);
-    VPRINT(stdout,"\tl = %.17lf, b = %.17lf\n",l*RAD,b*RAD);
+    print1(VSTREAM,"\t\t\tl = %.17lf, b = %.17lf\n",l*RAD,b*RAD);
 
     //CALCULATE UVW
     calcUVW(ra,dec,par,dpar,mura,dmura,mudec,dmudec,vr,dvr,UVW,dUVW);
-    VPRINT(stdout,"\tVelocity w.r.t. LSR: %s +/- %s\n",
+    print1(VSTREAM,"\t\t\tVelocity w.r.t. LSR: %s +/- %s\n",
 	   vec2str(UVW,"%.5f,"),
 	   vec2str(dUVW,"%.5f "));
 
     double vsun[]={USUN,VSUN+VCIRC,WSUN};
     vadd_c(UVW,vsun,vsun);
-    VPRINT(stdout,"\tGalactocentric velocity: %s\n",vec2str(vsun,"%.17f,"));
+    print1(VSTREAM,"\t\t\tGalactocentric velocity: %s\n",vec2str(vsun,"%.17f,"));
 
     double vmag=vnorm_c(UVW);
     
-    if(vmag>=vgc_max){
-      VPRINT(stderr,"\tThe star %d %s %s is going too fast. Skipping\n",
-	     n,fields[Stars::HIP],fields[Stars::TYCHO2_ID]);
+    if(vmag>=Vgc_Max){
+      print2(VSTREAM,"\t\t***The star %d %s %s is going too fast. Skipping***\n",
+	     n,FIELDS[Stars::HIP],FIELDS[Stars::TYCHO2_ID]);
+      Nstars_fast++;
       continue;
     }
 
@@ -304,93 +327,101 @@ int main(int argc,char* argv[])
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //BACKWARD STAR UNTIL TING
     vscl_c(tbody,UVW,p2);
-    VPRINT(stdout,"\tDisplacement (km): %s\n",vec2str(p2,"%.17e,"));
+    print1(VSTREAM,"\t\tDisplacement (km): %s\n",vec2str(p2,"%.17e,"));
     vscl_c(1e3/PARSEC,p2,p2);
-    VPRINT(stdout,"\tDisplacement (pc): %s\n",vec2str(p2,"%.17e,"));
+    print1(VSTREAM,"\t\tDisplacement (pc): %s\n",vec2str(p2,"%.17e,"));
     vadd_c(postar,p2,p2);
     d2=UVW;
     
-    VPRINT(stdout,"\tPosition particle: %s\n",vec2str(p1,"%.5lf,"));
-    VPRINT(stdout,"\tVelocity particle: %s\n",vec2str(d1,"%.5lf,"));
+    print1(VSTREAM,"\t\tPosition particle: %s\n",vec2str(p1,"%.5lf,"));
+    print1(VSTREAM,"\t\tVelocity particle: %s\n",vec2str(d1,"%.5lf,"));
 
-    VPRINT(stdout,"\tPosition star today: %s\n",vec2str(postar,"%.17lf,"));
-    VPRINT(stdout,"\tPosition star: %s\n",vec2str(p2,"%.17lf,"));
-    VPRINT(stdout,"\tVelocity star: %s\n",vec2str(d2,"%.5lf,"));
-
-    vsub_c(p1,p2,p1mp2);
-    ucrss_c(d1,d2,nv);
-    VPRINT(stdout,"\tNormal vector to skew lines: %s\n",vec2str(nv,"%.5f "));
-    dmin=fabs(vdot_c(nv,p1mp2));
-    VPRINT(stdout,"\tMinimum distance = %.17e\n",dmin);
-
-    //POINT OF MINIMUM DISTANCE
-    ucrss_c(d1,nv,nv1);
-    ucrss_c(d2,nv,nv2);
-    d1n2=vdot_c(d1,nv2);
-    d2n1=vdot_c(d2,nv1);
-    vscl_c(-vdot_c(p1mp2,nv2)/d1n2,d1,dc1);
-    vadd_c(p1,dc1,c1);
-    vscl_c(+vdot_c(p1mp2,nv1)/d2n1,d2,dc2);
-    vadd_c(p2,dc2,c2);
-    VPRINT(stdout,"\tPoint of peristar (body): %s\n",vec2str(c1,"%.5f "));
-    VPRINT(stdout,"\tPoint of peristar (star): %s\n",vec2str(c2,"%.5f "));
-    vsub_c(c1,p1,drp);
-    VPRINT(stdout,"\tDistance traveleded by body until crossing point: %s\n",vec2str(drp,"%.5f "));
-
-    //TIME OF MINIMUM DISTANCE
-    tmin1=(c1[0]-p1[0])/(d1[0]*1e3/KC1);
-    tmin2=(c2[0]-p2[0])/(d2[0]*1e3/KC1);
-    VPRINT(stdout,"\tTime for minimum distance 1 = %.17e\n",tmin1);
-    VPRINT(stdout,"\tTime for minimum distance 2 = %.17e\n",tmin2);
+    print1(VSTREAM,"\t\tPosition star today: %s\n",vec2str(postar,"%.17lf,"));
+    print1(VSTREAM,"\t\tPosition star: %s\n",vec2str(p2,"%.17lf,"));
+    print1(VSTREAM,"\t\tVelocity star: %s\n",vec2str(d2,"%.5lf,"));
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //CALCULATE PERISTAR
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    //r1-r2
+    vsub_c(p1,p2,p1mp2);
+    //v1-v2
     vsub_c(d1,d2,d1md2);
+
+    //Compute time at minimum
     vscl_c(1e3/KC1,d1md2,d1md2);
     dvnorm=vnorm_c(d1md2);
     tmin=-vdot_c(p1mp2,d1md2)/(dvnorm*dvnorm);
-    VPRINT(stdout,"\tTime for minimum distance dynamic = %.17e\n",tmin);
+    print1(VSTREAM,"\t\tTime for minimum distance dynamic = %.17e\n",tmin);
+
+    //Compute minimum distance
     vscl_c(tmin,d1md2,d1md2);
     vadd_c(p1mp2,d1md2,r1mr2);
     dmin=vnorm_c(r1mr2);
-    VPRINT(stdout,"\tMinimum distance dynamic = %.17e\n",dmin);
+    print1(VSTREAM,"\t\tMinimum distance dynamic = %.17e\n",dmin);
     
     //RELATIVE VELOCITY AT MINIMUM DISTANCE
     vsub_c(d2,d1,vrel);
     vrelmag=vnorm_c(vrel);
+    print1(VSTREAM,"\t\tRelative velocity at minimum = %.17e\n",vrelmag);
 
     //STORE INFORMATION
     fprintf(fe,"%d,",n);
-    fprintf(fe,"%s%s",vec2str(p2,"%.5e,"),vec2str(UVW,"%.5e,"));
-    fprintf(fe,"%.5e,%.5e,%.5e,",d,dmin,tmin);
-    fprintf(fe,"%s%.5e,",vec2str(vrel,"%.5e,"),vrelmag);
-    fprintf(fe,"%s",aline);
+    fprintf(fe,"%s%s",vec2str(postar,"%.17e,"),vec2str(UVW,"%.17e,"));
+    fprintf(fe,"%.17e,%.17e,%.17e,",d,dmin,tmin);
+    fprintf(fe,"%s%.17e,",vec2str(vrel,"%.17e,"),vrelmag);
+    fprintf(fe,"%d,",qastro);
+    fprintf(fe,"%s",SLINE);
     fprintf(fe,"\n");
 
     //CONDITION FOR CANDIDATES
-    dthres=d<10*dmax1?0.1*d:dmax1;
-    VPRINT(stdout,"\tDistance threshold (d = %e):%e\n",d,dthres);
-    if(tmin<0 && dmin<=dthres && vrelmag<50.0){
-      fprintf(fg,"%d,",n);
-      fprintf(fg,"%s%s",vec2str(p2,"%.5e,"),vec2str(UVW,"%.5e,"));
-      fprintf(fg,"%.5e,%.5e,%.5e,",d,dmin,tmin);
-      fprintf(fg,"%s%.5e,",vec2str(vrel,"%.5e,"),vrelmag);
-      fprintf(fg,"%s",aline);
-      fprintf(fg,"\n");
-      Ncand++;
+    dthres=MAX(Dmax,Dfactor*d);
+
+    print1(VSTREAM,"\t\tDistance threshold (tmin = %e, TRet = %e, d = %e):%e\n",tmin,TRet,d,dthres);
+
+    if(direction*tmin>0){
+      //Stars fullfiling that minimum encounter is in the direction of integration
+      print2(VSTREAM,"\t\tThe star is in the right direction\n");
+      if(dmin<=dthres && vrelmag<50.0){
+	print2(VSTREAM,"\t\t***The star is accepted***\n");
+	fprintf(fg,"%d,",n);
+	fprintf(fg,"%s%s",vec2str(postar,"%.17e,"),vec2str(UVW,"%.17e,"));
+	fprintf(fg,"%.17e,%.17e,%.17e,",d,dmin,tmin);
+	fprintf(fg,"%s%.17e,",vec2str(vrel,"%.17e,"),vrelmag);
+	fprintf(fg,"%d,",qastro);
+	fprintf(fg,"%s",SLINE);
+	fprintf(fg,"\n");
+	Nstars_cand++;
+      }else{
+	print2(VSTREAM,"\t\t***The star is beyond the threshold. Skipping***\n");
+	Nstars_nothresh++;
+      }
+    }else{
+      print2(VSTREAM,"\t\t***The star is not in the right direction. Skipping***\n");
+      Nstars_nodir++;
+      continue;
     }
     k++;
-    if(VERBOSE) break;
+    TELAPS+=elapsedTime();
   }
+  printHeader(OSTREAM,"RESULTS SUMMARY",'-');
+
+  TELAPS/=k;
+  print0(OSTREAM,"\tAverage time per star: %f ms\n",TELAPS/1e-3);
   fclose(fc);
   fclose(fe);
   fclose(fg);
   
-  Nstars=n+1;
-  Naccept=k;
-  fprintf(stdout,"Total number of stars: %d\n",Nstars);
-  fprintf(stdout,"Accepted stars: %d\n",Naccept);
-  fprintf(stdout,"Candidates: %d\n",Ncand);
+  //Summary
+  print0(OSTREAM,"\tTotal number of stars: %d\n",Nstars_total);
+  print0(OSTREAM,"\tStars rejected by astrometry quality: %d\n",Nstars_noastro);
+  print0(OSTREAM,"\tStars rejected by null quantity: %d\n",Nstars_null);
+  print0(OSTREAM,"\tStars too fast: %d\n",Nstars_fast);
+  print0(OSTREAM,"\tStars beyond the distance threshold: %d\n",Nstars_nothresh);
+  print0(OSTREAM,"\tStars in the wrong direction: %d\n",Nstars_nodir);
+  print0(OSTREAM,"\tAccepted stars: %d\n",Nstars_cand);
+
+  TELAPS=elapsedTime(0);
+  print0(OSTREAM,"Total elapsed time = %.5f s (%.5f min)\n",TELAPS,TELAPS/60.0);
   return 0;
 }

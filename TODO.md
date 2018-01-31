@@ -32,10 +32,13 @@ To Do list
 
 * Forward integration.
 
+<<<<<<< HEAD
 * Include the name of the object in the outputfiles.
 
 * Create configuration files depending on wanderer.
 
+=======
+>>>>>>> dev
 * Allow calculations for objects with zero uncertainty in orbital
   elements.
 
@@ -44,3 +47,10 @@ Done
 
 * Publish the list of progenitor candidates.
 
+<<<<<<< HEAD
+=======
+* Include the name of the object in the configuration file.
+
+* Create output files depending on wanderer.
+
+>>>>>>> dev

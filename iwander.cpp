@@ -1,8 +1,11 @@
 //////////////////////////////////////////
 //HEADERS
 //////////////////////////////////////////
+#include <stdexcept>
 #include <stdio.h>
+#include <unistd.h>
 #include <math.h>
+#include <sys/time.h>
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
@@ -25,20 +28,31 @@
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
+#include <gsl/gsl_statistics.h>
 
 //////////////////////////////////////////
 //MACROS
 //////////////////////////////////////////
+
+//VERBOSE OUTPUT
 #define VPRINT if(VERBOSE) fprintf
-#define DEG ((M_PI/180))
-#define RAD ((180/M_PI))
-#define PI M_PI
+#define print0 fprintf
+#define print1 if(VERBOSE>=1) fprintf
+#define print2 if(VERBOSE>=2) fprintf
+#define print3 if(VERBOSE>=3) fprintf
+
+//COMMON MACROS
 #define D2R(x) (x*M_PI/180)
 #define R2D(x) (x*180/M_PI)
 #define POWI(x,n) gsl_pow_int(x,n)
 #define SGN(x) (x<0?-1:+1)
 #define MAX(x,y) (x>y?x:y)
 #define MIN(x,y) (x<y?x:y)
+
+//NUMERICAL CONSTANTS
+#define DEG ((M_PI/180))
+#define RAD ((180/M_PI))
+#define PI M_PI
 
 //////////////////////////////////////////
 //CSPICE CONSTANTS
@@ -86,11 +100,17 @@
 #define VERBOSE 0
 #define HTOL 1E-6
 #define MAXSTALL 100
+#define MAXCOLS 10000
+#define MAXTEXT 200
+#define MAXLINE 100000
 
 //////////////////////////////////////////
 //OBJECTS
 //////////////////////////////////////////
 #define NUMOBJS 10
+
+double XFOO[]={99.99,99.99,99.99,99.99,99.99,99.99};
+double XNULL[]={0.0,0.0,0.0,0.0,0.0,0.0};
 
 //THESE ARE THE LABELS FOR KERNEL de430
 static char* LABELS[]={
@@ -245,10 +265,74 @@ double FEARTH;
 gsl_rng* RAND;
 double GGLOBAL;
 double UL,UM,UT,UV;
+double INI_TIME,LAST_TIME;
+
+char FILENAME[10000];
+double TELAPS=0.0;
+int NELAPS=0;
+char LINE[MAXLINE],SLINE[MAXLINE];
+char VALUES[MAXLINE];
+int NFIELDS=0;
+char **FIELDS;
 
 //////////////////////////////////////////
 //ROUTINES
 //////////////////////////////////////////
+double *vectorAllocate(int n)
+{
+  double *v;
+  v=(double*)malloc(n*sizeof(double));
+  return v;
+}
+
+char *charVectorAllocate(int n)
+{
+  char *v;
+  v=(char*)malloc(n*sizeof(char));
+  return v;
+}
+
+double **matrixAllocate(int n,int m)
+{
+  double **M;
+  
+  M=(double**)malloc(n*sizeof(double*));
+  for(int i=0;i<n;i++) M[i]=(double*)malloc(m*sizeof(double));
+  
+  return M;
+}
+
+char **charMatrixAllocate(int n,int m)
+{
+  char **M;
+  
+  M=(char**)malloc(n*sizeof(char*));
+  for(int i=0;i<n;i++) M[i]=(char*)malloc(m*sizeof(char));
+  
+  return M;
+}
+
+int freeMatrix(double **mat,int n,int m)
+{
+  for(int i=n;i-->0;){
+    free(mat[i]);
+  }
+  free(mat);
+  return 0;
+}
+
+double elapsedTime(int iprev=1,int iflag=1)
+{
+  static double times[]={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+  struct timeval  tv;
+  double t,dt;
+  gettimeofday(&tv, NULL);
+  t=(double)(tv.tv_usec/1000000.+tv.tv_sec);
+  dt=t-times[iprev];
+  times[iflag]=t;
+  return dt;
+}
+
 void errorGSL(const char * reason,const char * file,int line,int gsl_errno){throw(1);}
 int initWander(void)
 {
@@ -278,6 +362,12 @@ int initWander(void)
   RAND=gsl_rng_alloc(gsl_rng_default);
   gsl_rng_set(RAND,time(NULL));
   gsl_rng_set(RAND,3);
+
+  //TIME
+  elapsedTime(0,0);
+  
+  //ALLOCATE GLOBAL MATRICES
+  FIELDS=charMatrixAllocate(MAXCOLS,MAXTEXT);
 
   return 0;
 }
@@ -321,10 +411,12 @@ char* vec2str(double vec[],char frm[]="%.8e ")
 char* vec2strn(double vec[],int n,char frm[]="%.8e ")
 {
   int i;
-  char format[100];
+  char *format=charVectorAllocate(100);
   char *str=(char*)calloc(sizeof(char),100*n);
   sprintf(format,"%ss%s","%",frm);
   for(i=0;i<n;i++) sprintf(str,format,str,vec[i]);
+
+  free(format);
   return str;
 }
 
@@ -1035,9 +1127,6 @@ char *str_replace(char *orig, char *rep, char *with)
 }
 
 //PARSE LINES READ FROM A COMMA SEPARATED VALUES FILE
-#define MAXCOLS 10000
-#define MAXTEXT 200
-#define MAXLINE 100000
 int parseLine(char line[],char** cols,int *ncols,char sep[]=",")
 {
   int i=0;
@@ -1062,12 +1151,14 @@ int parseLine(char line[],char** cols,int *ncols,char sep[]=",")
   for details
  */
 //TRUNCATION RADIUS OF THE SOLAR SYSTEM
-#define RTRUNC 1E5 //AU
+#define RTRUNC 5E4 //AU
 //GIVEN BY https://ui.adsabs.harvard.edu/#abs/2009ApJ…692.1075G/abstract
-#define ROSUN 8.3E3 //PC
+//REPLACED BY https://academic.oup.com/mnras/article-abstract/465/1/472/2417491?redirectedFrom=PDF
+#define ROSUN 8.2E3 //PC
 //#define ROSUN 8.0E3 //PC
 //GIVEN BY https://ui.adsabs.harvard.edu/#abs/2001ApJ…553..184C/abstract
-#define ZSUN 27.0 //PC, 
+//REPLACED BY: https://academic.oup.com/mnras/article-abstract/465/1/472/2417491?redirectedFrom=PDF
+#define ZSUN 17.0 //PC, 
 //#define ZSUN 10.0 //PC, 
 #define PHISUN 0.0 //DEG
 //GIVEN BY: https://ui.adsabs.harvard.edu/#abs/2010MNRAS.403.1829S/abstract
@@ -1429,7 +1520,8 @@ int integrateEoM(double tini,double X0[],double h,int npoints,double duration,
   double h_used=h;
   double deltat,h_next,h_adjust;
   int status;
-  double x0[nsys],x[nsys];
+  double *x0=(double*)malloc(nsys*sizeof(double));
+  double *x=(double*)malloc(nsys*sizeof(double));
 
   VPRINT(stdout,"Integration parameters:\n");
   VPRINT(stdout,"\tnsys = %d\n",nsys);
@@ -1465,7 +1557,9 @@ int integrateEoM(double tini,double X0[],double h,int npoints,double duration,
     VPRINT(stdout,"\ty0 = %s\n",vec2strn(x0,nsys,"%.7e "));
     VPRINT(stdout,"\ty = %s\n",vec2strn(x,nsys,"%.7e "));
 
-    do {
+    int nmax=(int)(10*fabs(t_step/h));
+    int nint=0;
+    do{
       while(1){
 	status=Gragg_Bulirsch_Stoer(eom,x0,x,t,h_used,&h_next,1.0,
 				    TOLERANCE,EXTMET,params);
@@ -1487,9 +1581,10 @@ int integrateEoM(double tini,double X0[],double h,int npoints,double duration,
 	  if(VERBOSE) getchar();
 	  qpause=1;
 	}
-	else break;
+	else{
+	  break;
+	}
       }
-
       VPRINT(stdout,"\t\tSali del condenado ciclo con h_used = %e, h_next = %e\n",h_used,h_next);
 
       t+=h_used;
@@ -1510,8 +1605,15 @@ int integrateEoM(double tini,double X0[],double h,int npoints,double duration,
 
       VPRINT(stdout,"\t\tEn el siguiente paso usaré h = %e\n",h_used);
       if(VERBOSE && qpause) getchar();
+      
+      nint++;
+    }while(direction*(t-(t_stop-direction*fabs(t_step)*1.e-7))<0 && nint<nmax);
+    if(nint==nmax){
+      free(x0);
+      free(x);
+      throw(1);
+    }
 
-    }while(direction*(t-(t_stop-direction*fabs(t_step)*1.e-7))<0);
     VPRINT(stdout,"\tComplete ese condenado intervalo\n");
 
     if(direction*(t-t_stop)>0){
@@ -1524,6 +1626,9 @@ int integrateEoM(double tini,double X0[],double h,int npoints,double duration,
     t_start = t;
     if(direction*(t_start-tend)>0) break;
   }
+  
+  free(x0);
+  free(x);
   return 0;
 }
 
@@ -1604,8 +1709,8 @@ int EoMGalactic(double t,double y[],double dydt[],void *params)
     //*/
 
     //*
-    VPRINT(stdout,"\tR = %e, q = %e, z = %e, dphidR = %e, dphidq = %e, dphidz = %e\n",
-	   R,q,z,dphidR,dphidq,dphidz);
+    VPRINT(stdout,"\tR = %e, vR = %e, q = %e, uq = %e, z = %e, vz = %e, dphidR = %e, dphidq = %e, dphidz = %e, nsys = %d\n",
+	   R,vR,q,uq,z,vz,dphidR,dphidq,dphidz,nsys);
     VPRINT(stdout,"\ty = %s\n\tdydt = %s\n",
 	   vec2strn(y,nsys,"%.17e "),
 	   vec2strn(dydt,nsys,"%.17e "));
@@ -1695,26 +1800,6 @@ int generateMultivariate(double** cov,double *mu,double **x,int n,int Nobs)
   gsl_vector_free(xv);
   
   return 0;
-}
-
-double **matrixAllocate(int n,int m)
-{
-  double **M;
-  
-  M=(double**)malloc(n*sizeof(double*));
-  for(int i=0;i<n;i++) M[i]=(double*)malloc(m*sizeof(double));
-  
-  return M;
-}
-
-char **charMatrixAllocate(int n,int m)
-{
-  char **M;
-  
-  M=(char**)malloc(n*sizeof(char*));
-  for(int i=0;i<n;i++) M[i]=(char*)malloc(m*sizeof(char));
-  
-  return M;
 }
 
 double terminalDistance(double t,void *params)
@@ -1846,7 +1931,7 @@ int minDistanceDiscrete(double *xs,double **xp,double *tsp,int Ntimes,double dur
 }
 
 
-int minDistance(double *xs,double *xp,double mint,double maxt,double tmin0,
+int minDistanceBad(double *xs,double *xp,double mint,double maxt,double tmin0,
 		double *dmin,double *tmin,double *params)
 {
   int status;
@@ -1898,11 +1983,13 @@ double terminalDistance2(const gsl_vector *x,void *params)
   double t;
   double* ps=(double*)params;
   double **x1=matrixAllocate(2,6),**x2=matrixAllocate(2,6);
-  double x1c[6],x2c[6];
+  double *x1c=vectorAllocate(6);
+  double *x2c=vectorAllocate(6);
+  double *dx=vectorAllocate(6);
   double* ipars;
   double ts[2];
   double h;
-  double dx[6],d,dv;
+  double d,dv;
   ipars=ps+12;
 
   t=gsl_vector_get(x,0);
@@ -1945,14 +2032,19 @@ double terminalDistance2(const gsl_vector *x,void *params)
     copyVec(ps+6,x2[1],6);
   }
   
+  freeMatrix(x1,2,6);
+  freeMatrix(x2,2,6);
+  free(x1c);
+  free(x2c);
+  free(dx);
   return d;
 }
 
-int minDistance2(double *xs,double *xp,double tmin0,
+int minDistance(double *xs,double *xp,double tmin0,
 		 double *dmin,double *tmin,double *params)
 {
   int status;
-  double ps[23];
+  double *ps=vectorAllocate(23);
   double size;
   double error=fabs(tmin0)/10;
   double tolerance=error/10;
@@ -2003,6 +2095,11 @@ int minDistance2(double *xs,double *xp,double tmin0,
   copyVec(xs,ps,6);
   copyVec(xp,ps+6,6);
   
+  free(ps);
+  gsl_multimin_fminimizer_free(s);
+  gsl_vector_free(x);
+  gsl_vector_free(dx);
+
   return 0;
 }
 
@@ -2088,18 +2185,185 @@ int getMinMax(double array[],int left,int right,double *min,double *max,
   return 0;
 }
 
+int centerCloud(double **xp,int Npart,int Ncoord,
+		double *xc,double **xg,double *r)
+{
+  for(int j=0;j<Ncoord;j++){
+    double xm=0.0;
+    for(int i=0;i<Npart;i++){
+      xm+=xp[i][j];
+    }
+    xc[j]=xm/Npart;
+  }
+  return 0;
+}
+
+//Taken from: https://en.wikiversity.org/wiki/C_Source_Code/Find_the_median_and_mean
+int getPercentile(double x[],int n,double p/*p-value:0-1*/,
+		  double *min,double *max,
+		  double *ql,double *qm,double *qu) 
+{
+  double temp;
+  int i, j;
+
+  for(i=0; i<n-1; i++) {
+    for(j=i+1; j<n; j++) {
+      if(x[j] < x[i]) {
+	temp = x[i];
+	x[i] = x[j];
+	x[j] = temp;
+      }
+    }
+  }
+
+  //MEDIAN
+  if(n%2==0) {
+    *qm=((x[n/2] + x[n/2 - 1]) / 2.0);
+  } else {
+    *qm=x[n/2];
+  }
+
+  //LOWER
+  int nl=(int)floor((1-p)*n);
+  *ql=(x[nl]+x[nl+1])/2;
+  nl=nl==(n-1)?(n-2):nl;
+  
+  //UPPER
+  int nu=(int)ceil(p*n);
+  nu=nu==0?1:nu;
+  *qu=(x[nu]+x[nu-1])/2;
+
+  //MINIMUM AND MAXIMUM
+  *min=x[0];
+  *max=x[n-1];
+}
+
+int cloudVolume(double *x,int Npart,double *dV)
+{
+  /*
+    Better implementation is a convex hull
+
+    See:
+    https://en.wikibooks.org/wiki/Algorithm_Implementation/Geometry/Convex_hull/Monotone_chain
+  */
+
+  int ip,jp;
+  double *xi,*xj;
+
+  double *xci=vectorAllocate(6);
+  double *xcj=vectorAllocate(6);
+  double *dx=vectorAllocate(3);
+  double *ds=vectorAllocate(Npart);
+  double **dd=matrixAllocate(Npart,Npart);
+  double dmin;
+
+  //Calculate the average distance
+  double ad=0.0;
+  for(int i=0;i<Npart;i++){
+    ip=6*i;
+    xi=x+ip;
+    polar2cart(xi,xci);
+    for(int j=0;j<Npart;j++){
+      jp=6*j;
+      xj=x+jp;
+      ds[j]=1e100;
+      if(i==j) continue;
+      if(j<i) ds[j]=dd[j][i];
+      else{
+	polar2cart(xj,xcj);
+	vsub_c(xcj,xci,dx);
+	ds[j]=dd[i][j]=vnorm_c(dx);
+      }
+    }
+    dmin=gsl_stats_min(ds,1,Npart);
+    ad+=dmin;
+  }
+  ad/=Npart;
+
+  free(xci);
+  free(xcj);
+  free(dx);
+  free(ds);
+  freeMatrix(dd,Npart,Npart);
+
+  *dV=(4*M_PI/3*ad*ad*ad);
+  return 0;
+}
+
+int cloudProperties2(double *x,int Npart,
+		     double *r90,double *v90)
+{
+  int ip,is;
+  double *xadius=vectorAllocate(6);
+  double *center=vectorAllocate(6);
+  double *radius=vectorAllocate(Npart);
+  double *vadius=vectorAllocate(Npart);
+  double *xc=vectorAllocate(6);
+  double *xp;
+  double min,max,ql,qm,qu;
+
+  //Get the center
+  for(int j=0;j<6;j++){
+    double xm=0.0;
+    is=0;
+    for(int i=Npart;i-->0;){
+      ip=6*i;
+      //Particle
+      xp=x+ip;
+      if(xp[0]==99.99) continue;
+      //Convert to cartesian
+      polar2cart(xp,xc);
+      xm+=xc[j];
+      is++;
+    }
+    center[j]=xm/is;
+  }
+  
+  //Calculate the radius-vector
+  is=0;
+  for(int i=Npart;i-->0;){
+    ip=6*i;
+    xp=x+ip;
+    if(xp[0]==99.99) continue;
+    //Convert to cartesian
+    polar2cart(xp,xc);
+    //Compute radius
+    vsubg_c(xc,center,6,xadius);
+    radius[is]=vnorm_c(xadius);
+    vadius[is]=vnorm_c(xadius+3);
+    is++;
+  }
+
+  //Calculate the percentiles
+  getPercentile(radius,is,0.9,&min,&max,&ql,&qm,&qu);
+  *r90=qu;
+  getPercentile(vadius,is,0.9,&min,&max,&ql,&qm,&qu);
+  *v90=qu;
+  
+  free(radius);
+  free(vadius);
+  free(xadius);
+  free(center);
+  free(xc);
+}
+
 #define CVERBOSE 0
 int cloudProperties(double *xp,int Npart,
 		    double *radius,double *vradius,
 		    double *rinter,double *vinter)
 {
-  double x[6],xg[6],dx[6],xc[6*Npart];
+  double Rmin,Rmax,qmin,qmax,zmin,zmax;
+  double *x=vectorAllocate(6);
+  double *xg=vectorAllocate(6);
+  double *dx=vectorAllocate(6);
+  double *xc=vectorAllocate(6*Npart);
 
-  //SPATIAL RADIUS
-    double Rmin,Rmax,qmin,qmax,zmin,zmax;
+  //Get ranges of variables
   getMinMax(xp,0,Npart-1,&Rmin,&Rmax,0,6);
   getMinMax(xp,0,Npart-1,&qmin,&qmax,1,6);
   getMinMax(xp,0,Npart-1,&zmin,&zmax,2,6);
+
+  //Convert ranges to variables
   x[0]=Rmin;x[1]=Rmin*cos(qmin);x[2]=zmin;
   xg[0]=Rmax;xg[1]=Rmax*cos(qmax);xg[2]=zmax;
   if(CVERBOSE) fprintf(stdout,"\t\tR=(%e,%e),q=(%e,%e),z=(%e,%e)\n",
@@ -2162,14 +2426,163 @@ int cloudProperties(double *xp,int Npart,
   *rinter=dminmean;
   *vinter=vminmean;
 
+  free(x);
+  free(xg);
+  free(dx);
+  free(xc);
   return 0;
 }
 
-int printHeader(FILE* stream,char msg[],char mark[]="*",int n=60)
+int printHeader(FILE* stream,const char *msg,char mark='*',int ntabs=0,int nmax=60)
 {
-  char* bar;
-  bar=(char*)malloc(MAXLINE*sizeof(char));
-  for(int i=n;i-->0;) sprintf(bar,"%s%s",mark,bar);
-  fprintf(stream,"%s\n%s\n%s\n",bar,msg,bar);
+  char *bar=charVectorAllocate(1000);
+  char *tabs=charVectorAllocate(100);
+  int n=MAX(strlen(msg),nmax);
+
+  sprintf(tabs,"");
+  if(ntabs==1) sprintf(tabs,"\t");
+  if(ntabs==2) sprintf(tabs,"\t\t");
+  if(ntabs==3) sprintf(tabs,"\t\t\t");
+  
+  sprintf(bar,"%s",tabs);
+  for(int i=n;i-->0;) sprintf(bar,"%s%c",bar,mark);
+
+  fprintf(stream,"%s\n%s%s\n%s\n",bar,tabs,msg,bar);
+
+  free(bar);
+  free(tabs);
   return 0;
 }
+
+//Taken from: https://en.wikiversity.org/wiki/C_Source_Code/Find_the_median_and_mean
+int quantilesVector(double x[],int n,double *min,double *max,
+		    double *q050,double *q005,double *q095) 
+{
+  double temp;
+  int i, j;
+
+  for(i=0; i<n-1; i++) {
+    for(j=i+1; j<n; j++) {
+      if(x[j] < x[i]) {
+	temp = x[i];
+	x[i] = x[j];
+	x[j] = temp;
+      }
+    }
+  }
+
+  //MIN PERC
+
+  //MEDIAN
+  if(n%2==0) {
+    *q050=((x[n/2] + x[n/2 - 1]) / 2.0);
+  } else {
+    *q050=x[n/2];
+  }
+
+  //LOWER
+  int nl=(int)floor(0.05*n);
+  *q005=(x[nl]+x[nl+1])/2;
+  nl=nl==(n-1)?(n-2):nl;
+  
+  //UPPER
+  int nu=(int)ceil(0.95*n);
+  nu=nu==0?1:nu;
+  *q095=(x[nu]+x[nu-1])/2;
+
+  //MINIMUM AND MAXIMUM
+  *min=x[0];
+  *max=x[n-1];
+}
+
+struct vinfpar {
+  double xmin,xmax;
+  gsl_interp_accel *a;
+  gsl_spline *s;
+};
+
+double vinfPosterior(double x,void *params)
+{
+  struct vinfpar *pars=(struct vinfpar*)params;
+  double p;
+  if(x<pars->xmin) x=1.01*pars->xmin;
+  if(x>pars->xmax){
+    p=12*pow10(-3*x);
+    /*
+    VPRINT(stdout,"Extrapolation for %e: %e\n",x,p);
+    p=gsl_spline_eval(pars->s,pars->xmax,pars->a);
+    VPRINT(stdout,"Compare with maximum: %e\n",p);
+    */
+  }else{
+    p=gsl_spline_eval(pars->s,x,pars->a);
+  }
+  return p;
+}
+
+double vinfProbability(double v1,double v2,void *params)
+{
+  gsl_integration_workspace *w=gsl_integration_workspace_alloc(1000);
+  gsl_function F={.function=vinfPosterior,.params=params};
+  double vint,vint_error;
+  gsl_integration_qags(&F,v1,v2,0,1e-5,1000,w,&vint,&vint_error);
+  gsl_integration_workspace_free(w);
+  return vint;
+}
+
+double starDistance(double par)
+{
+  double d;
+  d=AU/tan(par/(60*60*1000.0)*DEG)/PARSEC;
+  return d;
+}
+
+/*
+  Compute the solid angle subtended by a set of vectors in space.
+ */
+double solidAngle(double** vecs,int nvec,double *vmed,double *vstd)
+{
+  double fill=0.7861;//Experimental
+  double q,f;
+  double v,d,ad,dmin;
+
+  double *vs=vectorAllocate(nvec);
+  double *ds=vectorAllocate(nvec);
+  double *ls=vectorAllocate(nvec);
+  double *fs=vectorAllocate(nvec);
+  double **dd=matrixAllocate(nvec,nvec);
+
+  //Convert to spherical
+  for(int i=0;i<nvec;i++){
+    recsph_c(vecs[i],&vs[i],&q,&f);
+    fs[i]=f<0?2*M_PI+f:f;
+    ls[i]=M_PI/2-q;
+  }
+  *vmed=gsl_stats_mean(vs,1,nvec);
+  *vstd=gsl_stats_sd(vs,1,nvec);
+
+  //Compute the average distance between points
+  ad=0.0;
+  for(int i=0;i<nvec;i++){
+    for(int j=0;j<nvec;j++){
+      ds[j]=1e100;
+      if(i==j) continue;
+      if(j<i) ds[j]=dd[j][i];
+      else ds[j]=dd[i][j]=greatCircleDistance(fs[i],fs[j],ls[i],ls[j]);
+    }
+    dmin=gsl_stats_min(ds,1,nvec);
+    ad+=dmin;
+  }
+  ad/=nvec;
+
+  //Solid angle approximation
+  double sa=nvec*M_PI*ad*ad/fill;
+  
+  free(ds);
+  free(vs);
+  free(ls);
+  free(fs);
+  freeMatrix(dd,nvec,nvec);
+
+  return sa;
+}
+

@@ -229,6 +229,8 @@ Components
   * Output: 
     - progenitors-<object>.csv
 
+  Done.
+
 For the developer
 -----------------
 

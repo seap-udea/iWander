@@ -32,7 +32,7 @@ analysis:all
 	$(PYTHON) bin/progenitors.py
 
 edit:
-	emacs -nw *.cpp *.conf bin/*.py bin/*.sh *.sh
+	emacs -nw makefile *.cpp *.conf bin/*.py bin/*.sh *.sh
 
 #########################################################
 # COMPILATION
@@ -69,7 +69,10 @@ cleanexe:
 
 cleandata:
 	@echo "Cleaning data..."
-	@rm *.csv
+	@touch scratch/foo
+	@-rm -r scratch/* 
+	@touch log/foo
+	@-rm -r log/* 
 
 clean:cleancrap cleanexe
 	@echo "Cleaning..."

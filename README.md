@@ -188,9 +188,9 @@ Components
 
   * Output: 
 
-    * wanderer.csv: properties of all the surrogate objects.
+    * ``wanderer-<object>.csv``: properties of all the surrogate objects.
 
-    * ingress.dat: a summary of the ingress orbit properties including
+    * ``ingress-<object>.dat``: a summary of the ingress orbit properties including
       the epoch of asymptotic elements and their covariance matrix,
       the time of ingress, the radiant and velocity at ingress.
 
@@ -207,14 +207,14 @@ Components
     2) Select the progenitor candidates.
 
   * Input: 
-    - wanderer.csv
+    - ``wanderer-<object>.csv``
 
     Output: 
 
-    - encounters-<Wanderer>.csv: all the columns of the input catalog (AstroRV)
+    - ``encounters-<Wanderer>.csv``: all the columns of the input catalog (AstroRV)
       plus additional information computed from the LMA approximation.
 
-    - candidates-<Wanderer>.csv: list of objects fulfilling certain
+    - ``candidates-<Wanderer>.csv``: list of objects fulfilling certain
       selection criteria that classify them as close encounters candidates.
 
 - **probability**: This program integrate the orbit of a moving object

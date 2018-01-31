@@ -223,11 +223,11 @@ Components
   * Function: calculate the IOP for a list of stellar candidates.
 
   * Input:
-    + wanderer-<object>.csv
-    + candidates-<object>.csv
+    - wanderer-<object>.csv
+    - candidates-<object>.csv
 
   * Output: 
-    + progenitors-<object>.csv
+    - progenitors-<object>.csv
 
 For the developer
 -----------------

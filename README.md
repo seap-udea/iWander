@@ -46,25 +46,24 @@ You may obtain the package in different ways:
 
 - Cloning anonymously the github repository:
 
-```  
-git clone http://github.com/seap-udea/iWander.git
-```  
+  ```  
+  git clone http://github.com/seap-udea/iWander.git
+  ```  
 
-- Download the tarball:
+- Downloading the tarball of the latest release:
 
-```  
-wget http://github.com/seap-udea/iWander/archive/master.zip
-```  
+  ```  
+  wget http://github.com/seap-udea/iWander/archive/master.zip
+  ```  
 
-- Cloning the package as developer (permissions required):
+- Cloning the package as a developer (credentials required):
 
-```  
-git clone git@github.com:seap-udea/iWander.git
-```  
+  ```  
+  git clone git@github.com:seap-udea/iWander.git
+  ```  
 
 The size of the package is large (several hundreds of MBs).  This is
-mainly due to the data required to run some of the modules (GAIA and
-Radial velocities databases, SPICE Kernels, etc.).  
+mainly due to the data required to run some of the modules.  
 
 Installation
 ----------------

@@ -70,27 +70,22 @@ Installation
 
 For installing the package run:
 
-```  
-bash install.sh
-```  
+    ```  
+    bash install.sh
+    ```  
 
-Installation perform several operations required to start using the
-package:
+The installation script performs several operations required to start
+using the package:
 
-1. Copy the template files in the ``templates`` directory to the
-   package directory.
+1. Copy the template files in the ``util/conf`` directory to the
+   root package directory.
 
 2. Install the required linux and python packages.
 
 3. Unpack large files.  Large files are splitted in 20MB chunks of
-   data inside the `.store` directory.  Before you use some critical
-   modules you must unpack those large files:
+   data inside the `.store` directory.  
 
-   ```  
-   make unpack
-   ```  
-
-4. Try to compile a small test program.  If compilation fails
+4. Attempt to compile a small test program.  If compilation fails
    comment/uncomment the proper line in the file ``compiler.in``:
 
    ```  
@@ -103,6 +98,10 @@ package:
 
 Quickstart
 ----------
+
+1. Prepare the configuration file for the object and place it in the
+   ``objects`` directoy. See the already available examples there
+   (Oumuamua, Voyager 1 and Voyager 2).
 
 1. Edit the general configuration files ``iwander.conf`` and
    ``wanderer.conf`` for setting up the name of the wanderer and its
@@ -117,20 +116,20 @@ Quickstart
 3. Generate the surrogate objects and propagate them until the time of ingress.
 
    ```  
-   ./wanderer.exe
+   bash bin/run.sh wanderer.exe
    ```  
 
 4. Compute the minimum distance to all the stars in the input catalog
    and select the candidates.
 
    ```  
-   ./encounters.exe
+   bash bin/run.sh encounters.exe
    ```  
 
 5. Find progenitor candidates and compute their origin probability:
 
    ```  
-   ./probability.exe
+   bash bin/run.sh probability.exe
    ```  
 
 The output of this process is the file ``progenitors-<wanderer>.csv``
@@ -139,7 +138,13 @@ origin probability.
 
 Optionally you can:
 
-6. Sort out the candidates according to position probability or
+6. Generate the table of ingress properties:
+
+   ```  
+   python3 bin/ingress.py
+   ```  
+
+7. Sort out the candidates according to position probability or
    minimum distance:
 
    ```  
@@ -156,8 +161,7 @@ Programs are used to compute the core functions (propagate wanderers,
 find encounters, compute interstellar origin probabilities, etc.)
 
 Scripts are used for pre and post processing of the information
-required or produced by the package.  Here we mainly use python
-scripts and Ipython notebooks.
+required or produced by the package.
 
 Databases contain the information required to run some of the
 functionalities of the package.
@@ -167,45 +171,30 @@ Components
 
 - **wanderer**: This program integrate the orbit of a moving object
   inside the Solar System.
-  
+
   * Function: 
 
     This program perform three different tasks:
 
-    1) Calculate the time t_asymp when the single conic approximation is
+    1) Calculate the time t_asy when the single conic approximation is
        good enough to predict the future position of the interstellar
        object.
 
-    2) Calculate the time t_ingress at which the object was at a half
-       of the truncation tidal radius of the Solar System, ie. 100,000
-       AU.
+    2) Calculate the time t_ing at which the object was at a distance
+       equivalent to the truncation tidal radius of the Solar System.
 
     3) Predict the position and velocity of the surrogate objects at
-       t_ingress.
+       t_ing.
 
   * Input: None
 
   * Output: 
 
-    + wanderer.csv
+    * wanderer.csv: properties of all the surrogate objects.
 
-      Rows: 1 is for nominal solution, the rest is for random particle
-
-      Cols: 
-
-      ```
-	  0:NUmber of the object (0 for nominal trajectory) 
-	  1-6:Initial random elements, q,e,i,W,w,Mo,to,mu
-	  7-12:Asymptotic elements, q,e,i,W,w,Mo,to,mu
-	  13:Time of ingress to Solar System
-	  14-19:Cartesian position at ingress wrt. Ecliptic J2000
-	  20-25:Cartesian position at ingress wrt. J2000
-	  26-31:Cartesian position at ingress wrt. Galactic
-	  32:Radiant at ingress RA(h) (terminal)
-	  33:Radiant at ingress DEC(deg)
-	  34:Radiant at ingress l(deg)
-	  35:Radiant at ingress b(deg)
-      ```
+    * ingress.dat: a summary of the ingress orbit properties including
+      the epoch of asymptotic elements and their covariance matrix,
+      the time of ingress, the radiant and velocity at ingress.
 
 - **encounters**: This program integrate the orbit of a moving object
   inside the Solar System.
@@ -215,69 +204,32 @@ Components
     This program perform two different tasks:
 
     1) Compute the LMA minimum distance and time to all stars in the
-       AstroRV catalogue..
+       AstroRV catalogue...
 
     2) Select the progenitor candidates.
 
   * Input: 
-    + wanderer.csv
+    - wanderer.csv
 
-  * Output: 
+    Output: 
 
-    + encounters.csv: all the columns of the input catalog (AstroRV)
-      plus:
+    - encounters-<Wanderer>.csv: all the columns of the input catalog (AstroRV)
+      plus additional information computed from the LMA approximation.
 
-      Cols:
-
-      ```
-	  0: n
-	  1-6: Position and velocity of the star for LMA purposes
-	  7: Initial distance of the star, d
-	  8: Minimum LMA distance, dmin
-	  9: Minimum LMA time, tmin
-	  10-13: Relative velocity computed with LMA vrelx,vrely,vrelz,vrel,
-	  14-...: All fields in AstroRV catalog
-      ```
-
-    + candidates.csv
-
-      Cols:
-
-      ```
-	  0: n
-	  1-6: Position and velocity of the star for LMA purposes
-	  7: Initial distance of the star, d
-	  8: Minimum LMA distance, dmin
-	  9: Minimum LMA time, tmin
-	  10-13: Relative velocity computed with LMA vrelx,vrely,vrelz,vrel,
-	  14-...: All fields in AstroRV catalog
-      ```
+    - candidates-<Wanderer>.csv: list of objects fulfilling certain
+      selection criteria that classify them as close encounters candidates.
 
 - **probability**: This program integrate the orbit of a moving object
   inside the Solar System.
 
-  * Function: calculate the IOP for a list of candidates.
+  * Function: calculate the IOP for a list of stellar candidates.
 
   * Input:
-    + wanderer.csv
-    + candidates.csv
+    + wanderer-<object>.csv
+    + candidates-<object>.csv
 
   * Output: 
-    + progenitors.csv
-
-      Cols:
-
-      ```
-      0: IOP for this candidate, Pprob
-      1: Average position probability, Psmed
-      2: Average velocity probability, Pvmed
-      3: Probability distance factor, fdist
-      4-6: Nominal minimum time, minimum distance, relative velocity
-      7,8: Minimum and maximum tmin
-      9,10: Minimum and maximum dmin
-      11,12: Minimum and maximum vrel
-      13...: Same as candidates.csv
-      ```
+    + progenitors-<object>.csv
 
 For the developer
 -----------------

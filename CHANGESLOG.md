@@ -62,10 +62,6 @@ package:
 
 * The truncation radius has been reduced to 10^4 AU.
 
-### v0.3
-
-Version published after revision 1 of the paper:
-
 * A new script intended to create the configuration file for a given
   object has been developed. The script is called JPL2iWander.py. A
   file called "<object>.jpl" must be provided and the script convert
@@ -76,4 +72,6 @@ Version published after revision 1 of the paper:
   be stored.
 
 * Now all output files are redirected to scratch dir.
+
+* The probability model has been considerably improved.
 

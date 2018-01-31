@@ -32,7 +32,7 @@ analysis:all
 	$(PYTHON) bin/progenitors.py
 
 edit:
-	emacs -nw makefile *.cpp *.conf bin/*.py bin/*.sh *.sh
+	emacs -nw makefile *.cpp *.conf bin/*.py bin/*.sh *.sh README.md CHANGESLOG.md
 
 #########################################################
 # COMPILATION

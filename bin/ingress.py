@@ -24,12 +24,12 @@ conf=readConf("iwander.conf");
 ############################################################
 #READ INGRESS FILE
 ############################################################
-exec(open("scratch/ingress-%s.dat"%conf["WANDERER"]).read());
+exec(open("scratch/ingress-%s.dat"%conf["Wanderer"]).read());
 
 ############################################################
-#READ WANDERERS FILE
+#READ WandererS FILE
 ############################################################
-wanderer=pd.read_csv("scratch/wanderer-%s.csv"%conf["WANDERER"])
+wanderer=pd.read_csv("scratch/wanderer-%s.csv"%conf["Wanderer"])
 
 RAm=wanderer.RA.mean()
 dRA=wanderer.RA.std()
@@ -166,6 +166,11 @@ table="""
      RAm,dRA,DECm,dDEC,
      lm,dl,bm,dl,
      Um,dU,Vm,dV,Wm,dW,
-     conf["WANDERER"])     
+     conf["Wanderer"])     
 
-print(table)
+ingfile="scratch/ingress-%s.tex"%conf["Wanderer"]
+print("Generating file '%s'..."%ingfile)
+f=open(ingfile,"w")
+f.write(table)
+f.close()
+print("Done.")

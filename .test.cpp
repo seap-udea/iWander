@@ -20,6 +20,7 @@ int main(int argc,char* argv[])
     double vd,qd,fd;
     double qmin=70.0*DEG,qmax=80.0*DEG;
     double fmin=0.0*DEG,fmax=1.0*DEG;
+    double vmed,vstd;
     int idir=0;
     while(idir<Ndir){
       gsl_ran_dir_3d(RAND,&rvec[idir][0],&rvec[idir][1],&rvec[idir][2]);
@@ -28,7 +29,7 @@ int main(int argc,char* argv[])
       idir++;
     }
     fprintf(stdout,"Done\n");
-    double dO=solidAngle(rvec,Ndir);
+    double dO=solidAngle(rvec,Ndir,&vmed,&vstd);
     fprintf(stdout,"Solid angle:%e\n",dO);
     fprintf(stdout,"Solid angle real:%e\n",(fmax-fmin)*(cos(qmin)-cos(qmax)));
     exit(0);

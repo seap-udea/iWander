@@ -91,9 +91,9 @@ for index in progsort.index:
 
     d=AU/np.tan(p.parallax/(60*60*1000.0)*DEG)/PARSEC;
     row+=r"| %d | %s %s %s | %.1f | %d | "%(i,bf,sid,simbad,d,p.qastro)
-    row+=r"%s%.2f [%.2f,%.2f,%.2f] |%s %.2f [%.2f,%.2f,%.2f] |%s %.1f [%.1f,%.1f,%.1f] | "%(mbf,p.nomdmin,p.dminl,p.dminmed,p.dminu,
-                                                                                           mbf,p.nomtmin/1e6,p.tminl/1e6,p.tminmed/1e6,p.tminu/1e6,
-                                                                                           mbf,p.nomvrel,p.vrell,p.vrelmed,p.vrelu)
+    row+=r"%s%.2f [f=%.2f,%.2f,%.2f,%.2f] |%s %.2f [%.2f,%.2f,%.2f] |%s %.1f [%.1f,%.1f,%.1f] | "%(mbf,p.nomdmin,p.fdmin,p.dminmin,p.dminl,p.dminu,
+                                                                                                   mbf,p.nomtmin/1e6,p.tminl/1e6,p.tminmed/1e6,p.tminu/1e6,
+                                                                                                   mbf,p.nomvrel,p.vrell,p.vrelmed,p.vrelu)
     Ppos="%s%.1f"%(mbf,p.Ppos)
     if qpast:
         Pvel="%s%.1f"%(mbf,p.Pvel)
@@ -163,7 +163,7 @@ for index in progsort.index:
     row=""
     row+=r" & %s%s & & & "%(bf,simbad)
     row+=r"\tiny $%s[%.2f,%.2f,%.2f]$ &"%(mbf,p.tminl/1e6,p.tminmed/1e6,p.tminu/1e6)
-    row+=r"\tiny $%s[%.2f,%.2f,%.2f]$ &"%(mbf,p.dminl,p.dminmed,p.dminu)
+    row+=r"\tiny $%s[f=%.2f,%.2f,%.2f,%.2f]$ &"%(mbf,p.fdmin,p.dminmin,p.dminl,p.dminu)
     row+=r"\tiny $%s[%.1f,%.1f,%.1f]$ &"%(mbf,p.vrell,p.vrelmed,p.vrelu)
     row+=r" & & & & \\"
 

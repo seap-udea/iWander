@@ -73,6 +73,7 @@ int main(int argc,char* argv[])
   double dminmin,dminmax,dminl,dminu,dminmed;
   double tminmin,tminmax,tminl,tminu,tminmed,tmint;
   double vrelmin,vrelmax,vrell,vrelu,vrelmed;
+  double fdmin,fttmin,fvrel;
 
   double ni=0.0,nsum=0.0;
   double P=0.0,Pspeed=0.0,Psum=0.0,Psump=0.0,Psumv=0.0;
@@ -431,9 +432,9 @@ int main(int argc,char* argv[])
 
   //Header of progenitors
   fprintf(fp,"nomtmin,nomdmin,nomvrel,");
-  fprintf(fp,"dminl,dminmed,dminu,");
-  fprintf(fp,"tminl,tminmed,tminu,");
-  fprintf(fp,"vrell,vrelmed,vrelu,");
+  fprintf(fp,"fdmin,dminmin,dminl,dminmed,dminu,");
+  fprintf(fp,"fttmin,tminmin,tminl,tminmed,tminu,");
+  fprintf(fp,"fvrel,vrelmin,vrell,vrelmed,vrelu,");
   fprintf(fp,"Ppos,Pvel,Pposvel,Pdist,IOP,");
   fprintf(fp,"%s",LINE);
 
@@ -981,18 +982,21 @@ int main(int argc,char* argv[])
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     //ENCOUNTER STATISTICS
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-    getPercentile(Ds,nt,0.90,
-		  &dminmin,&dminmax,
+    getPercentile(Ds,nt,0.90,nomdmin,
+		  &dminmin,&dminmax,&fdmin,
 		  &dminl,&dminmed,&dminu);
+    print1(VSTREAM,"\t\tNumber of points: %d\n",nt);
+
     print1(VSTREAM,"\tDistance:\n");
     print1(VSTREAM,"\t\tNominal: %e\n",nomdmin);
     print1(VSTREAM,"\t\tMinimum: %e\n",dminmin);
     print1(VSTREAM,"\t\tMaximum: %e\n",dminmax);
     print1(VSTREAM,"\t\tMedian: %e\n",dminmed);
+    print1(VSTREAM,"\t\tf(dmin): %e\n",fdmin);
     print1(VSTREAM,"\t\t90%% CL: %e,%e\n",dminl,dminu);
 
-    getPercentile(Ts,nt,0.90,
-		  &tminmin,&tminmax,
+    getPercentile(Ts,nt,0.90,nomtmin,
+		  &tminmin,&tminmax,&fttmin,
 		  &tminl,&tminmed,&tminu);
     tmint=tminl;
     tminl=-tminu;
@@ -1003,25 +1007,27 @@ int main(int argc,char* argv[])
     print1(VSTREAM,"\t\tMinimum: %e\n",tminmin);
     print1(VSTREAM,"\t\tMaximum: %e\n",tminmax);
     print1(VSTREAM,"\t\tMedian: %e\n",tminmed);
+    print1(VSTREAM,"\t\tf(dmin): %e\n",fttmin);
     print1(VSTREAM,"\t\t90%% CL: %e,%e\n",tminl,tminu);
 
-    getPercentile(Vs,nt,0.90,
-		  &vrelmin,&vrelmax,
+    getPercentile(Vs,nt,0.90,nomvrel,
+		  &vrelmin,&vrelmax,&fvrel,
 		  &vrell,&vrelmed,&vrelu);
     print1(VSTREAM,"\tRelative velocity:\n");
     print1(VSTREAM,"\t\tNominal: %e\n",nomvrel);
     print1(VSTREAM,"\t\tMinimum: %e\n",vrelmin);
     print1(VSTREAM,"\t\tMaximum: %e\n",vrelmax);
     print1(VSTREAM,"\t\tMedian: %e\n",vrelmed);
+    print1(VSTREAM,"\t\tf(dmin): %e\n",fvrel);
     print1(VSTREAM,"\t\t90%% CL: %e,%e\n",vrell,vrelu);
 
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     //SAVE RESULTS
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     fprintf(fp,"%e,%e,%e,",nomtmin,nomdmin,nomvrel);
-    fprintf(fp,"%e,%e,%e,",dminl,dminmed,dminu);
-    fprintf(fp,"%e,%e,%e,",tminl,tminmed,tminu);
-    fprintf(fp,"%e,%e,%e,",vrell,vrelmed,vrelu);
+    fprintf(fp,"%e,%e,%e,%e,%e,",fdmin,dminmin,dminl,dminmed,dminu);
+    fprintf(fp,"%e,%e,%e,%e,%e,",fttmin,tminmin,tminl,tminmed,tminu);
+    fprintf(fp,"%e,%e,%e,%e,%e,",fvrel,vrelmin,vrell,vrelmed,vrelu);
     fprintf(fp,"%e,%e,%e,%e,%e,",Ppos,Pvel,Pposvel,Pdist,IOP);
     fprintf(fp,"%s",VALUES);
     fflush(fp);

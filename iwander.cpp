@@ -2199,8 +2199,8 @@ int centerCloud(double **xp,int Npart,int Ncoord,
 }
 
 //Taken from: https://en.wikiversity.org/wiki/C_Source_Code/Find_the_median_and_mean
-int getPercentile(double x[],int n,double p/*p-value:0-1*/,
-		  double *min,double *max,
+int getPercentile(double x[],int n,double p/*p-value:0-1*/,double nominal,
+		  double *min,double *max,double *f,
 		  double *ql,double *qm,double *qu) 
 {
   double temp;
@@ -2215,6 +2215,12 @@ int getPercentile(double x[],int n,double p/*p-value:0-1*/,
       }
     }
   }
+  
+  //FRACTION BELOW NOMINAL
+  for(i=0;i<n;i++){
+    if(x[i]>nominal) break;
+  }
+  *f=(1.0*i)/n;
 
   //MEDIAN
   if(n%2==0) {
@@ -2301,6 +2307,7 @@ int cloudProperties2(double *x,int Npart,
   double *xc=vectorAllocate(6);
   double *xp;
   double min,max,ql,qm,qu;
+  double nom,f;
 
   //Get the center
   for(int j=0;j<6;j++){
@@ -2335,9 +2342,10 @@ int cloudProperties2(double *x,int Npart,
   }
 
   //Calculate the percentiles
-  getPercentile(radius,is,0.9,&min,&max,&ql,&qm,&qu);
+  nom=0;
+  getPercentile(radius,is,0.9,nom,&min,&max,&f,&ql,&qm,&qu);
   *r90=qu;
-  getPercentile(vadius,is,0.9,&min,&max,&ql,&qm,&qu);
+  getPercentile(vadius,is,0.9,nom,&min,&max,&f,&ql,&qm,&qu);
   *v90=qu;
   
   free(radius);

@@ -922,7 +922,14 @@ int main(int argc,char* argv[])
       //Probability contributions
       Pposi=term5*term6;
       Pveli=term1*term2*term3*term4;
+
+      //Revision 3
+      Pposi=term6;
+      Pveli=term2;
+
+      //Combined
       Pposveli=Pposi*Pveli;
+
       print2(VSTREAM,"\t\t\t\tProbability terms:\n");
       print2(VSTREAM,"\t\t\t\t\tPpos_i: %e\n",Pposi);
       print2(VSTREAM,"\t\t\t\t\tPvel_i: %e\n",Pveli);
@@ -946,16 +953,24 @@ int main(int argc,char* argv[])
       continue;
     }
 
-    print0(OSTREAM,"\t\tNumber of accepted surrogates: %d\n",Nsur_acc);
+    print0(OSTREAM,"\t\tNumber of accepted surrogates: %d / %d\n",Nsur_acc,Nsur);
     print0(OSTREAM,"\tTotal probabilities:\n");
 
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     //PARTIAL PROBABILITIES
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     Ppos*=sigma/(Nsur_acc*Nsur_acc);
+    //Revision 3
+    Ppos*=1.0/(Nsur*Nsur);
+
+    //Log scale
     Ppos=log10(Ppos);
     print0(OSTREAM,"\t\tProbability position (partial): %f\n",Ppos);
+
+    //Revision 3 (same)
     Pvel*=1.0/Nsur_acc;
+
+    //Log scale
     Pvel=log10(Pvel);
     print0(OSTREAM,"\t\tProbability velocity (partial): %f\n",Pvel);
     
@@ -963,6 +978,11 @@ int main(int argc,char* argv[])
     //POSITION-VELOCITY PROBABILITY
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     Pposvel*=sigma/(Nsur_acc*Nsur_acc);
+
+    //Revision 3
+    Pposvel*=1.0/(Nsur*Nsur);
+
+    //Log scale
     Pposvel=log10(Pposvel);
     print0(OSTREAM,"\t\tProbability position-velocity: %f\n",Pposvel);
     
@@ -976,6 +996,10 @@ int main(int argc,char* argv[])
     //TOTAL
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     IOP=Pposvel+Pdist;
+    
+    //Revision 3
+    IOP=Pposvel;
+
     sprintf(FILENAME,"IOP: %f",IOP);
     printHeader(OSTREAM,FILENAME,'&',2,30);
   

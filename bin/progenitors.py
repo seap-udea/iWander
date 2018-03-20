@@ -32,7 +32,8 @@ else:
     candtxt="Future close encounters"
 
 if qpast:
-    pcols="Ppos|Pvel|Pposvel|Pdist|IOP|"
+    #pcols="Ppos|Pvel|Pposvel|Pdist|IOP|"
+    pcols="Ppos|<find>|Pposvel|"
     lcols="--|--|--|--|--|"
     suffix="Past"
 else:
@@ -53,9 +54,37 @@ print("Number of progenitors:",len(progenitors))
 
 #SELECT COLUMNS
 sorting=conf["Sorting"].split(",")
-
 progsort=progenitors.sort_values(by=sorting[0],ascending=eval(sorting[1]))
 
+############################################################
+#NORMALIZE PROBABILITIES
+############################################################
+i=1
+Npos=0.0;
+Nposvel=0.0;
+for index in progsort.index:
+    p=progsort.loc[index]
+
+    #No filter must be applied here
+    Ppos=10**(p.Ppos)
+    Pposvel=10**(p.Pposvel)
+
+    if p.nomdmin>=conf["DminMax"] and p.qastro>=1:
+        if str(p.hip)=='nan':
+            if str(p.tycho2_id)=='nan':sid='--'
+            else:sid="TYC "+str(p.tycho2_id)
+        else:sid="HIP "+str(int(p.hip))
+        #print(sid,Ppos,np.log10(Ppos),Pposvel,np.log10(Pposvel))
+    Npos+=Ppos
+    Nposvel+=Pposvel
+
+Npos=np.log10(Npos)
+Nposvel=np.log10(Nposvel)
+print("Normalization constants:\n\tPosition probability: %e\n\tPos.vel. probability:%e"%(Npos,Nposvel))
+
+############################################################
+#MARKDOWN TABLE
+############################################################
 # MD Table
 f=open("scratch/CANDIDATES-%s-%s.md"%(conf["Wanderer"],suffix),"w")
 f.write("""# %s of %s
@@ -94,13 +123,15 @@ for index in progsort.index:
     row+=r"%s%.2f [f=%.2f,%.2f,%.2f,%.2f] |%s %.2f [%.2f,%.2f,%.2f] |%s %.1f [%.1f,%.1f,%.1f] | "%(mbf,p.nomdmin,p.fdmin,p.dminmin,p.dminl,p.dminu,
                                                                                                    mbf,p.nomtmin/1e6,p.tminl/1e6,p.tminmed/1e6,p.tminu/1e6,
                                                                                                    mbf,p.nomvrel,p.vrell,p.vrelmed,p.vrelu)
-    Ppos="%s%.1f"%(mbf,p.Ppos)
+    Ppos="%s%.1f"%(mbf,p.Ppos-Npos)
     if qpast:
         Pvel="%s%.1f"%(mbf,p.Pvel)
-        Pposvel="%s%.1f"%(mbf,p.Pposvel)
-        Pdist="%s%.1f"%(mbf,p.Pdist)
-        IOP="%s%.1f"%(mbf,p.IOP)
-        row+=r"%s | %s | %s | %s | %s |"%(Ppos,Pvel,Pposvel,Pdist,IOP)
+        Pposvel="%s%.1f"%(mbf,p.Pposvel-Nposvel)
+        #Pdist="%s%.1f"%(mbf,p.Pdist)
+        #IOP="%s%.1f"%(mbf,p.IOP)
+        #row+=r"%s | %s | %s | %s | %s |"%(Ppos,Pvel,Pposvel,Pdist,IOP)
+        #Revision 3
+        row+=r"%s | %s | %s |"%(Ppos,Pvel,Pposvel)
     else:
         row+=r"%s |"%(Ppos)
 
@@ -110,19 +141,21 @@ for index in progsort.index:
 # Generate latex table
 i=1
 f=open("scratch/CANDIDATES-%s-%s.tex"%(conf["Wanderer"],suffix),"w")
+
+#\begin{tabular}{llll|ccc|ccccc}
 f.write(r"""\begin{table*}
 \centering
 \scriptsize
-\begin{tabular}{llll|ccc|ccccc}
+\begin{tabular}{llll|ccc|ccc}
 \hline
 \multicolumn{4}{c|}{Basic properties} & 
-\multicolumn{3}{c|}{Encounter conditions} & \multicolumn{5}{c}{$\log P$}  \\ \hline
+\multicolumn{3}{c|}{Encounter conditions} & \multicolumn{3}{c}{$\log\;$IOP}  \\ \hline
 \# & Name & $d_*$ (pc) & $q$ & 
 $t\sub{min}$ (Myr)  & 
 $d\sub{min}$ (pc)   & 
 $v\sub{rel}$ (km/s) & 
-$P\sub{pos}$ & $P\sub{vel}$ & $P\sub{pos,vel}$ & $P\sub{dist}$ & IOP \\
-  \hline\hline
+$P\sub{pos}$ & $\langle f_{\rm ind}\rangle$ & $P\sub{pos,vel}$ \\
+\hline\hline
 """)
 for index in progsort.index:
     p=progenitors.loc[index]
@@ -147,25 +180,27 @@ for index in progsort.index:
     if simbad=="(--)":simbad=""
 
     d=AU/np.tan(p.parallax/(60*60*1000.0)*DEG)/PARSEC;
-    Ppos="$%s{%.1f}$"%(mbf,p.Ppos)
+    Ppos="$%s{%.1f}$"%(mbf,p.Ppos-Npos)
     Pvel="$%s{%.1f}$"%(mbf,p.Pvel)
-    Pposvel="$%s{%.1f}$"%(mbf,p.Pposvel)
-    Pdist="$%s{%.1f}$"%(mbf,p.Pdist)
-    IOP="$%s{%.1f}$"%(mbf,p.IOP) 
+    Pposvel="$%s{%.1f}$"%(mbf,p.Pposvel-Nposvel)
+    #Pdist="$%s{%.1f}$"%(mbf,p.Pdist)
+    #IOP="$%s{%.1f}$"%(mbf,p.IOP) 
 
     row+=r"%s %d & %s%s & %.1f & %d & "%(bf,i,bf,sid,p.d,p.qastro)
     row+=r"$%s{%.2f}$ &"%(mbf,p.nomtmin/1e6)
     row+=r"$%s{%.2f}$ &"%(mbf,p.nomdmin)
     row+=r"$%s{%.1f}$ &"%(mbf,p.nomvrel)
-    row+=r"%s & %s & %s & %s & %s \\"%(Ppos,Pvel,Pposvel,Pdist,IOP)
+    #row+=r"%s & %s & %s & %s & %s \\"%(Ppos,Pvel,Pposvel,Pdist,IOP)
+    #Revision 3
+    row+=r"%s & %s & %s \\"%(Ppos,Pvel,Pposvel)
     f.write(row+"\n")
     
     row=""
     row+=r" & %s%s & & & "%(bf,simbad)
     row+=r"\tiny $%s[%.2f,%.2f,%.2f]$ &"%(mbf,p.tminl/1e6,p.tminmed/1e6,p.tminu/1e6)
-    row+=r"\tiny $%s[f=%.2f,%.2f,%.2f,%.2f]$ &"%(mbf,p.fdmin,p.dminmin,p.dminl,p.dminu)
+    row+=r"\tiny $%s[f=%.2f,{\rm min}=%.2f,%.2f,%.2f]$ &"%(mbf,p.fdmin,p.dminmin,p.dminl,p.dminu)
     row+=r"\tiny $%s[%.1f,%.1f,%.1f]$ &"%(mbf,p.vrell,p.vrelmed,p.vrelu)
-    row+=r" & & & & \\"
+    row+=r" & & \\\hline"
 
     f.write(row+"\n\n")
 

@@ -10,9 +10,28 @@ package either suggested by the reviewers of the paper, by colleagues
 or by the community.  These are the most important
 ones in the available versions of the manuscript.
 
-### v0.1
+### v0.3
 
-This is the initial version.
+Revision 3 version.  Changes introduced to the package:
+
+* A new and thoroughly revised version of the program and scripts is
+  released.
+
+* The verbose mode for all the programs are carefully revised to
+  provide different depths of verbosity.
+
+* We have introduced a new ```run.sh``` script `that allows to run any
+  program of the package while preserving the detailed output
+  (VERBOSE=2) and the normal output (VERBOSE=0).  
+
+* All outputs are now stored in the log file.
+
+* The probability model has been revised after the valid comments of
+  the referee.
+
+* Now only the Ppos and Pposvel probabilities are provided.  
+
+* We removed the Pdist factor of the probability.
 
 ### v0.2
 
@@ -74,4 +93,8 @@ package:
 * Now all output files are redirected to scratch dir.
 
 * The probability model has been considerably improved.
+
+### v0.1
+
+This is the initial version.
 

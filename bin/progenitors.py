@@ -34,7 +34,7 @@ else:
 if qpast:
     #pcols="Ppos|Pvel|Pposvel|Pdist|IOP|"
     pcols="Ppos|<find>|Pposvel|"
-    lcols="--|--|--|--|--|"
+    lcols="--|--|--|"
     suffix="Past"
 else:
     pcols="Ppos|"

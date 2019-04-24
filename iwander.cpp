@@ -2515,7 +2515,7 @@ double vinfPosterior(double x,void *params)
   double p;
   if(x<pars->xmin) x=1.01*pars->xmin;
   if(x>pars->xmax){
-    p=12*pow10(-3*x);
+    p=12*pow(10.0,-3*x);
     /*
     VPRINT(stdout,"Extrapolation for %e: %e\n",x,p);
     p=gsl_spline_eval(pars->s,pars->xmax,pars->a);

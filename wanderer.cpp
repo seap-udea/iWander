@@ -200,6 +200,7 @@ int main(int argc,char* argv[])
 
   for(j=0;j<=Ndisp+1;j++){
 
+    double q,a,n;
     if(j>0){
 
       //Qdiagonal?
@@ -209,16 +210,22 @@ int main(int argc,char* argv[])
       //Generate random elements
       gsl_linalg_cholesky_decomp1(L);
       gsl_ran_multivariate_gaussian(RAND,ielements,L,relements);
-
+      double e=gsl_vector_get(relements,0);
+      if(e<1){
+	j--;
+	continue;
+      }
+      
       //Generate mean orbital motion
-      n=ini_n+gsl_ran_gaussian(RAND,ini_dn);
-
-      //Time of periapsis passage
+      //double ng=ini_n+gsl_ran_gaussian(RAND,ini_dn);
+      q=gsl_vector_get(relements,1)*AU;//m
+      a=q/(1-e);//m
+      n=sqrt((MUTOT*1e9)/(fabs(a)*fabs(a)*fabs(a)))*RAD*DAY;//deg/day
       tp=gsl_vector_get(relements,2);
-
-      //Mean anomaly
       Mo=n*(ini_to_jed-tp);
-
+      //printf("\ttp = %e, to = %e\n",tp,ini_to_jed);
+      //printf("\tM = %e\n",Mo);
+      
       /*q=*/elements[0]=gsl_vector_get(relements,1)*AU/1e3;
       /*e=*/elements[1]=gsl_vector_get(relements,0);
       /*i=*/elements[2]=gsl_vector_get(relements,5)*DEG;
@@ -227,9 +234,9 @@ int main(int argc,char* argv[])
       /*M=*/elements[5]=Mo*DEG;
       /*to=*/elements[6]=to;
       /*mu=*/elements[7]=mu;
+      print2(OSTREAM,"\tSurrogate %d: %s\n",j,vec2strn(elements,8,"%.2e "));
 
     }else{
-
       //The nominal object use the nominal elements
       /*q=*/elements[0]=ini_q*AU/1e3;
       /*e=*/elements[1]=ini_e;
@@ -239,6 +246,7 @@ int main(int argc,char* argv[])
       /*M=*/elements[5]=ini_M*DEG;
       /*to=*/elements[6]=to;
       /*mu=*/elements[7]=mu;
+      print2(OSTREAM,"\tNominal: %s\n",vec2strn(elements,8,"%.2e "));
     }
 
     //Convert from conic elements to rectangular position
@@ -257,11 +265,11 @@ int main(int argc,char* argv[])
     tdyn=2*M_PI*sqrt(as*as*as/(GGLOBAL*MSUN/UM));
 
     //Initial time-step
-    h=tdyn/1000.0;
+    h=MIN(tdyn/1000.0,-Duration/100);
 
     //Integrate surrogate objects
     integrateEoM(tini/UT,X0,h,npoints,Duration,6,EoM,params,ts,Xout);
-
+    
     //Convert to km, km/s
     vscl_c(UL/1E3,Xout[1],Xu);vscl_c(UV/1E3,Xout[1]+3,Xu+3);
 
@@ -276,9 +284,9 @@ int main(int argc,char* argv[])
   }
   ds/=Ndisp;
   ds*=1e3/AU;//AVERAGE DISTANCE IN AU
-  print0(OSTREAM,"\tSize of the cloud at t = %e, d = %e: %e AU\n",
+  print0(OSTREAM,"\tSize of the cloud at t = %e, d = %e AU: %e AU\n",
 	 Duration*UT/YEAR,vnorm_c(Xu)*1e3/AU,2*ds);
-
+  
   //Save report in ingress file
   fprintf(fi,"t_test=%.17e\n",Duration*UT/YEAR);
   fprintf(fi,"d_test=%.17e\n",vnorm_c(Xu)*1e3/AU);
@@ -322,7 +330,7 @@ int main(int argc,char* argv[])
   vpack_c(position[3]*1E3/UV,position[4]*1E3/UV,position[5]*1E3/UV,X0+3);
   as=vnorm_c(X0);
   tdyn=2*M_PI*sqrt(as*as*as/(GGLOBAL*MSUN/UM));
-  h=tdyn/1000.0;
+  h=MIN(tdyn/1000.0,-Duration/100);
 
   //Estimate time of asymptotic elements
   tfut=to+Duration*UT;
@@ -361,7 +369,7 @@ int main(int argc,char* argv[])
     dtdur*=2;
   }while(direction*(tdur-1*Duration*UT)<0);
   print0(OSTREAM,"\tConic approximation can be calculated from t = %e years, when dist. = %e AU (Cloud size = %e AU)\n",durasymp/YEAR,dasymp,dpasymp);
-
+  
   //ASYMPTOTIC ELEMENTS
   copyVec(elemasymp,elts,8);
   tend=tini+tdur;
@@ -392,98 +400,125 @@ int main(int argc,char* argv[])
   print1(VSTREAM,"\t\tt_asy=%.17e\n",unitim_c(elemasymp[6],"TDB","JDTDB"));
   print1(VSTREAM,"\t\tdate_asy='%s'\n",dend);
 
-  ////////////////////////////////////////////////////
-  //COMPUTE ERROR OF ASYMPTOTIC ELEMENTS
-  ////////////////////////////////////////////////////
-  printHeader(stdout,"COMPUTING ERRORS IN ASYMPTOTIC ELEMENTS",'-');
-  print1(VSTREAM,"COMPUTING ERRORS IN ASYMPTOTIC ELEMENTS\n");
+  if(fabs(durasymp/YEAR)<0.1){
+    //Compute covariances
+    fprintf(fi,"#actual covariance and original covariance\n");
+    fprintf(fi,"cov_ee=%.17e,%.17e\n",ini_cov[0][0],ini_cov[0][0]);
+    fprintf(fi,"cov_eq=%.17e,%.17e\n",ini_cov[0][1],ini_cov[0][1]);
+    fprintf(fi,"cov_et=%.17e,%.17e\n",ini_cov[0][2],ini_cov[0][2]);
+    fprintf(fi,"cov_eW=%.17e,%.17e\n",ini_cov[0][3],ini_cov[0][3]);
+    fprintf(fi,"cov_ew=%.17e,%.17e\n",ini_cov[0][4],ini_cov[0][4]);
+    fprintf(fi,"cov_ei=%.17e,%.17e\n",ini_cov[0][5],ini_cov[0][5]);
+    fprintf(fi,"cov_qq=%.17e,%.17e\n",ini_cov[1][1],ini_cov[1][1]);
+    fprintf(fi,"cov_qt=%.17e,%.17e\n",ini_cov[1][2],ini_cov[1][2]);
+    fprintf(fi,"cov_qW=%.17e,%.17e\n",ini_cov[1][3],ini_cov[1][3]);
+    fprintf(fi,"cov_qw=%.17e,%.17e\n",ini_cov[1][4],ini_cov[1][4]);
+    fprintf(fi,"cov_qi=%.17e,%.17e\n",ini_cov[1][5],ini_cov[1][5]);
+    fprintf(fi,"cov_tt=%.17e,%.17e\n",ini_cov[2][2],ini_cov[2][2]);
+    fprintf(fi,"cov_tW=%.17e,%.17e\n",ini_cov[2][3],ini_cov[2][3]);
+    fprintf(fi,"cov_tw=%.17e,%.17e\n",ini_cov[2][4],ini_cov[2][4]);
+    fprintf(fi,"cov_ti=%.17e,%.17e\n",ini_cov[2][5],ini_cov[2][5]);
+    fprintf(fi,"cov_WW=%.17e,%.17e\n",ini_cov[3][3],ini_cov[3][3]);
+    fprintf(fi,"cov_Ww=%.17e,%.17e\n",ini_cov[3][4],ini_cov[3][4]);
+    fprintf(fi,"cov_Wi=%.17e,%.17e\n",ini_cov[3][5],ini_cov[3][5]);
+    fprintf(fi,"cov_ww=%.17e,%.17e\n",ini_cov[4][4],ini_cov[4][4]);
+    fprintf(fi,"cov_wi=%.17e,%.17e\n",ini_cov[4][5],ini_cov[4][5]);
+    fprintf(fi,"cov_ii=%.17e,%.17e\n",ini_cov[5][5],ini_cov[5][5]);
+    fflush(fi);
+  }else{
+    ////////////////////////////////////////////////////
+    //COMPUTE ERROR OF ASYMPTOTIC ELEMENTS
+    ////////////////////////////////////////////////////
+    printHeader(stdout,"COMPUTING ERRORS IN ASYMPTOTIC ELEMENTS",'-');
+    print1(VSTREAM,"COMPUTING ERRORS IN ASYMPTOTIC ELEMENTS\n");
   
-  print0(OSTREAM,"\tUsing %d objects\n",Ncov);
-  for(j=0;j<=Ncov+1;j++){
+    print0(OSTREAM,"\tUsing %d objects\n",Ncov);
+    for(j=0;j<=Ncov+1;j++){
 
-    //Generate elements
-    if(Qdiagonal) gsl_matrix_memcpy(L,D);
-    else gsl_matrix_memcpy(L,Lo);
-    gsl_linalg_cholesky_decomp1(L);
-    gsl_ran_multivariate_gaussian(RAND,ielements,L,relements);
-    n=ini_n+gsl_ran_gaussian(RAND,ini_dn);
-    tp=gsl_vector_get(relements,2);
-    Mo=n*(ini_to_jed-tp);
+      //Generate elements
+      if(Qdiagonal) gsl_matrix_memcpy(L,D);
+      else gsl_matrix_memcpy(L,Lo);
+      gsl_linalg_cholesky_decomp1(L);
+      gsl_ran_multivariate_gaussian(RAND,ielements,L,relements);
+      n=ini_n+gsl_ran_gaussian(RAND,ini_dn);
+      tp=gsl_vector_get(relements,2);
+      Mo=n*(ini_to_jed-tp);
 
-    //Save elements
-    /*q=*/elements[0]=gsl_vector_get(relements,1)*AU/1e3;
-    /*e=*/elements[1]=gsl_vector_get(relements,0);
-    /*i=*/elements[2]=gsl_vector_get(relements,5)*DEG;
-    /*W=*/elements[3]=gsl_vector_get(relements,3)*DEG;
-    /*w=*/elements[4]=gsl_vector_get(relements,4)*DEG;
-    /*M=*/elements[5]=Mo*DEG;
-    /*to=*/elements[6]=to;
-    /*mu=*/elements[7]=mu;
+      //Save elements
+      /*q=*/elements[0]=gsl_vector_get(relements,1)*AU/1e3;
+      /*e=*/elements[1]=gsl_vector_get(relements,0);
+      /*i=*/elements[2]=gsl_vector_get(relements,5)*DEG;
+      /*W=*/elements[3]=gsl_vector_get(relements,3)*DEG;
+      /*w=*/elements[4]=gsl_vector_get(relements,4)*DEG;
+      /*M=*/elements[5]=Mo*DEG;
+      /*to=*/elements[6]=to;
+      /*mu=*/elements[7]=mu;
 
-    //Compute position
-    conics_c(elements,to,position);
-    spkezr_c("SUN",to,"ECLIPJ2000","NONE",SSB,sun,&ltmp);
-    vaddg_c(position,sun,6,position);
-    vpack_c(position[0]*1E3/UL,position[1]*1E3/UL,position[2]*1E3/UL,X0);
-    vpack_c(position[3]*1E3/UV,position[4]*1E3/UV,position[5]*1E3/UV,X0+3);
+      //Compute position
+      conics_c(elements,to,position);
+      spkezr_c("SUN",to,"ECLIPJ2000","NONE",SSB,sun,&ltmp);
+      vaddg_c(position,sun,6,position);
+      vpack_c(position[0]*1E3/UL,position[1]*1E3/UL,position[2]*1E3/UL,X0);
+      vpack_c(position[3]*1E3/UV,position[4]*1E3/UV,position[5]*1E3/UV,X0+3);
 
-    //Integrate 
-    as=vnorm_c(X0);
-    tdyn=2*M_PI*sqrt(as*as*as/(GGLOBAL*MSUN/UM));
-    h=tdyn/1000.0;
-    integrateEoM(tini/UT,X0,h,npoints,durasymp/UT,6,EoM,params,ts,Xout);
-    vscl_c(UL/1E3,Xout[1],Xu);vscl_c(UV/1E3,Xout[1]+3,Xu+3);
-
-    //Calculate asymptotic elements
-    oscelt_c(Xu,to*DAY,munom,elts);
-    qs[j]=elts[0]*1e3/AU;
-    es[j]=elts[1];
-    is[j]=elts[2]*RAD;
-    Ws[j]=elts[3]*RAD;
-    ws[j]=elts[4]*RAD;
-
-    //Compute tp
-    a=qs[j]*AU/1e3/(es[j]-1);//km
-    n=sqrt(munom/(a*a*a))*RAD*DAY;//deg/day
-    Mo=elts[5]*RAD;
-    tp=ini_to_jed+durasymp/DAY-Mo/n;
-    tps[j]=tp;
+      //Integrate 
+      as=vnorm_c(X0);
+      tdyn=2*M_PI*sqrt(as*as*as/(GGLOBAL*MSUN/UM));
+      h=MIN(tdyn/1000.0,-durasymp/1000.0);
+      integrateEoM(tini/UT,X0,h,npoints,durasymp/UT,6,EoM,params,ts,Xout);
+      vscl_c(UL/1E3,Xout[1],Xu);vscl_c(UV/1E3,Xout[1]+3,Xu+3);
     
-    if(j==0){
-      copyVec(Xref,Xu,6);
-    }else{
-      vsub_c(Xref,Xu,Xdif);
-      ds+=vnorm_c(Xdif);
-    }
-  }
-  ds/=Ncov;
-  ds*=1e3/AU;//AVERAGE DISTANCE IN AU
-  print0(OSTREAM,"\tTypical size of the cloud at asymptotic time: %e\n",2*ds);
+      //Calculate asymptotic elements
+      oscelt_c(Xu,to*DAY,munom,elts);
+      qs[j]=elts[0]*1e3/AU;
+      es[j]=elts[1];
+      is[j]=elts[2]*RAD;
+      Ws[j]=elts[3]*RAD;
+      ws[j]=elts[4]*RAD;
 
-  //Compute covariances
-  fprintf(fi,"#actual covariance and original covariance\n");
-  fprintf(fi,"cov_ee=%.17e,%.17e\n",gsl_stats_covariance(es,1,es,1,Ncov),ini_cov[0][0]);
-  fprintf(fi,"cov_eq=%.17e,%.17e\n",gsl_stats_covariance(es,1,qs,1,Ncov),ini_cov[0][1]);
-  fprintf(fi,"cov_et=%.17e,%.17e\n",gsl_stats_covariance(es,1,tps,1,Ncov),ini_cov[0][2]);
-  fprintf(fi,"cov_eW=%.17e,%.17e\n",gsl_stats_covariance(es,1,Ws,1,Ncov),ini_cov[0][3]);
-  fprintf(fi,"cov_ew=%.17e,%.17e\n",gsl_stats_covariance(es,1,ws,1,Ncov),ini_cov[0][4]);
-  fprintf(fi,"cov_ei=%.17e,%.17e\n",gsl_stats_covariance(es,1,is,1,Ncov),ini_cov[0][5]);
-  fprintf(fi,"cov_qq=%.17e,%.17e\n",gsl_stats_covariance(qs,1,qs,1,Ncov),ini_cov[1][1]);
-  fprintf(fi,"cov_qt=%.17e,%.17e\n",gsl_stats_covariance(qs,1,tps,1,Ncov),ini_cov[1][2]);
-  fprintf(fi,"cov_qW=%.17e,%.17e\n",gsl_stats_covariance(qs,1,Ws,1,Ncov),ini_cov[1][3]);
-  fprintf(fi,"cov_qw=%.17e,%.17e\n",gsl_stats_covariance(qs,1,ws,1,Ncov),ini_cov[1][4]);
-  fprintf(fi,"cov_qi=%.17e,%.17e\n",gsl_stats_covariance(qs,1,is,1,Ncov),ini_cov[1][5]);
-  fprintf(fi,"cov_tt=%.17e,%.17e\n",gsl_stats_covariance(tps,1,tps,1,Ncov),ini_cov[2][2]);
-  fprintf(fi,"cov_tW=%.17e,%.17e\n",gsl_stats_covariance(tps,1,Ws,1,Ncov),ini_cov[2][3]);
-  fprintf(fi,"cov_tw=%.17e,%.17e\n",gsl_stats_covariance(tps,1,ws,1,Ncov),ini_cov[2][4]);
-  fprintf(fi,"cov_ti=%.17e,%.17e\n",gsl_stats_covariance(tps,1,is,1,Ncov),ini_cov[2][5]);
-  fprintf(fi,"cov_WW=%.17e,%.17e\n",gsl_stats_covariance(Ws,1,Ws,1,Ncov),ini_cov[3][3]);
-  fprintf(fi,"cov_Ww=%.17e,%.17e\n",gsl_stats_covariance(Ws,1,ws,1,Ncov),ini_cov[3][4]);
-  fprintf(fi,"cov_Wi=%.17e,%.17e\n",gsl_stats_covariance(Ws,1,is,1,Ncov),ini_cov[3][5]);
-  fprintf(fi,"cov_ww=%.17e,%.17e\n",gsl_stats_covariance(ws,1,ws,1,Ncov),ini_cov[4][4]);
-  fprintf(fi,"cov_wi=%.17e,%.17e\n",gsl_stats_covariance(ws,1,is,1,Ncov),ini_cov[4][5]);
-  fprintf(fi,"cov_ii=%.17e,%.17e\n",gsl_stats_covariance(is,1,is,1,Ncov),ini_cov[5][5]);
-  fflush(fi);
+      //Compute tp
+      a=qs[j]*AU/1e3/(es[j]-1);//km
+      n=sqrt(munom/(a*a*a))*RAD*DAY;//deg/day
+      Mo=elts[5]*RAD;
+      tp=ini_to_jed+durasymp/DAY-Mo/n;
+      tps[j]=tp;
+    
+      if(j==0){
+	copyVec(Xref,Xu,6);
+      }else{
+	vsub_c(Xref,Xu,Xdif);
+	ds+=vnorm_c(Xdif);
+      }
+    }
+    ds/=Ncov;
+    ds*=1e3/AU;//AVERAGE DISTANCE IN AU
+    print0(OSTREAM,"\tTypical size of the cloud at asymptotic time: %e\n",2*ds);
+
+    //Compute covariances
+    fprintf(fi,"#actual covariance and original covariance\n");
+    fprintf(fi,"cov_ee=%.17e,%.17e\n",gsl_stats_covariance(es,1,es,1,Ncov),ini_cov[0][0]);
+    fprintf(fi,"cov_eq=%.17e,%.17e\n",gsl_stats_covariance(es,1,qs,1,Ncov),ini_cov[0][1]);
+    fprintf(fi,"cov_et=%.17e,%.17e\n",gsl_stats_covariance(es,1,tps,1,Ncov),ini_cov[0][2]);
+    fprintf(fi,"cov_eW=%.17e,%.17e\n",gsl_stats_covariance(es,1,Ws,1,Ncov),ini_cov[0][3]);
+    fprintf(fi,"cov_ew=%.17e,%.17e\n",gsl_stats_covariance(es,1,ws,1,Ncov),ini_cov[0][4]);
+    fprintf(fi,"cov_ei=%.17e,%.17e\n",gsl_stats_covariance(es,1,is,1,Ncov),ini_cov[0][5]);
+    fprintf(fi,"cov_qq=%.17e,%.17e\n",gsl_stats_covariance(qs,1,qs,1,Ncov),ini_cov[1][1]);
+    fprintf(fi,"cov_qt=%.17e,%.17e\n",gsl_stats_covariance(qs,1,tps,1,Ncov),ini_cov[1][2]);
+    fprintf(fi,"cov_qW=%.17e,%.17e\n",gsl_stats_covariance(qs,1,Ws,1,Ncov),ini_cov[1][3]);
+    fprintf(fi,"cov_qw=%.17e,%.17e\n",gsl_stats_covariance(qs,1,ws,1,Ncov),ini_cov[1][4]);
+    fprintf(fi,"cov_qi=%.17e,%.17e\n",gsl_stats_covariance(qs,1,is,1,Ncov),ini_cov[1][5]);
+    fprintf(fi,"cov_tt=%.17e,%.17e\n",gsl_stats_covariance(tps,1,tps,1,Ncov),ini_cov[2][2]);
+    fprintf(fi,"cov_tW=%.17e,%.17e\n",gsl_stats_covariance(tps,1,Ws,1,Ncov),ini_cov[2][3]);
+    fprintf(fi,"cov_tw=%.17e,%.17e\n",gsl_stats_covariance(tps,1,ws,1,Ncov),ini_cov[2][4]);
+    fprintf(fi,"cov_ti=%.17e,%.17e\n",gsl_stats_covariance(tps,1,is,1,Ncov),ini_cov[2][5]);
+    fprintf(fi,"cov_WW=%.17e,%.17e\n",gsl_stats_covariance(Ws,1,Ws,1,Ncov),ini_cov[3][3]);
+    fprintf(fi,"cov_Ww=%.17e,%.17e\n",gsl_stats_covariance(Ws,1,ws,1,Ncov),ini_cov[3][4]);
+    fprintf(fi,"cov_Wi=%.17e,%.17e\n",gsl_stats_covariance(Ws,1,is,1,Ncov),ini_cov[3][5]);
+    fprintf(fi,"cov_ww=%.17e,%.17e\n",gsl_stats_covariance(ws,1,ws,1,Ncov),ini_cov[4][4]);
+    fprintf(fi,"cov_wi=%.17e,%.17e\n",gsl_stats_covariance(ws,1,is,1,Ncov),ini_cov[4][5]);
+    fprintf(fi,"cov_ii=%.17e,%.17e\n",gsl_stats_covariance(is,1,is,1,Ncov),ini_cov[5][5]);
+    fflush(fi);
+  }
 
   ////////////////////////////////////////////////////
   //COMPUTE INGRESS TIME OF NOMINAL OBJECT
@@ -510,7 +545,7 @@ int main(int argc,char* argv[])
   during=durold+(during-durold)/(ding-dold)*(truncation/1e3-dold);
   print0(OSTREAM,"\tTime of ingress: %e\n",during/YEAR);
   fprintf(fi,"t_ing=%.17e\n",during/YEAR);
-
+  
   ////////////////////////////////////////////////////
   //COMPUTE POSITION AT INGRESS
   ////////////////////////////////////////////////////
@@ -611,6 +646,9 @@ int main(int argc,char* argv[])
       tp=gsl_vector_get(relements,2);
       Mo=n*(ini_to_jed-tp);
 
+      double e=gsl_vector_get(relements,0);
+      if(e<1){j--;continue;}
+      
       //EXTRACT ELEMENTS
       /*q=*/elements[0]=gsl_vector_get(relements,1)*AU/1e3;
       /*e=*/elements[1]=gsl_vector_get(relements,0);
@@ -659,7 +697,12 @@ int main(int argc,char* argv[])
     //INTEGRATION UNTIL TASYMP
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     h=tdyn/1000.0;
-    integrateEoM(tini/UT,X0,h,npoints,durasymp/UT,6,EoM,params,ts,Xout);
+    try{
+      integrateEoM(tini/UT,X0,h,npoints,durasymp/UT,6,EoM,params,ts,Xout);
+    }catch(int e){
+      print2(VSTREAM,"\t\tIntegration failed.\n");
+      continue;
+    }
 
     //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     //FINAL POSITION

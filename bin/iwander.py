@@ -61,7 +61,7 @@ FIGDIR="figures/"
 ############################################################
 #ROUTINES
 def figure(qax=True,**figopts):
-    default=dict(qax=True)
+    #default=dict(qax=True)
     fig=plt.figure(**figopts)
     if qax:ax=fig.add_subplot(111)
     else:ax=None

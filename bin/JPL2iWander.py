@@ -97,8 +97,7 @@ for line in open(jplfile).readlines():
 
     if "obs. used" in line:qcom=True
     if "Additional" in line:qcom=False
-    if qcom:
-        if not re.search("\w+",line) is None:
+    if qcom and (not re.search("\w+",line) is None):
             coms+="\t"+" ".join(line.split())+"\n"
 
 print("\tComments:\n",coms)

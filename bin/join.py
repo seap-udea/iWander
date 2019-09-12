@@ -27,10 +27,13 @@ conf=readConf("iwander.conf");
 progenitors=pd.DataFrame()
 for progfile in argv[1:]:
     print("\tMerging '%s'..."%progfile)
-    data=pd.read_csv(progfile)
-    progenitors=progenitors.append(data,ignore_index=True)
+    try:
+        data=pd.read_csv(progfile)
+        progenitors=progenitors.append(data,ignore_index=True)
+    except:
+        print("\t\tNo data")
 
-progfile="scratch/progenitors-%s.csv"%conf["WANDERER"]
+progfile="scratch/progenitors-%s.csv"%conf["Wanderer"]
 print("Saving joined progenitors to '%s'..."%progfile)
 progenitors.to_csv(progfile,index=False)
 print("Number of progenitors:",len(progenitors))

@@ -14,6 +14,9 @@
 echo "Installing templates..."
 cp util/conf/* .
 
+echo "Installing packages..."
+pip3 install pycparser
+
 echo "Unpacking large files..."
 make unpack
 
